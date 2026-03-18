@@ -682,6 +682,7 @@
       <a href="/points" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--gold);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--gold-dim);border-radius:4px;background:rgba(201,168,76,.12)">⚔ Points</a>
       <a href="/budget" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">◈ Budget</a>
       <a href="/wheel" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">🎡 Wheel</a>
+      <a href="/dailies" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">📋 Dailies</a>
     </div>
     <div class="topbar-user">
       <div class="user-badge">
@@ -1221,12 +1222,17 @@ async function loadLeaderboard() {
 // ---- SUBMIT POINTS ----
 async function loadSubmitForm() {
   // Load members into dropdown
+  // All roles can submit for any member - they all go through approval anyway
   const r = await fetch('/points/api/users');
   const users = await r.json();
   const sel = document.getElementById('sub-member');
   sel.innerHTML = users.filter(u => u.is_active).map(u =>
     `<option value="${u.user_id}" ${u.user_id === currentUser.user_id ? 'selected' : ''}>${u.username}</option>`
   ).join('');
+
+  // Make sure custom entry toggle is always visible for all roles
+  const toggleRow = document.querySelector('.custom-toggle-row');
+  if (toggleRow) toggleRow.style.display = 'flex';
 
   // Load actions into dropdown
   const ar = await fetch('/points/api/actions');
