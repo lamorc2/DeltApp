@@ -781,7 +781,7 @@ def api_get_requests():
 
 @app.route('/budget/api/requests/pending', methods=['GET'])
 @login_required
-@mod_required
+@admin_required
 def api_pending_requests():
     conn = get_db()
     rows = fetchall(conn, '''
@@ -850,7 +850,7 @@ def api_submit_request():
 
 @app.route('/budget/api/requests/<int:rid>/approve', methods=['POST'])
 @login_required
-@mod_required
+@admin_required
 def api_approve_request(rid):
     conn = get_db()
     req = fetchone(conn, "SELECT * FROM budget_requests WHERE request_id=? AND status='pending'", (rid,))
@@ -866,7 +866,7 @@ def api_approve_request(rid):
 
 @app.route('/budget/api/requests/<int:rid>/reject', methods=['POST'])
 @login_required
-@mod_required
+@admin_required
 def api_reject_request(rid):
     data = request.json or {}
     reason = (data.get('reason') or '').strip()
