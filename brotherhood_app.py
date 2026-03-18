@@ -1,71 +1,145 @@
 #!/usr/bin/env python3
 """
 Δ Τ Δ - Delta Tau Delta Brotherhood Points System
-Modern Web App - Single File
-Run: pip install flask && python brotherhood_app.py
+Modern Web App - Railway Edition (PostgreSQL)
+Local:   pip install flask psycopg2-binary && python brotherhood_app.py
+Railway: connects automatically via DATABASE_URL env var
 """
 
-from flask import Flask, request, jsonify, session, redirect, url_for
-import sqlite3
+from flask import Flask, request, jsonify, session
 import hashlib
 import os
-from datetime import datetime
-from pathlib import Path
 from functools import wraps
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)
+# Postgres when DATABASE_URL is set (Railway), SQLite locally as fallback
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-DB_PATH = "brotherhood_system.db"
+if DATABASE_URL:
+    import psycopg2
+    import psycopg2.extras
+    PH = '%s'  # Postgres placeholder
+else:
+    import sqlite3
+    PH = '?'   # SQLite placeholder
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # ============================================================================
 # DATABASE
 # ============================================================================
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = False
+        return conn
+    else:
+        conn = sqlite3.connect('brotherhood_system.db')
+        conn.row_factory = sqlite3.Row
+        return conn
+
+def fetchone(conn, sql, params=()):
+    """Unified fetchone that always returns a dict-like row."""
+    sql = sql.replace('?', PH)
+    if DATABASE_URL:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(sql, params)
+        return cur.fetchone()
+    else:
+        return conn.execute(sql, params).fetchone()
+
+def fetchall(conn, sql, params=()):
+    """Unified fetchall that always returns a list of dict-like rows."""
+    sql = sql.replace('?', PH)
+    if DATABASE_URL:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(sql, params)
+        return [dict(r) for r in cur.fetchall()]
+    else:
+        return [dict(r) for r in conn.execute(sql, params).fetchall()]
+
+def execute(conn, sql, params=()):
+    """Unified execute."""
+    sql = sql.replace('?', PH)
+    if DATABASE_URL:
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        return cur
+    else:
+        return conn.execute(sql, params)
 
 def init_db():
     conn = get_db()
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        role TEXT NOT NULL,
-        brotherhood_points INTEGER DEFAULT 0,
-        is_active BOOLEAN DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS transactions (
-        transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        member_id INTEGER NOT NULL,
-        points INTEGER NOT NULL,
-        description TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        reviewed_by TEXT,
-        reviewed_at TIMESTAMP,
-        rejection_reason TEXT,
-        FOREIGN KEY (member_id) REFERENCES users(user_id)
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS audit_log (
-        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        action TEXT NOT NULL,
-        user_id INTEGER,
-        details TEXT,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
+    if DATABASE_URL:
+        # Postgres: use SERIAL instead of AUTOINCREMENT, TRUE/FALSE for booleans
+        execute(conn, '''CREATE TABLE IF NOT EXISTS users (
+            user_id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            role TEXT NOT NULL,
+            brotherhood_points INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS transactions (
+            transaction_id SERIAL PRIMARY KEY,
+            member_id INTEGER NOT NULL REFERENCES users(user_id),
+            points INTEGER NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reviewed_by TEXT,
+            reviewed_at TIMESTAMP,
+            rejection_reason TEXT
+        )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS audit_log (
+            log_id SERIAL PRIMARY KEY,
+            action TEXT NOT NULL,
+            user_id INTEGER,
+            details TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+    else:
+        execute(conn, '''CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            role TEXT NOT NULL,
+            brotherhood_points INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS transactions (
+            transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            member_id INTEGER NOT NULL,
+            points INTEGER NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reviewed_by TEXT,
+            reviewed_at TIMESTAMP,
+            rejection_reason TEXT,
+            FOREIGN KEY (member_id) REFERENCES users(user_id)
+        )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS audit_log (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            action TEXT NOT NULL,
+            user_id INTEGER,
+            details TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+
     conn.commit()
-    # Seed default admin
-    c.execute("SELECT COUNT(*) FROM users")
-    if c.fetchone()[0] == 0:
-        pw = hashlib.sha256("admin123".encode()).hexdigest()
-        c.execute("INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
-                  ("admin", pw, "admin@brotherhood.com", "admin"))
+    # Seed default admin if no users exist
+    row = fetchone(conn, "SELECT COUNT(*) as cnt FROM users")
+    cnt = row['cnt'] if row else 0
+    if cnt == 0:
+        pw = hash_pw("admin123")
+        execute(conn, "INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
+                ("admin", pw, "admin@brotherhood.com", "admin"))
         conn.commit()
     conn.close()
 
@@ -74,10 +148,16 @@ def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
 def log_audit(user_id, action, details=""):
     try:
         conn = get_db()
-        conn.execute("INSERT INTO audit_log (user_id, action, details) VALUES (?,?,?)", (user_id, action, details))
+        execute(conn, "INSERT INTO audit_log (user_id, action, details) VALUES (?,?,?)", (user_id, action, details))
         conn.commit()
         conn.close()
     except: pass
+
+def is_integrity_error(e):
+    if DATABASE_URL:
+        return isinstance(e, psycopg2.errors.UniqueViolation)
+    else:
+        return isinstance(e, sqlite3.IntegrityError)
 
 # ============================================================================
 # AUTH DECORATORS
@@ -115,7 +195,7 @@ def moderator_required(f):
 def api_login():
     data = request.json
     conn = get_db()
-    user = conn.execute("SELECT * FROM users WHERE username=? AND is_active=1", (data.get('username'),)).fetchone()
+    user = fetchone(conn, "SELECT * FROM users WHERE username=? AND is_active=true", (data.get('username'),))
     conn.close()
     if user and user['password_hash'] == hash_pw(data.get('password', '')):
         session['user_id'] = user['user_id']
@@ -136,7 +216,7 @@ def api_me():
     if 'user_id' not in session:
         return jsonify({'authenticated': False})
     conn = get_db()
-    user = conn.execute("SELECT user_id, username, email, role, brotherhood_points FROM users WHERE user_id=?", (session['user_id'],)).fetchone()
+    user = fetchone(conn, "SELECT user_id, username, email, role, brotherhood_points FROM users WHERE user_id=?", (session['user_id'],))
     conn.close()
     if user:
         return jsonify({'authenticated': True, **dict(user)})
@@ -147,9 +227,9 @@ def api_me():
 @login_required
 def api_get_users():
     conn = get_db()
-    users = conn.execute("SELECT user_id, username, email, role, brotherhood_points, is_active, created_at FROM users ORDER BY brotherhood_points DESC").fetchall()
+    users = fetchall(conn, "SELECT user_id, username, email, role, brotherhood_points, is_active, created_at FROM users ORDER BY brotherhood_points DESC")
     conn.close()
-    return jsonify([dict(u) for u in users])
+    return jsonify(users)
 
 @app.route('/api/users', methods=['POST'])
 @login_required
@@ -158,14 +238,16 @@ def api_create_user():
     data = request.json
     try:
         conn = get_db()
-        conn.execute("INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
-                     (data['username'], hash_pw(data['password']), data['email'], data['role']))
+        execute(conn, "INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
+                (data['username'], hash_pw(data['password']), data['email'], data['role']))
         conn.commit()
         conn.close()
         log_audit(session['user_id'], 'CREATE_USER', f"Created user {data['username']}")
         return jsonify({'success': True})
-    except sqlite3.IntegrityError:
-        return jsonify({'error': 'Username or email already exists'}), 400
+    except Exception as e:
+        if is_integrity_error(e):
+            return jsonify({'error': 'Username or email already exists'}), 400
+        raise
 
 @app.route('/api/users/<int:uid>', methods=['PUT'])
 @login_required
@@ -185,19 +267,21 @@ def api_update_user(uid):
     vals.append(uid)
     try:
         conn = get_db()
-        conn.execute(f"UPDATE users SET {', '.join(fields)} WHERE user_id=?", vals)
+        execute(conn, f"UPDATE users SET {', '.join(fields)} WHERE user_id=?", vals)
         conn.commit()
         conn.close()
         return jsonify({'success': True})
-    except sqlite3.IntegrityError:
-        return jsonify({'error': 'Username or email already exists'}), 400
+    except Exception as e:
+        if is_integrity_error(e):
+            return jsonify({'error': 'Username or email already exists'}), 400
+        raise
 
 @app.route('/api/users/<int:uid>', methods=['DELETE'])
 @login_required
 @admin_required
 def api_delete_user(uid):
     conn = get_db()
-    conn.execute("UPDATE users SET is_active=0 WHERE user_id=?", (uid,))
+    execute(conn, "UPDATE users SET is_active=false WHERE user_id=?", (uid,))
     conn.commit()
     conn.close()
     log_audit(session['user_id'], 'DELETE_USER', f"Deactivated user {uid}")
@@ -210,35 +294,44 @@ def api_get_transactions():
     conn = get_db()
     role = session.get('role')
     if role in ('admin', 'moderator'):
-        rows = conn.execute('''SELECT t.transaction_id, t.member_id, u.username as member_name, t.points, 
+        rows = fetchall(conn, '''SELECT t.transaction_id, t.member_id, u.username as member_name, t.points,
             t.description, t.status, t.created_at, t.reviewed_by, t.reviewed_at, t.rejection_reason
-            FROM transactions t JOIN users u ON t.member_id=u.user_id ORDER BY t.created_at DESC''').fetchall()
+            FROM transactions t JOIN users u ON t.member_id=u.user_id ORDER BY t.created_at DESC''')
     else:
-        rows = conn.execute('''SELECT t.transaction_id, t.member_id, u.username as member_name, t.points, 
+        rows = fetchall(conn, '''SELECT t.transaction_id, t.member_id, u.username as member_name, t.points,
             t.description, t.status, t.created_at, t.reviewed_by, t.reviewed_at, t.rejection_reason
             FROM transactions t JOIN users u ON t.member_id=u.user_id WHERE t.member_id=? ORDER BY t.created_at DESC''',
-            (session['user_id'],)).fetchall()
+            (session['user_id'],))
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    # Ensure datetime fields are JSON-serializable strings
+    for r in rows:
+        for k in ('created_at', 'reviewed_at'):
+            if r.get(k) and not isinstance(r[k], str):
+                r[k] = r[k].isoformat()
+    return jsonify(rows)
 
 @app.route('/api/transactions/pending', methods=['GET'])
 @login_required
 @moderator_required
 def api_pending_transactions():
     conn = get_db()
-    rows = conn.execute('''SELECT t.transaction_id, t.member_id, u.username as member_name, t.points, 
+    rows = fetchall(conn, '''SELECT t.transaction_id, t.member_id, u.username as member_name, t.points,
         t.description, t.status, t.created_at, t.reviewed_by, t.reviewed_at, t.rejection_reason
-        FROM transactions t JOIN users u ON t.member_id=u.user_id WHERE t.status='pending' ORDER BY t.created_at ASC''').fetchall()
+        FROM transactions t JOIN users u ON t.member_id=u.user_id WHERE t.status='pending' ORDER BY t.created_at ASC''')
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    for r in rows:
+        for k in ('created_at', 'reviewed_at'):
+            if r.get(k) and not isinstance(r[k], str):
+                r[k] = r[k].isoformat()
+    return jsonify(rows)
 
 @app.route('/api/transactions', methods=['POST'])
 @login_required
 def api_submit_transaction():
     data = request.json
     conn = get_db()
-    conn.execute("INSERT INTO transactions (member_id, points, description) VALUES (?,?,?)",
-                 (session['user_id'], data['points'], data['description']))
+    execute(conn, "INSERT INTO transactions (member_id, points, description) VALUES (?,?,?)",
+            (session['user_id'], data['points'], data['description']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -248,13 +341,13 @@ def api_submit_transaction():
 @moderator_required
 def api_approve(tid):
     conn = get_db()
-    row = conn.execute("SELECT member_id, points FROM transactions WHERE transaction_id=?", (tid,)).fetchone()
+    row = fetchone(conn, "SELECT member_id, points FROM transactions WHERE transaction_id=?", (tid,))
     if not row:
         conn.close()
         return jsonify({'error': 'Not found'}), 404
-    conn.execute("UPDATE transactions SET status='approved', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP WHERE transaction_id=?",
-                 (session['username'], tid))
-    conn.execute("UPDATE users SET brotherhood_points=brotherhood_points+? WHERE user_id=?", (row['points'], row['member_id']))
+    execute(conn, "UPDATE transactions SET status='approved', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP WHERE transaction_id=?",
+            (session['username'], tid))
+    execute(conn, "UPDATE users SET brotherhood_points=brotherhood_points+? WHERE user_id=?", (row['points'], row['member_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -265,8 +358,8 @@ def api_approve(tid):
 def api_reject(tid):
     data = request.json
     conn = get_db()
-    conn.execute("UPDATE transactions SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, rejection_reason=? WHERE transaction_id=?",
-                 (session['username'], data.get('reason', ''), tid))
+    execute(conn, "UPDATE transactions SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, rejection_reason=? WHERE transaction_id=?",
+            (session['username'], data.get('reason', ''), tid))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -1581,12 +1674,15 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 def index():
     return HTML
 
+# Init DB on startup (works for both gunicorn and direct python execution)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     print("\n" + "="*55)
     print("  Δ Τ Δ  Delta Tau Delta Brotherhood Points System")
     print("="*55)
     print(f"  → Open: http://localhost:5000")
     print(f"  → Default login: admin / admin123")
+    print(f"  → DB: PostgreSQL" if DATABASE_URL else "  → DB: SQLite (local)")
     print("="*55 + "\n")
-    app.run(debug=True, port=5000)
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
