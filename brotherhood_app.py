@@ -94,6 +94,13 @@ def init_db():
             reviewed_at TIMESTAMP,
             rejection_reason TEXT
         )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS point_actions (
+            action_id SERIAL PRIMARY KEY,
+            label TEXT NOT NULL,
+            points INTEGER NOT NULL,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
         execute(conn, '''CREATE TABLE IF NOT EXISTS audit_log (
             log_id SERIAL PRIMARY KEY,
             action TEXT NOT NULL,
@@ -123,6 +130,13 @@ def init_db():
             reviewed_at TIMESTAMP,
             rejection_reason TEXT,
             FOREIGN KEY (member_id) REFERENCES users(user_id)
+        )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS point_actions (
+            action_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            label TEXT NOT NULL,
+            points INTEGER NOT NULL,
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )''')
         execute(conn, '''CREATE TABLE IF NOT EXISTS audit_log (
             log_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -329,9 +343,88 @@ def api_pending_transactions():
 @login_required
 def api_submit_transaction():
     data = request.json
+    # Allow submitting on behalf of another member (any logged-in user can do this)
+    target_member_id = data.get('member_id', session['user_id'])
     conn = get_db()
+    # Verify target member exists
+    target = fetchone(conn, "SELECT user_id FROM users WHERE user_id=? AND is_active=true", (target_member_id,))
+    if not target:
+        conn.close()
+        return jsonify({'error': 'Member not found'}), 404
     execute(conn, "INSERT INTO transactions (member_id, points, description) VALUES (?,?,?)",
-            (session['user_id'], data['points'], data['description']))
+            (target_member_id, data['points'], data['description']))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+# Point Actions
+@app.route('/api/actions', methods=['GET'])
+@login_required
+def api_get_actions():
+    conn = get_db()
+    actions = fetchall(conn, "SELECT * FROM point_actions WHERE is_active=true ORDER BY points DESC")
+    conn.close()
+    return jsonify(actions)
+
+@app.route('/api/actions/all', methods=['GET'])
+@login_required
+@admin_required
+def api_get_all_actions():
+    conn = get_db()
+    actions = fetchall(conn, "SELECT * FROM point_actions ORDER BY created_at DESC")
+    conn.close()
+    return jsonify(actions)
+
+@app.route('/api/actions', methods=['POST'])
+@login_required
+@admin_required
+def api_create_action():
+    data = request.json
+    label = (data.get('label') or '').strip()
+    points = data.get('points')
+    if not label:
+        return jsonify({'error': 'Label is required'}), 400
+    try:
+        points = int(points)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Points must be a number'}), 400
+    conn = get_db()
+    execute(conn, "INSERT INTO point_actions (label, points) VALUES (?,?)", (label, points))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+@app.route('/api/actions/<int:aid>', methods=['PUT'])
+@login_required
+@admin_required
+def api_update_action(aid):
+    data = request.json
+    label = (data.get('label') or '').strip()
+    points = data.get('points')
+    is_active = data.get('is_active')
+    fields, vals = [], []
+    if label:
+        fields.append("label=?"); vals.append(label)
+    if points is not None:
+        try: fields.append("points=?"); vals.append(int(points))
+        except: pass
+    if is_active is not None:
+        fields.append("is_active=?"); vals.append(bool(is_active))
+    if not fields:
+        return jsonify({'error': 'Nothing to update'}), 400
+    vals.append(aid)
+    conn = get_db()
+    execute(conn, f"UPDATE point_actions SET {', '.join(fields)} WHERE action_id=?", vals)
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+@app.route('/api/actions/<int:aid>', methods=['DELETE'])
+@login_required
+@admin_required
+def api_delete_action(aid):
+    conn = get_db()
+    execute(conn, "UPDATE point_actions SET is_active=false WHERE action_id=?", (aid,))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -932,7 +1025,71 @@ HTML = r"""<!DOCTYPE html>
   .page.active { display: block; }
 
   /* POINTS SUBMIT */
-  .submit-form { max-width: 560px; }
+  .submit-form { max-width: 600px; }
+
+  /* CUSTOM ACTION TOGGLE */
+  .custom-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .toggle-checkbox {
+    width: 16px; height: 16px;
+    accent-color: var(--gold);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* ACTION DROPDOWN OPTION PREVIEW */
+  .action-preview {
+    background: var(--dark-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem 1rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 42px;
+  }
+  .action-preview-label { font-style: italic; color: var(--text-dim); font-size: 0.9rem; }
+  .action-pts-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+  .pts-positive { background: rgba(76,175,122,0.15); color: var(--green); border: 1px solid rgba(76,175,122,0.3); }
+  .pts-negative { background: rgba(207,74,74,0.15); color: var(--red); border: 1px solid rgba(207,74,74,0.3); }
+  .pts-zero { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* ACTIONS MANAGEMENT */
+  .actions-grid { display: grid; gap: 0.75rem; }
+  .action-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--dark-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    transition: border-color 0.15s;
+  }
+  .action-row:hover { border-color: var(--border-strong); }
+  .action-row-label { flex: 1; font-size: 0.95rem; }
+  .action-row-pts { font-family: 'Cinzel', serif; font-size: 0.85rem; min-width: 60px; text-align: right; }
+  .disabled-row { opacity: 0.4; }
 
   /* UTILITY */
   .text-gold { color: var(--gold); }
@@ -1016,6 +1173,9 @@ HTML = r"""<!DOCTYPE html>
       </div>
       <div class="nav-divider" id="admin-divider" style="display:none"></div>
       <div class="nav-section-title" id="admin-section" style="display:none">Admin</div>
+      <div class="nav-item" onclick="showPage('actions', this)" id="nav-actions" style="display:none">
+        <span class="icon">⚙</span> Point Actions
+      </div>
       <div class="nav-item" onclick="showPage('users', this)" id="nav-users" style="display:none">
         <span class="icon">👥</span> User Management
       </div>
@@ -1050,20 +1210,46 @@ HTML = r"""<!DOCTYPE html>
         <div class="page-header">
           <div>
             <div class="page-title">Submit Points Request</div>
-            <div class="page-subtitle">Submit your brotherhood activities for review</div>
+            <div class="page-subtitle">Report an activity for any member</div>
           </div>
         </div>
         <div class="card submit-form">
           <div class="card-title">New Request</div>
+
           <div class="form-group">
-            <label class="form-label">Points Value</label>
-            <input class="form-input" type="number" id="sub-points" min="1" max="1000" placeholder="e.g. 10">
+            <label class="form-label">Member</label>
+            <select class="form-input" id="sub-member">
+              <option value="">Loading members...</option>
+            </select>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Description / Activity</label>
-            <textarea class="form-input" id="sub-desc" placeholder="Describe the activity you completed..."></textarea>
+            <label class="form-label">Action</label>
+            <select class="form-input" id="sub-action" onchange="onActionChange()" disabled>
+              <option value="">— Select an action —</option>
+            </select>
+            <div class="action-preview" id="action-preview">
+              <span class="action-preview-label">Select an action to see details</span>
+            </div>
           </div>
-          <button class="btn btn-gold" onclick="submitPoints()">✦ Submit for Review</button>
+
+          <div class="custom-toggle-row">
+            <input type="checkbox" class="toggle-checkbox" id="sub-custom-check" onchange="toggleCustom()">
+            <label class="toggle-label" for="sub-custom-check">Custom entry</label>
+          </div>
+
+          <div id="custom-fields" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Custom Description</label>
+              <input class="form-input" type="text" id="sub-custom-desc" placeholder="Describe the activity...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Points Value <span class="text-dim">(use negative for deductions)</span></label>
+              <input class="form-input" type="number" id="sub-custom-points" placeholder="e.g. 5 or -2">
+            </div>
+          </div>
+
+          <button class="btn btn-gold" onclick="submitPoints()" style="margin-top:0.5rem;">✦ Submit for Review</button>
         </div>
       </div>
 
@@ -1156,6 +1342,23 @@ HTML = r"""<!DOCTYPE html>
           </div>
         </div>
       </div>
+      <!-- Point Actions Management -->
+      <div class="page" id="page-actions">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Point Actions</div>
+            <div class="page-subtitle">Define the actions members can report</div>
+          </div>
+          <button class="btn btn-gold btn-sm" onclick="openAddAction()">+ New Action</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Defined Actions</div>
+          <div class="actions-grid" id="actions-grid">
+            <div class="empty-state"><div class="empty-text">Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
@@ -1248,10 +1451,50 @@ HTML = r"""<!DOCTYPE html>
   </div>
 </div>
 
+<!-- ADD ACTION MODAL -->
+<div class="modal-overlay" id="modal-add-action">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">New Point Action</span>
+      <button class="modal-close" onclick="closeModal('modal-add-action')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Label</label><input class="form-input" id="action-label" placeholder="e.g. Missed a Daily"></div>
+      <div class="form-group"><label class="form-label">Points <span class="text-dim">(negative for deductions)</span></label><input class="form-input" type="number" id="action-points" placeholder="e.g. -1 or 3"></div>
+      <div class="error-msg" id="action-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-action')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="createAction()">Create Action</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ACTION MODAL -->
+<div class="modal-overlay" id="modal-edit-action">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Action</span>
+      <button class="modal-close" onclick="closeModal('modal-edit-action')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-action-id">
+      <div class="form-group"><label class="form-label">Label</label><input class="form-input" id="edit-action-label"></div>
+      <div class="form-group"><label class="form-label">Points</label><input class="form-input" type="number" id="edit-action-points"></div>
+      <div class="error-msg" id="edit-action-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-edit-action')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="saveAction()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let currentUser = null;
 let allUsers = [];
 let allTransactions = [];
+let allActions = [];
 
 // ---- UTILS ----
 function toast(msg, type='info') {
@@ -1342,7 +1585,7 @@ async function loadApp() {
     show('nav-submit'); show('nav-my-tx');
     show('nav-pending'); show('nav-all-tx');
     document.getElementById('mod-section').style.display = 'block';
-    show('nav-users');
+    show('nav-actions'); show('nav-users');
     document.getElementById('admin-section').style.display = 'block';
     document.getElementById('admin-divider').style.display = 'block';
   }
@@ -1378,11 +1621,12 @@ function showPage(page, el) {
 
   // Load data for page
   if (page === 'leaderboard') loadLeaderboard();
-  else if (page === 'submit') {}
+  else if (page === 'submit') loadSubmitForm();
   else if (page === 'my-transactions') loadMyTransactions();
   else if (page === 'pending') loadPending();
   else if (page === 'all-transactions') loadAllTransactions();
   else if (page === 'users') loadUsers();
+  else if (page === 'actions') loadActions();
 }
 
 // ---- LEADERBOARD ----
@@ -1433,20 +1677,170 @@ async function loadLeaderboard() {
 }
 
 // ---- SUBMIT POINTS ----
+async function loadSubmitForm() {
+  // Load members into dropdown
+  const r = await fetch('/api/users');
+  const users = await r.json();
+  const sel = document.getElementById('sub-member');
+  sel.innerHTML = users.filter(u => u.is_active).map(u =>
+    `<option value="${u.user_id}" ${u.user_id === currentUser.user_id ? 'selected' : ''}>${u.username}</option>`
+  ).join('');
+
+  // Load actions into dropdown
+  const ar = await fetch('/api/actions');
+  allActions = await ar.json();
+  const asel = document.getElementById('sub-action');
+  if (allActions.length === 0) {
+    asel.innerHTML = '<option value="">No actions defined yet</option>';
+    asel.disabled = true;
+  } else {
+    asel.innerHTML = '<option value="">— Select an action —</option>' +
+      allActions.map(a => {
+        const sign = a.points > 0 ? '+' : '';
+        return `<option value="${a.action_id}" data-pts="${a.points}">${a.label} (${sign}${a.points})</option>`;
+      }).join('');
+    asel.disabled = false;
+  }
+  updateActionPreview();
+}
+
+function onActionChange() {
+  updateActionPreview();
+}
+
+function updateActionPreview() {
+  const asel = document.getElementById('sub-action');
+  const preview = document.getElementById('action-preview');
+  const opt = asel.options[asel.selectedIndex];
+  if (!opt || !opt.value) {
+    preview.innerHTML = '<span class="action-preview-label">Select an action to see details</span>';
+    return;
+  }
+  const pts = parseInt(opt.dataset.pts);
+  const sign = pts > 0 ? '+' : '';
+  const cls = pts > 0 ? 'pts-positive' : pts < 0 ? 'pts-negative' : 'pts-zero';
+  preview.innerHTML = `<span class="action-preview-label">${opt.text.split('(')[0].trim()}</span><span class="action-pts-badge ${cls}">${sign}${pts} pts</span>`;
+}
+
+function toggleCustom() {
+  const checked = document.getElementById('sub-custom-check').checked;
+  document.getElementById('custom-fields').style.display = checked ? 'block' : 'none';
+  document.getElementById('sub-action').disabled = checked;
+  document.getElementById('action-preview').style.opacity = checked ? '0.35' : '1';
+  if (!checked) updateActionPreview();
+}
+
 async function submitPoints() {
-  const pts = parseInt(document.getElementById('sub-points').value);
-  const desc = document.getElementById('sub-desc').value.trim();
-  if (!pts || pts < 1) { toast('Enter a valid point value','error'); return; }
-  if (!desc) { toast('Please provide a description','error'); return; }
-  const r = await fetch('/api/transactions', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({points:pts, description:desc})});
+  const memberId = parseInt(document.getElementById('sub-member').value);
+  const isCustom = document.getElementById('sub-custom-check').checked;
+
+  let points, description;
+
+  if (isCustom) {
+    description = document.getElementById('sub-custom-desc').value.trim();
+    points = parseInt(document.getElementById('sub-custom-points').value);
+    if (!description) { toast('Please enter a description','error'); return; }
+    if (isNaN(points) || points === 0) { toast('Please enter a valid point value','error'); return; }
+  } else {
+    const asel = document.getElementById('sub-action');
+    const opt = asel.options[asel.selectedIndex];
+    if (!opt || !opt.value) { toast('Please select an action','error'); return; }
+    points = parseInt(opt.dataset.pts);
+    description = opt.text.split('(')[0].trim();
+  }
+
+  if (!memberId) { toast('Please select a member','error'); return; }
+
+  const r = await fetch('/api/transactions', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({member_id: memberId, points, description})
+  });
   const d = await r.json();
   if (d.success) {
     toast('Request submitted for review!','success');
-    document.getElementById('sub-points').value = '';
-    document.getElementById('sub-desc').value = '';
+    document.getElementById('sub-action').value = '';
+    document.getElementById('sub-custom-desc').value = '';
+    document.getElementById('sub-custom-points').value = '';
+    document.getElementById('sub-custom-check').checked = false;
+    toggleCustom();
+    updateActionPreview();
   } else {
     toast(d.error || 'Error submitting request','error');
   }
+}
+
+// ---- POINT ACTIONS MANAGEMENT ----
+async function loadActions() {
+  const r = await fetch('/api/actions/all');
+  const actions = await r.json();
+  const grid = document.getElementById('actions-grid');
+  if (actions.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⚙</div><div class="empty-text">No actions defined yet — add one above</div></div>';
+    return;
+  }
+  grid.innerHTML = actions.map(a => {
+    const pts = a.points;
+    const sign = pts > 0 ? '+' : '';
+    const cls = pts > 0 ? 'pts-positive' : pts < 0 ? 'pts-negative' : 'pts-zero';
+    const activeRow = a.is_active ? '' : ' disabled-row';
+    return `
+    <div class="action-row${activeRow}">
+      <div class="action-row-label">${a.label}</div>
+      <div class="action-row-pts"><span class="action-pts-badge ${cls}">${sign}${pts}</span></div>
+      <span class="badge ${a.is_active ? 'badge-active' : 'badge-inactive'}">${a.is_active ? 'Active' : 'Disabled'}</span>
+      <div class="action-btns">
+        <button class="btn btn-ghost btn-sm" onclick="openEditAction(${a.action_id})">Edit</button>
+        ${a.is_active
+          ? `<button class="btn btn-danger btn-sm" onclick="toggleAction(${a.action_id}, false)">Disable</button>`
+          : `<button class="btn btn-success btn-sm" onclick="toggleAction(${a.action_id}, true)">Enable</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddAction() {
+  document.getElementById('action-label').value = '';
+  document.getElementById('action-points').value = '';
+  document.getElementById('action-error').style.display = 'none';
+  openModal('modal-add-action');
+}
+async function createAction() {
+  const label = document.getElementById('action-label').value.trim();
+  const points = document.getElementById('action-points').value;
+  if (!label || points === '') { showErr('action-error', 'Label and points are required'); return; }
+  const r = await fetch('/api/actions', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({label, points: parseInt(points)})});
+  const d = await r.json();
+  if (d.success) { toast('Action created!','success'); closeModal('modal-add-action'); loadActions(); }
+  else showErr('action-error', d.error || 'Error');
+}
+
+function openEditAction(aid) {
+  const r = fetch('/api/actions/all').then(r => r.json()).then(actions => {
+    const a = actions.find(x => x.action_id === aid);
+    if (!a) return;
+    document.getElementById('edit-action-id').value = aid;
+    document.getElementById('edit-action-label').value = a.label;
+    document.getElementById('edit-action-points').value = a.points;
+    document.getElementById('edit-action-error').style.display = 'none';
+    openModal('modal-edit-action');
+  });
+}
+async function saveAction() {
+  const aid = document.getElementById('edit-action-id').value;
+  const label = document.getElementById('edit-action-label').value.trim();
+  const points = document.getElementById('edit-action-points').value;
+  if (!label || points === '') { showErr('edit-action-error', 'Both fields required'); return; }
+  const r = await fetch(`/api/actions/${aid}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({label, points: parseInt(points)})});
+  const d = await r.json();
+  if (d.success) { toast('Action updated!','success'); closeModal('modal-edit-action'); loadActions(); }
+  else showErr('edit-action-error', d.error || 'Error');
+}
+async function toggleAction(aid, active) {
+  const r = await fetch(`/api/actions/${aid}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({is_active: active})});
+  const d = await r.json();
+  if (d.success) { toast(active ? 'Action enabled' : 'Action disabled','info'); loadActions(); }
+  else toast('Error','error');
 }
 
 // ---- MY TRANSACTIONS ----
