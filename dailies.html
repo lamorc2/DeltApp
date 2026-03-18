@@ -83,6 +83,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .badge-submitted{background:rgba(91,141,217,.12);color:#5B8DD9;border:1px solid rgba(91,141,217,.25)}
 .badge-approved{background:rgba(76,175,122,.12);color:#4CAF7A;border:1px solid rgba(76,175,122,.25)}
 .badge-rejected{background:rgba(207,74,74,.12);color:#CF4A4A;border:1px solid rgba(207,74,74,.25)}
+.badge-missed{background:rgba(207,74,74,.18);color:#CF4A4A;border:1px solid rgba(207,74,74,.4)}
 .badge-overdue{background:rgba(207,74,74,.18);color:#CF4A4A;border:1px solid rgba(207,74,74,.4)}
 
 /* BUTTONS */
@@ -269,17 +270,21 @@ textarea.form-input{resize:vertical;min-height:70px}
   </div>
 </div>
 
-<!-- REJECT MODAL -->
-<div class="modal-overlay" id="modal-reject">
+<!-- MARK MISSED MODAL -->
+<div class="modal-overlay" id="modal-miss">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title">Reject Completion</span><button class="modal-close" onclick="closeModal('modal-reject')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">Mark as Missed</span><button class="modal-close" onclick="closeModal('modal-miss')">✕</button></div>
     <div class="modal-body">
-      <input type="hidden" id="reject-aid">
-      <div class="form-group"><label class="form-label">Reason</label><textarea class="form-input" id="reject-reason" placeholder="Why is this being rejected?"></textarea></div>
+      <input type="hidden" id="miss-aid">
+      <p style="font-size:.9rem;color:#9A8E7A;margin-bottom:1.25rem;font-style:italic">This will deduct points from the member and mark the task as missed.</p>
+      <div class="form-group">
+        <label class="form-label">Points to Deduct</label>
+        <input class="form-input" type="number" id="miss-penalty" value="1" min="0" placeholder="1">
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-reject')">Cancel</button>
-      <button class="btn btn-danger btn-sm" onclick="submitReject()">Reject</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-miss')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="submitMiss()">Mark Missed &amp; Deduct Points</button>
     </div>
   </div>
 </div>
@@ -299,10 +304,7 @@ textarea.form-input{resize:vertical;min-height:70px}
             <option value="HM Crew">HM Crew</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Point Value</label>
-          <input class="form-input" type="number" id="task-points" value="0" placeholder="0">
-        </div>
+
       </div>
       <div class="err" id="add-task-err"></div>
     </div>
@@ -410,15 +412,10 @@ function catBadge(cat) {
 }
 function statusBadge(status, due) {
   if (isOverdue(due, status) && status !== 'approved') return '<span class="badge badge-overdue">Overdue</span>';
-  const map = {pending:'badge-pending',submitted:'badge-submitted',approved:'badge-approved',rejected:'badge-rejected'};
+  const map = {pending:'badge-pending',submitted:'badge-submitted',approved:'badge-approved',rejected:'badge-rejected',missed:'badge-missed'};
   return `<span class="badge ${map[status]||'badge-pending'}">${status}</span>`;
 }
-function ptsDisplay(pts) {
-  if (!pts) return `<span class="pts-zero assign-pts">—</span>`;
-  const sign = pts > 0 ? '+' : '';
-  const cls = pts > 0 ? 'pts-pos' : 'pts-neg';
-  return `<span class="${cls} assign-pts">${sign}${pts}</span>`;
-}
+
 
 // ── AUTH ──
 async function init() {
@@ -509,7 +506,6 @@ function renderMyWeek(assignments) {
               ${a.task_desc ? `<div class="assign-task-desc">${a.task_desc}</div>` : ''}
             </div>
             <div class="assign-due ${over?'overdue':''}">${fmtDate(a.due_date)}</div>
-            ${ptsDisplay(a.point_value)}
             ${statusBadge(a.status, a.due_date)}
             ${a.status === 'submitted' ? '<span style="font-size:.75rem;color:#5C5248;font-style:italic">Awaiting approval</span>' : ''}
             ${a.status === 'approved' ? `<span style="font-size:.75rem;color:#4CAF7A">✓ Approved by ${a.approver_name||'admin'}</span>` : ''}
@@ -545,7 +541,6 @@ async function loadMyHistory() {
             <div class="assign-task"><div class="assign-task-name">${a.title}</div></div>
             ${catBadge(a.category)}
             <div class="assign-due ${over?'overdue':''}">${fmtDate(a.due_date)}</div>
-            ${ptsDisplay(a.point_value)}
             ${statusBadge(a.status, a.due_date)}
           </div>`;
         }).join('')}
@@ -585,10 +580,10 @@ function renderAdminWeek(assignments) {
             <div class="assign-task"><div class="assign-task-name">${a.title}</div></div>
             <div class="assign-member">${a.member_name}</div>
             <div class="assign-due ${over?'overdue':''}">${fmtDate(a.due_date)}</div>
-            ${ptsDisplay(a.point_value)}
             ${statusBadge(a.status, a.due_date)}
             <div class="action-btns" style="margin-left:auto">
-              ${a.status==='submitted' ? `<button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓</button><button class="btn btn-danger btn-sm" onclick="openReject(${a.assignment_id})">✕</button>` : ''}
+              ${a.status==='submitted' ? `<button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓ Approve</button>` : ''}
+              ${a.status!=='approved'&&a.status!=='missed' ? `<button class="btn btn-danger btn-sm" onclick="openMiss(${a.assignment_id})">✕ Miss</button>` : ''}
               <button class="btn btn-ghost btn-sm" onclick="deleteAssignment(${a.assignment_id})" title="Remove">🗑</button>
             </div>
           </div>`;
@@ -616,10 +611,9 @@ async function loadAdminReview() {
         ${catBadge(a.category)}
         <div class="assign-member">${a.member_name}</div>
         <div class="assign-due">${fmtDate(a.due_date)}</div>
-        ${ptsDisplay(a.point_value)}
         <div class="action-btns" style="margin-left:auto">
           <button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓ Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="openReject(${a.assignment_id})">✕ Reject</button>
+          <button class="btn btn-danger btn-sm" onclick="openMiss(${a.assignment_id})">✕ Mark Missed</button>
         </div>
       </div>`).join('') + '</div>';
 }
@@ -640,7 +634,6 @@ async function loadTaskLibrary() {
             <div style="font-size:.9rem">${t.title}</div>
             ${t.description ? `<div style="font-size:.78rem;color:#5C5248;font-style:italic">${t.description}</div>` : ''}
           </div>
-          ${ptsDisplay(t.point_value)}
           <div class="action-btns">
             <button class="btn btn-ghost btn-sm" onclick="editTask(${t.task_id})">Edit</button>
             <button class="btn btn-danger btn-sm" onclick="archiveTask(${t.task_id})">Archive</button>
@@ -671,18 +664,17 @@ async function approveAssignment(aid) {
   if (d.success) { toast('Approved!','success'); loadAdminReview(); loadAdminWeek(); }
   else toast(d.error||'Error','error');
 }
-function openReject(aid) {
-  document.getElementById('reject-aid').value = aid;
-  document.getElementById('reject-reason').value = '';
-  openModal('modal-reject');
+function openMiss(aid) {
+  document.getElementById('miss-aid').value = aid;
+  document.getElementById('miss-penalty').value = '1';
+  openModal('modal-miss');
 }
-async function submitReject() {
-  const aid = document.getElementById('reject-aid').value;
-  const reason = document.getElementById('reject-reason').value.trim();
-  if (!reason) { toast('Please provide a reason','error'); return; }
-  const r = await fetch(`/dailies/api/assignments/${aid}/reject`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})});
+async function submitMiss() {
+  const aid = document.getElementById('miss-aid').value;
+  const penalty = parseInt(document.getElementById('miss-penalty').value) || 0;
+  const r = await fetch(`/dailies/api/assignments/${aid}/miss`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({penalty})});
   const d = await r.json();
-  if (d.success) { toast('Rejected','info'); closeModal('modal-reject'); loadAdminReview(); loadAdminWeek(); }
+  if (d.success) { toast('Marked as missed — points deducted','info'); closeModal('modal-miss'); loadAdminReview(); loadAdminWeek(); }
   else toast(d.error||'Error','error');
 }
 async function deleteAssignment(aid) {
@@ -696,7 +688,6 @@ async function deleteAssignment(aid) {
 // ── TASKS ──
 function openAddTask() {
   ['task-title','task-desc'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('task-points').value='0';
   document.getElementById('task-category').value='Stew Crew';
   document.getElementById('add-task-err').style.display='none';
   openModal('modal-add-task');
@@ -705,9 +696,8 @@ async function saveTask() {
   const title = document.getElementById('task-title').value.trim();
   const category = document.getElementById('task-category').value;
   const description = document.getElementById('task-desc').value.trim();
-  const point_value = parseInt(document.getElementById('task-points').value)||0;
   if (!title) { showErr('add-task-err','Title is required'); return; }
-  const r = await fetch('/dailies/api/tasks', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,category,description,point_value})});
+  const r = await fetch('/dailies/api/tasks', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,category,description})});
   const d = await r.json();
   if (d.success) { toast('Task created!','success'); closeModal('modal-add-task'); await loadTasks(); loadTaskLibrary(); }
   else showErr('add-task-err', d.error||'Error');
@@ -724,7 +714,6 @@ function editTask(tid) {
   document.getElementById('task-title').value = t.title;
   document.getElementById('task-desc').value = t.description||'';
   document.getElementById('task-category').value = t.category;
-  document.getElementById('task-points').value = t.point_value||0;
   document.getElementById('add-task-err').style.display='none';
   // Repurpose save button to update
   const btn = document.querySelector('#modal-add-task .btn-gold');
@@ -735,7 +724,6 @@ function editTask(tid) {
     const r = await fetch(`/dailies/api/tasks/${tid}`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       title, description:document.getElementById('task-desc').value.trim(),
       category:document.getElementById('task-category').value,
-      point_value:parseInt(document.getElementById('task-points').value)||0
     })});
     const d = await r.json();
     if (d.success) { toast('Task updated!','success'); closeModal('modal-add-task'); await loadTasks(); loadTaskLibrary(); btn.textContent='Create Task'; btn.onclick=saveTask; }

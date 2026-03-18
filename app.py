@@ -1021,8 +1021,8 @@ def dailies_create_task():
     if not title or not category:
         return jsonify({'error': 'Title and category required'}), 400
     conn = get_db()
-    execute(conn, "INSERT INTO daily_tasks (title, description, category, point_value, created_by) VALUES (?,?,?,?,?)",
-            (title, data.get('description','').strip(), category, int(data.get('point_value', 0)), session['user_id']))
+    execute(conn, "INSERT INTO daily_tasks (title, description, category, created_by) VALUES (?,?,?,?)",
+            (title, data.get('description','').strip(), category, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -1035,7 +1035,7 @@ def dailies_update_task(tid):
     fields, vals = [], []
     for f in ('title', 'description', 'category', 'is_active'):
         if f in data: fields.append(f"{f}=?"); vals.append(data[f])
-    if 'point_value' in data: fields.append("point_value=?"); vals.append(int(data['point_value']))
+    pass  # point_value removed - dailies no longer have points attached
     if not fields: return jsonify({'error': 'Nothing to update'}), 400
     vals.append(tid)
     conn = get_db()
@@ -1165,13 +1165,29 @@ def dailies_approve(aid):
         return jsonify({'error': 'Not found'}), 404
     execute(conn, "UPDATE daily_assignments SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
             (session['user_id'], aid))
-    # Auto-submit points transaction
-    task = fetchone(conn, "SELECT title, point_value FROM daily_tasks WHERE task_id=?", (a['task_id'],))
-    if task and task['point_value'] != 0:
+    conn.commit(); conn.close()
+    return jsonify({'success': True})
+
+@app.route('/dailies/api/assignments/<int:aid>/miss', methods=['POST'])
+@login_required
+@admin_required
+def dailies_mark_missed(aid):
+    data = request.json or {}
+    penalty = abs(int(data.get('penalty', 1)))
+    conn = get_db()
+    a = fetchone(conn, "SELECT * FROM daily_assignments WHERE assignment_id=?", (aid,))
+    if not a:
+        conn.close()
+        return jsonify({'error': 'Not found'}), 404
+    task = fetchone(conn, "SELECT title FROM daily_tasks WHERE task_id=?", (a['task_id'],))
+    execute(conn, "UPDATE daily_assignments SET status='missed', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
+            (session['user_id'], aid))
+    if penalty > 0:
+        title = task['title'] if task else 'Unknown'
         execute(conn, "INSERT INTO transactions (member_id, points, description, status, reviewed_by, reviewed_at) VALUES (?,?,?,'approved',?,CURRENT_TIMESTAMP)",
-                (a['member_id'], task['point_value'], f"Daily: {task['title']}", session['username']))
-        execute(conn, "UPDATE users SET brotherhood_points=brotherhood_points+? WHERE user_id=?",
-                (task['point_value'], a['member_id']))
+                (a['member_id'], -penalty, "Missed Daily: " + title, session['username']))
+        execute(conn, "UPDATE users SET brotherhood_points=brotherhood_points-? WHERE user_id=?",
+                (penalty, a['member_id']))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
