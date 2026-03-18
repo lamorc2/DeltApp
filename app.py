@@ -939,6 +939,17 @@ def points_app():
 def budget_app_route():
     return _read_html('budget.html')
 
+@app.route('/wheel')
+def wheel_app():
+    return _read_html('wheel.html')
+
+@app.route('/wheel/api/members')
+def wheel_members():
+    conn = get_db()
+    users = fetchall(conn, "SELECT user_id, username FROM users WHERE is_active=true ORDER BY username")
+    conn.close()
+    return jsonify(users)
+
 init_db()
 
 if __name__ == '__main__':
@@ -948,6 +959,7 @@ if __name__ == '__main__':
     print(f"  → Landing:      http://localhost:5000")
     print(f"  → Points:       http://localhost:5000/points")
     print(f"  → Budget:       http://localhost:5000/budget")
+    print(f"  → Wheel:        http://localhost:5000/wheel")
     print(f"  → Default login: admin / admin123")
     print(f"  → DB: {'PostgreSQL' if DATABASE_URL else 'SQLite (local)'}")
     print("="*55 + "\n")

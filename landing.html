@@ -9,11 +9,11 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#0D0910;color:#F0E8D0;font-family:'Crimson Pro',Georgia,serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;overflow:hidden}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(92,31,107,.35) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(61,12,69,.25) 0%,transparent 55%);pointer-events:none}
-.portal{position:relative;z-index:1;text-align:center;max-width:640px;width:100%}
+.portal{position:relative;z-index:1;text-align:center;max-width:860px;width:100%}
 .symbol{font-family:'Cinzel Decorative',serif;font-size:5rem;color:#C9A84C;text-shadow:0 0 60px rgba(201,168,76,.4);line-height:1;display:block;margin-bottom:1rem}
 .org-name{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.4em;color:#8A7235;text-transform:uppercase;margin-bottom:.5rem}
 .tagline{font-family:'Crimson Pro',serif;font-style:italic;font-size:1.2rem;color:#9A8E7A;margin-bottom:3rem}
-.apps{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem}
+.apps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:2rem}
 .app-card{background:#1A0F21;border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:2.5rem 2rem;text-decoration:none;color:inherit;transition:all .25s;position:relative;overflow:hidden;display:block}
 .app-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.05) 0%,transparent 60%);opacity:0;transition:opacity .25s}
 .app-card:hover{border-color:rgba(201,168,76,.5);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
@@ -22,7 +22,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .app-name{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.12em;color:#C9A84C;text-transform:uppercase;margin-bottom:.5rem}
 .app-desc{font-size:.9rem;color:#9A8E7A;font-style:italic;line-height:1.5}
 .footer{font-size:.75rem;color:#5C5248;font-family:'Cinzel',serif;letter-spacing:.2em}
-@media(max-width:480px){.apps{grid-template-columns:1fr}}
+@media(max-width:700px){.apps{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -40,6 +40,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <span class="app-icon">◈</span>
       <div class="app-name">Treasury &amp; Budget</div>
       <div class="app-desc">Manage department budgets, submit expense requests, and track brotherhood spending</div>
+    </a>
+    <a class="app-card" href="/wheel">
+      <span class="app-icon">🎡</span>
+      <div class="app-name">Wheel of Brothers</div>
+      <div class="app-desc">Spin the wheel to randomly select a brother for any task, duty, or honor</div>
     </a>
   </div>
   <div class="footer">Δ Τ Δ — Est. 1858</div>
