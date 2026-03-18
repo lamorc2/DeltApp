@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Δ Τ Δ Budget System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #3D0C45; --purple-mid: #5C1F6B; --purple-light: #7B3094;
+  --gold: #C9A84C; --gold-bright: #E8C96A; --gold-dim: #8A7235;
+  --dark: #0D0910; --dark-2: #150D1A; --dark-3: #1E1227; --dark-4: #261630;
+  --surface: #1A0F21; --surface-2: #231428;
+  --border: rgba(201,168,76,0.18); --border-strong: rgba(201,168,76,0.38);
+  --text: #F0E8D0; --text-dim: #9A8E7A; --text-muted: #5C5248;
+  --green: #4CAF7A; --red: #CF4A4A; --blue: #5B8DD9;
+  --radius: 4px; --radius-lg: 8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--dark);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:16px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.6}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--dark-2)}::-webkit-scrollbar-thumb{background:var(--purple-mid);border-radius:3px}
+#app{position:relative;z-index:1}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;background:radial-gradient(ellipse at 50% 0%,rgba(92,31,107,.4) 0%,transparent 70%),radial-gradient(ellipse at 80% 100%,rgba(61,12,69,.3) 0%,transparent 60%)}
+.login-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border-strong);padding:3rem 2.5rem;position:relative;box-shadow:0 0 80px rgba(92,31,107,.3),0 0 0 1px rgba(201,168,76,.08)}
+.login-card::before,.login-card::after{content:'';position:absolute;width:24px;height:24px;border-color:var(--gold);border-style:solid}
+.login-card::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.login-card::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.crest{text-align:center;margin-bottom:2rem}
+.crest-symbol{font-family:'Cinzel Decorative',serif;font-size:3.5rem;color:var(--gold);display:block;line-height:1;text-shadow:0 0 40px rgba(201,168,76,.4);letter-spacing:.1em}
+.crest-name{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-top:.5rem}
+.crest-sub{font-family:'Crimson Pro',serif;font-style:italic;font-size:1rem;color:var(--text-dim);margin-top:.3rem}
+
+/* FORMS */
+.form-group{margin-bottom:1.25rem}
+.form-label{display:block;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.5rem}
+.form-input{width:100%;background:var(--dark-3);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem;font-family:'Crimson Pro',serif;font-size:1rem;outline:none;border-radius:var(--radius);transition:border-color .2s,box-shadow .2s}
+.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.12)}
+.form-input::placeholder{color:var(--text-muted)}
+.form-input:disabled{opacity:.45;cursor:not-allowed}
+select.form-input option{background:var(--dark-3)}
+textarea.form-input{resize:vertical;min-height:80px}
+.error-msg{color:var(--red);font-size:.875rem;margin-top:.5rem;display:none;font-style:italic}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;border-radius:var(--radius);transition:all .2s;font-weight:600}
+.btn-primary{background:linear-gradient(135deg,var(--purple-mid),var(--purple));color:var(--gold);border:1px solid var(--border-strong);width:100%;justify-content:center;padding:.9rem}
+.btn-primary:hover{background:linear-gradient(135deg,var(--purple-light),var(--purple-mid));box-shadow:0 4px 20px rgba(92,31,107,.5)}
+.btn-sm{padding:.4rem .9rem;font-size:.6rem}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:rgba(207,74,74,.15);color:var(--red);border:1px solid rgba(207,74,74,.3)}
+.btn-danger:hover{background:rgba(207,74,74,.25)}
+.btn-success{background:rgba(76,175,122,.15);color:var(--green);border:1px solid rgba(76,175,122,.3)}
+.btn-success:hover{background:rgba(76,175,122,.25)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:var(--dark);border:none}
+.btn-gold:hover{filter:brightness(1.1)}
+
+/* TOPBAR */
+#main-app{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:linear-gradient(180deg,var(--purple) 0%,var(--dark-2) 100%);border-bottom:1px solid var(--border-strong);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.4)}
+.topbar-brand{display:flex;align-items:center;gap:1rem}
+.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5)}
+.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase}
+.topbar-sub{font-family:'Crimson Pro',serif;font-style:italic;font-size:.8rem;color:var(--text-muted);margin-left:.5rem}
+.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem}
+.user-badge{display:flex;align-items:center;gap:.6rem;background:rgba(201,168,76,.08);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
+.user-name{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em}
+.role-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;font-family:'Cinzel',serif}
+.role-admin{background:rgba(201,168,76,.2);color:var(--gold);border:1px solid var(--gold-dim)}
+.role-moderator{background:rgba(192,132,208,.15);color:#C084D0;border:1px solid var(--purple-light)}
+.role-member{background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid var(--border)}
+
+/* LAYOUT */
+.app-body{display:flex;flex:1}
+.sidebar{width:230px;background:var(--dark-2);border-right:1px solid var(--border);padding:1.5rem 0;flex-shrink:0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
+.nav-section-title{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.3em;color:var(--text-muted);text-transform:uppercase;padding:0 1.5rem;margin-bottom:.5rem;margin-top:1.5rem}
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.5rem;cursor:pointer;transition:all .15s;color:var(--text-dim);font-size:.9rem;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(201,168,76,.05);color:var(--text)}
+.nav-item.active{color:var(--gold);background:rgba(201,168,76,.08);border-left-color:var(--gold)}
+.nav-item .icon{font-size:1rem;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:white;font-size:.6rem;font-family:'Cinzel',serif;padding:.1rem .4rem;border-radius:10px;min-width:18px;text-align:center}
+.nav-divider{height:1px;background:var(--border);margin:1rem 1.5rem}
+.nav-dept{padding:.5rem 1.5rem .5rem 2.5rem;font-size:.85rem;color:var(--text-muted);cursor:pointer;transition:all .15s;border-left:3px solid transparent;display:flex;align-items:center;gap:.5rem}
+.nav-dept:hover{color:var(--text-dim);background:rgba(255,255,255,.03)}
+.nav-dept.active{color:var(--gold-dim);border-left-color:var(--gold-dim)}
+.nav-dept-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* CONTENT */
+.content{flex:1;padding:2rem;overflow-x:auto;min-width:0}
+.page{display:none}.page.active{display:block}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold);letter-spacing:.05em}
+.page-subtitle{font-style:italic;color:var(--text-dim);font-size:.875rem;margin-top:.25rem}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem}
+.card-title{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.15em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-dim),var(--gold))}
+.stat-card.stat-spent::before{background:linear-gradient(90deg,#8B1A1A,var(--red))}
+.stat-card.stat-remaining::before{background:linear-gradient(90deg,#1A5C35,var(--green))}
+.stat-card.stat-pending::before{background:linear-gradient(90deg,var(--gold-dim),var(--gold-bright))}
+.stat-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase}
+.stat-value{font-family:'Cinzel Decorative',serif;font-size:1.7rem;color:var(--gold);line-height:1.2;margin:.3rem 0}
+.stat-value.red{color:var(--red)}.stat-value.green{color:var(--green)}
+.stat-sub{font-size:.8rem;color:var(--text-dim);font-style:italic}
+
+/* BUDGET BAR */
+.budget-bar-wrap{margin:1rem 0}
+.budget-bar-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-dim);margin-bottom:.4rem;font-family:'Cinzel',serif}
+.budget-bar-track{height:8px;background:var(--dark-3);border-radius:4px;overflow:hidden;position:relative}
+.budget-bar-fill{height:100%;border-radius:4px;transition:width .4s ease;background:linear-gradient(90deg,var(--green),#7DD69A)}
+.budget-bar-fill.warn{background:linear-gradient(90deg,#B8860B,var(--gold))}
+.budget-bar-fill.over{background:linear-gradient(90deg,#8B1A1A,var(--red))}
+.budget-bar-pending{height:100%;border-radius:4px;position:absolute;top:0;background:rgba(201,168,76,.35)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+thead tr{border-bottom:1px solid var(--border-strong)}
+th{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;padding:.75rem 1rem;text-align:left;font-weight:600;white-space:nowrap}
+td{padding:.75rem 1rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:rgba(201,168,76,.04)}
+
+/* BADGES */
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.65rem;font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.badge-pending{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+.badge-approved{background:rgba(76,175,122,.15);color:var(--green);border:1px solid rgba(76,175,122,.3)}
+.badge-rejected{background:rgba(207,74,74,.15);color:var(--red);border:1px solid rgba(207,74,74,.3)}
+.money{font-family:'Cinzel',serif;color:var(--gold);font-size:.9rem}
+.money.red{color:var(--red)}.money.green{color:var(--green)}
+
+/* DEPT VIEW */
+.dept-header{background:linear-gradient(135deg,var(--purple) 0%,var(--dark-2) 100%);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:1.75rem 2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.dept-header::after{content:'ΔΤΔ';position:absolute;right:2rem;top:50%;transform:translateY(-50%);font-family:'Cinzel Decorative',serif;font-size:4rem;color:rgba(201,168,76,.06);pointer-events:none}
+.dept-header-name{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);letter-spacing:.08em}
+.dept-header-desc{font-style:italic;color:var(--text-dim);margin-top:.25rem}
+
+/* ITEMS GRID */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem}
+.item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;cursor:pointer;transition:all .2s;position:relative}
+.item-card:hover{border-color:var(--gold-dim);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.item-card.selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-dim)}
+.item-card-name{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.05em;margin-bottom:.75rem}
+.item-figures{display:flex;justify-content:space-between;font-size:.8rem;margin-top:.5rem}
+.item-fig-label{color:var(--text-muted);font-size:.65rem;text-transform:uppercase;font-family:'Cinzel',serif;letter-spacing:.1em}
+.item-fig-val{font-family:'Cinzel',serif}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s}
+.modal-overlay.show .modal{transform:translateY(0)}
+.modal-header{background:linear-gradient(135deg,var(--purple) 0%,var(--dark-2) 100%);padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.15em;color:var(--gold);text-transform:uppercase}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;padding:.25rem}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:1.5rem}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.75rem;justify-content:flex-end}
+
+/* TOAST */
+#toast-container{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+.toast{background:var(--surface);border:1px solid var(--border);padding:.8rem 1.2rem;border-radius:var(--radius);font-size:.875rem;display:flex;align-items:center;gap:.75rem;min-width:280px;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slideIn .3s ease}
+.toast.success{border-left:3px solid var(--green)}.toast.error{border-left:3px solid var(--red)}.toast.info{border-left:3px solid var(--gold)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+
+/* MISC */
+.search-bar{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.search-input{background:var(--dark-3);border:1px solid var(--border);color:var(--text);padding:.5rem 1rem;font-family:'Crimson Pro',serif;font-size:.9rem;outline:none;border-radius:var(--radius);min-width:220px;transition:border-color .2s}
+.search-input:focus{border-color:var(--gold-dim)}
+.search-input::placeholder{color:var(--text-muted)}
+.empty-state{text-align:center;padding:3rem;color:var(--text-muted)}
+.empty-icon{font-size:2.5rem;margin-bottom:1rem}.empty-text{font-style:italic}
+.action-btns{display:flex;gap:.4rem;flex-wrap:wrap}
+.text-dim{color:var(--text-dim)}.text-gold{color:var(--gold)}.truncate{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-info{font-size:.75rem;color:var(--text-muted);font-style:italic;margin-top:.2rem}
+
+@media(max-width:768px){.sidebar{display:none}.content{padding:1rem}.items-grid{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="crest">
+      <span class="crest-symbol">ΔΤΔ</span>
+      <div class="crest-name">Delta Tau Delta</div>
+      <div class="crest-sub">Budget &amp; Bookkeeping</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input class="form-input" type="text" id="login-username" placeholder="Enter your username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="error-msg" id="login-error">Invalid credentials or inactive account.</div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign In to Treasury</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-symbol">ΔΤΔ</span>
+      <span class="topbar-title">Treasury</span>
+      <span class="topbar-sub">Budget &amp; Bookkeeping</span>
+    </div>
+    <div class="topbar-nav-links" style="display:flex;gap:.5rem;margin-left:1.5rem">
+      <a href="/points" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">⚔ Points</a>
+      <a href="/budget" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--gold);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--gold-dim);border-radius:4px;background:rgba(201,168,76,.12)">◈ Budget</a>
+    </div>
+    <div class="topbar-user">
+      <div class="user-badge">
+        <span class="user-name" id="topbar-username"></span>
+        <span class="role-tag" id="topbar-role"></span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <nav class="sidebar">
+      <div class="nav-section-title">Overview</div>
+      <div class="nav-item active" onclick="showPage('overview',this)" id="nav-overview">
+        <span class="icon">◈</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('submit',this)" id="nav-submit">
+        <span class="icon">✦</span> Submit Request
+      </div>
+      <div class="nav-item" onclick="showPage('my-requests',this)" id="nav-my">
+        <span class="icon">📋</span> My Requests
+      </div>
+
+      <div class="nav-divider"></div>
+      <div class="nav-section-title" id="mod-label" style="display:none">Moderation</div>
+      <div class="nav-item" onclick="showPage('pending',this)" id="nav-pending" style="display:none">
+        <span class="icon">⏳</span> Pending
+        <span class="nav-badge" id="pending-badge" style="display:none">0</span>
+      </div>
+
+      <div class="nav-divider"></div>
+      <div class="nav-section-title">Departments</div>
+      <div id="dept-nav-list"></div>
+
+      <div class="nav-divider" id="admin-divider" style="display:none"></div>
+      <div class="nav-section-title" id="admin-label" style="display:none">Admin</div>
+      <div class="nav-item" onclick="showPage('manage-depts',this)" id="nav-manage" style="display:none">
+        <span class="icon">⚙</span> Manage Depts &amp; Items
+      </div>
+    </nav>
+
+    <main class="content">
+
+      <!-- OVERVIEW -->
+      <div class="page active" id="page-overview">
+        <div class="page-header">
+          <div><div class="page-title">Treasury Overview</div><div class="page-subtitle">Total budget status across all departments</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadOverview()">↻ Refresh</button>
+        </div>
+        <div class="stats-row" id="overview-stats"></div>
+        <div class="card">
+          <div class="card-title">Departments at a Glance</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Department</th><th>Total Budget</th><th>Spent</th><th>Remaining</th><th>Usage</th></tr></thead>
+              <tbody id="overview-depts-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBMIT REQUEST -->
+      <div class="page" id="page-submit">
+        <div class="page-header">
+          <div><div class="page-title">Submit Budget Request</div><div class="page-subtitle">Request funds from a department budget line</div></div>
+        </div>
+        <div class="card" style="max-width:580px">
+          <div class="card-title">New Request</div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <select class="form-input" id="req-dept" onchange="onDeptChange()">
+              <option value="">— Select a department —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Budget Line Item</label>
+            <select class="form-input" id="req-item" disabled onchange="onItemChange()">
+              <option value="">— Select a budget item —</option>
+            </select>
+            <div id="item-budget-preview" style="margin-top:.5rem;display:none">
+              <div class="budget-bar-wrap" id="item-bar-wrap"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount ($)</label>
+            <input class="form-input" type="number" id="req-amount" min="0.01" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description / Purpose</label>
+            <textarea class="form-input" id="req-desc" placeholder="What is this expense for?"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vendor / Payee <span class="text-dim">(optional)</span></label>
+            <input class="form-input" type="text" id="req-vendor" placeholder="e.g. Amazon, Home Depot">
+          </div>
+          <button class="btn btn-gold" onclick="submitRequest()">✦ Submit for Approval</button>
+        </div>
+      </div>
+
+      <!-- MY REQUESTS -->
+      <div class="page" id="page-my-requests">
+        <div class="page-header">
+          <div><div class="page-title">My Requests</div><div class="page-subtitle">Track your submitted budget requests</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadMyRequests()">↻ Refresh</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Dept</th><th>Item</th><th>Amount</th><th>Description</th><th>Status</th><th>Submitted</th></tr></thead>
+              <tbody id="my-req-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING MODERATION -->
+      <div class="page" id="page-pending">
+        <div class="page-header">
+          <div><div class="page-title">Pending Requests</div><div class="page-subtitle">Review and approve or reject budget requests</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadPending()">↻ Refresh</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Member</th><th>Dept</th><th>Item</th><th>Amount</th><th>Description</th><th>Vendor</th><th>Submitted</th><th>Actions</th></tr></thead>
+              <tbody id="pending-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEPARTMENT VIEW -->
+      <div class="page" id="page-dept">
+        <div id="dept-view-header" class="dept-header">
+          <div class="dept-header-name" id="dept-view-name">Department</div>
+          <div class="dept-header-desc" id="dept-view-desc"></div>
+        </div>
+        <div class="stats-row" id="dept-stats"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+          <span style="font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.15em;color:var(--gold-dim);text-transform:uppercase">Budget Line Items</span>
+          <button class="btn btn-ghost btn-sm" id="btn-add-item-dept" style="display:none" onclick="openAddItemFromDept()">+ Add Item</button>
+        </div>
+        <div class="items-grid" id="dept-items-grid"></div>
+        <div class="card">
+          <div class="card-title" id="dept-tx-title">Transactions</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Item</th><th>Member</th><th>Amount</th><th>Description</th><th>Vendor</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="dept-tx-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MANAGE DEPARTMENTS & ITEMS (admin) -->
+      <div class="page" id="page-manage-depts">
+        <div class="page-header">
+          <div><div class="page-title">Manage Departments</div><div class="page-subtitle">Create and configure departments and budget items</div></div>
+          <button class="btn btn-gold btn-sm" onclick="openAddDept()">+ New Department</button>
+        </div>
+        <div id="manage-depts-list"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- ADD DEPT MODAL -->
+<div class="modal-overlay" id="modal-add-dept">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">New Department</span><button class="modal-close" onclick="closeModal('modal-add-dept')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Department Name</label><input class="form-input" id="add-dept-name" placeholder="e.g. Social Events"></div>
+      <div class="form-group"><label class="form-label">Description <span class="text-dim">(optional)</span></label><textarea class="form-input" id="add-dept-desc" placeholder="What does this department cover?"></textarea></div>
+      <div class="error-msg" id="add-dept-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-dept')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="createDept()">Create Department</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT DEPT MODAL -->
+<div class="modal-overlay" id="modal-edit-dept">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Edit Department</span><button class="modal-close" onclick="closeModal('modal-edit-dept')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-dept-id">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="edit-dept-name"></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="edit-dept-desc"></textarea></div>
+      <div class="error-msg" id="edit-dept-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-edit-dept')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="saveDept()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="modal-add-item">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">New Budget Item</span><button class="modal-close" onclick="closeModal('modal-add-item')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="add-item-dept-id">
+      <div class="form-group"><label class="form-label">Item Name</label><input class="form-input" id="add-item-name" placeholder="e.g. Decorations"></div>
+      <div class="form-group"><label class="form-label">Allocated Budget ($)</label><input class="form-input" type="number" id="add-item-amount" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="error-msg" id="add-item-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-item')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="createItem()">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ITEM MODAL -->
+<div class="modal-overlay" id="modal-edit-item">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Edit Budget Item</span><button class="modal-close" onclick="closeModal('modal-edit-item')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-item-id">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="edit-item-name"></div>
+      <div class="form-group"><label class="form-label">Allocated Budget ($)</label><input class="form-input" type="number" id="edit-item-amount" min="0" step="0.01"></div>
+      <div class="error-msg" id="edit-item-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-edit-item')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="saveItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- REJECT REQUEST MODAL -->
+<div class="modal-overlay" id="modal-reject">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Reject Request</span><button class="modal-close" onclick="closeModal('modal-reject')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="reject-rid">
+      <div class="form-group"><label class="form-label">Reason</label><textarea class="form-input" id="reject-reason" placeholder="Why is this request being rejected?"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-reject')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let allDepts = [];
+let currentDeptId = null;
+let currentDeptItems = [];
+
+// ── UTILS ──
+const $ = id => document.getElementById(id);
+function toast(msg, type='info') {
+  const c = $('toast-container'), t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ⓘ'}[type]||'ⓘ'}</span><span>${msg}</span>`;
+  c.appendChild(t); setTimeout(() => t.remove(), 3500);
+}
+function openModal(id) { $(id).classList.add('show'); }
+function closeModal(id) { $(id).classList.remove('show'); }
+function fmt$(n) { return '$' + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function showErr(id, msg) { const e=$(id); e.textContent=msg; e.style.display='block'; }
+function statusBadge(s) { return `<span class="badge badge-${s}">${s}</span>`; }
+function budgetBar(spent, pending, allocated) {
+  const pct = allocated > 0 ? Math.min((spent/allocated)*100,100) : 0;
+  const pendPct = allocated > 0 ? Math.min((pending/allocated)*100, 100-pct) : 0;
+  const cls = pct >= 100 ? 'over' : pct >= 80 ? 'warn' : '';
+  const remaining = allocated - spent;
+  return `<div class="budget-bar-wrap">
+    <div class="budget-bar-labels">
+      <span>${fmt$(spent)} spent</span>
+      <span class="${remaining < 0 ? 'money red' : 'money'}">${fmt$(Math.abs(remaining))} ${remaining < 0 ? 'over' : 'left'}</span>
+    </div>
+    <div class="budget-bar-track">
+      <div class="budget-bar-fill ${cls}" style="width:${pct}%"></div>
+      <div class="budget-bar-pending" style="left:${pct}%;width:${pendPct}%"></div>
+    </div>
+  </div>`;
+}
+
+// ── AUTH ──
+async function doLogin() {
+  const u = $('login-username').value.trim(), p = $('login-password').value;
+  $('login-error').style.display = 'none';
+  $('login-btn').textContent = 'Signing in…';
+  try {
+    const r = await fetch('/budget/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u, password:p})});
+    const d = await r.json();
+    if (d.success) { await loadApp(); }
+    else { $('login-error').style.display='block'; $('login-btn').textContent='Sign In to Treasury'; }
+  } catch(e) {
+    $('login-error').textContent = 'Connection error.';
+    $('login-error').style.display = 'block';
+    $('login-btn').textContent = 'Sign In to Treasury';
+  }
+}
+async function doLogout() {
+  await fetch('/budget/api/logout', {method:'POST'});
+  currentUser = null;
+  $('main-app').style.display = 'none';
+  $('login-screen').style.display = 'flex';
+  $('login-password').value = '';
+}
+
+async function loadApp() {
+  const r = await fetch('/budget/api/me');
+  const d = await r.json();
+  if (!d.authenticated) return;
+  currentUser = d;
+  $('login-screen').style.display = 'none';
+  $('main-app').style.display = 'flex';
+  $('topbar-username').textContent = d.username.toUpperCase();
+  const rb = $('topbar-role'); rb.textContent = d.role; rb.className = `role-tag role-${d.role}`;
+
+  if (d.role !== 'member') {
+    $('nav-pending').style.display = 'flex';
+    $('mod-label').style.display = 'block';
+  }
+  if (d.role === 'admin') {
+    $('nav-manage').style.display = 'flex';
+    $('admin-label').style.display = 'block';
+    $('admin-divider').style.display = 'block';
+  }
+
+  await loadDepts();
+  showPage('overview', $('nav-overview'));
+  pollPending();
+}
+
+async function pollPending() {
+  if (!currentUser || currentUser.role === 'member') return;
+  try {
+    const r = await fetch('/budget/api/requests/pending');
+    const d = await r.json();
+    const b = $('pending-badge');
+    if (d.length > 0) { b.textContent = d.length; b.style.display = 'inline'; }
+    else { b.style.display = 'none'; }
+  } catch(e) {}
+  setTimeout(pollPending, 30000);
+}
+
+// ── NAV ──
+function showPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .nav-dept').forEach(n => n.classList.remove('active'));
+  const pg = $('page-' + page);
+  if (pg) pg.classList.add('active');
+  if (el) el.classList.add('active');
+  if (page === 'overview') loadOverview();
+  else if (page === 'submit') loadSubmitForm();
+  else if (page === 'my-requests') loadMyRequests();
+  else if (page === 'pending') loadPending();
+  else if (page === 'manage-depts') loadManageDepts();
+}
+
+function showDept(deptId, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .nav-dept').forEach(n => n.classList.remove('active'));
+  $('page-dept').classList.add('active');
+  if (el) el.classList.add('active');
+  currentDeptId = deptId;
+  loadDeptView(deptId);
+}
+
+// ── DEPTS ──
+async function loadDepts() {
+  const r = await fetch('/budget/api/departments');
+  allDepts = await r.json();
+  renderDeptNav();
+}
+
+function renderDeptNav() {
+  const list = $('dept-nav-list');
+  const active = allDepts.filter(d => d.is_active);
+  if (active.length === 0) {
+    list.innerHTML = '<div style="padding:.5rem 1.5rem;font-size:.8rem;color:var(--text-muted);font-style:italic">No departments yet</div>';
+    return;
+  }
+  list.innerHTML = active.map(d => `
+    <div class="nav-dept" id="nav-dept-${d.dept_id}" onclick="showDept(${d.dept_id}, this)">
+      <span class="nav-dept-dot"></span>${d.name}
+    </div>`).join('');
+}
+
+// ── OVERVIEW ──
+async function loadOverview() {
+  const [sumR, deptR] = await Promise.all([fetch('/budget/api/summary'), fetch('/budget/api/departments')]);
+  const sum = await sumR.json();
+  allDepts = await deptR.json();
+  const remaining = sum.total_budget - sum.total_spent;
+
+  $('overview-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Budget</div><div class="stat-value">${fmt$(sum.total_budget)}</div><div class="stat-sub">${sum.dept_count} department${sum.dept_count!==1?'s':''}</div></div>
+    <div class="stat-card stat-spent"><div class="stat-label">Total Spent</div><div class="stat-value red">${fmt$(sum.total_spent)}</div><div class="stat-sub">approved expenses</div></div>
+    <div class="stat-card stat-remaining"><div class="stat-label">Remaining</div><div class="stat-value green">${fmt$(remaining)}</div><div class="stat-sub">${sum.total_budget > 0 ? Math.round((remaining/sum.total_budget)*100) : 0}% of budget</div></div>
+    <div class="stat-card stat-pending"><div class="stat-label">Pending</div><div class="stat-value">${sum.pending_count}</div><div class="stat-sub">awaiting review</div></div>
+  `;
+
+  const tbody = $('overview-depts-body');
+  const active = allDepts.filter(d => d.is_active);
+  if (active.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No departments yet</div></div></td></tr>`;
+    return;
+  }
+  // Fetch spent per dept via individual dept items
+  tbody.innerHTML = active.map(d => {
+    const pct = d.total_allocated > 0 ? 0 : 0; // will load async below
+    return `<tr id="dept-row-${d.dept_id}" onclick="showDept(${d.dept_id}, $('nav-dept-${d.dept_id}'))" style="cursor:pointer">
+      <td style="font-family:'Cinzel',serif;font-size:.85rem">${d.name}</td>
+      <td><span class="money">${fmt$(d.total_allocated)}</span></td>
+      <td id="dept-spent-${d.dept_id}"><span class="text-dim">—</span></td>
+      <td id="dept-rem-${d.dept_id}"><span class="text-dim">—</span></td>
+      <td id="dept-bar-${d.dept_id}" style="min-width:140px"></td>
+    </tr>`;
+  }).join('');
+
+  // Load spent amounts for each dept asynchronously
+  active.forEach(async d => {
+    try {
+      const ir = await fetch(`/budget/api/departments/${d.dept_id}/items`);
+      const items = await ir.json();
+      const spent = items.reduce((s,i)=>s+parseFloat(i.spent||0),0);
+      const pending = items.reduce((s,i)=>s+parseFloat(i.pending_amount||0),0);
+      const alloc = parseFloat(d.total_allocated||0);
+      const rem = alloc - spent;
+      const pct = alloc > 0 ? Math.min((spent/alloc)*100,100) : 0;
+      const cls = pct>=100?'over':pct>=80?'warn':'';
+      $(`dept-spent-${d.dept_id}`).innerHTML = `<span class="money">${fmt$(spent)}</span>`;
+      $(`dept-rem-${d.dept_id}`).innerHTML = `<span class="money ${rem<0?'red':'green'}">${fmt$(Math.abs(rem))}</span>`;
+      $(`dept-bar-${d.dept_id}`).innerHTML = `<div class="budget-bar-track" style="height:6px"><div class="budget-bar-fill ${cls}" style="width:${pct}%"></div></div>`;
+    } catch(e) {}
+  });
+}
+
+// ── SUBMIT FORM ──
+async function loadSubmitForm() {
+  await loadDepts();
+  const sel = $('req-dept');
+  const active = allDepts.filter(d => d.is_active);
+  sel.innerHTML = '<option value="">— Select a department —</option>' +
+    active.map(d => `<option value="${d.dept_id}">${d.name}</option>`).join('');
+  $('req-item').innerHTML = '<option value="">— Select a budget item —</option>';
+  $('req-item').disabled = true;
+  $('item-budget-preview').style.display = 'none';
+}
+
+async function onDeptChange() {
+  const did = $('req-dept').value;
+  const itemSel = $('req-item');
+  $('item-budget-preview').style.display = 'none';
+  if (!did) { itemSel.disabled=true; itemSel.innerHTML='<option value="">— Select a budget item —</option>'; return; }
+  const r = await fetch(`/budget/api/departments/${did}/items`);
+  const items = await r.json();
+  currentDeptItems = items;
+  itemSel.innerHTML = '<option value="">— Select a budget item —</option>' +
+    items.map(i => {
+      const rem = parseFloat(i.allocated)-parseFloat(i.spent||0);
+      return `<option value="${i.item_id}" data-alloc="${i.allocated}" data-spent="${i.spent||0}" data-pending="${i.pending_amount||0}">${i.name} (${fmt$(rem)} remaining)</option>`;
+    }).join('');
+  itemSel.disabled = false;
+}
+
+function onItemChange() {
+  const opt = $('req-item').options[$('req-item').selectedIndex];
+  if (!opt || !opt.value) { $('item-budget-preview').style.display='none'; return; }
+  const alloc = parseFloat(opt.dataset.alloc||0);
+  const spent = parseFloat(opt.dataset.spent||0);
+  const pending = parseFloat(opt.dataset.pending||0);
+  $('item-bar-wrap').innerHTML = budgetBar(spent, pending, alloc);
+  $('item-budget-preview').style.display = 'block';
+}
+
+async function submitRequest() {
+  const item_id = parseInt($('req-item').value);
+  const amount = parseFloat($('req-amount').value);
+  const description = $('req-desc').value.trim();
+  const vendor = $('req-vendor').value.trim();
+  if (!item_id) { toast('Please select a budget item', 'error'); return; }
+  if (!amount || amount <= 0) { toast('Please enter a valid amount', 'error'); return; }
+  if (!description) { toast('Please enter a description', 'error'); return; }
+  const r = await fetch('/budget/api/requests', {method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({item_id, amount, description, vendor})});
+  const d = await r.json();
+  if (d.success) {
+    toast('Request submitted for approval!', 'success');
+    $('req-amount').value=''; $('req-desc').value=''; $('req-vendor').value='';
+    $('req-dept').value=''; $('req-item').disabled=true;
+    $('item-budget-preview').style.display='none';
+  } else toast(d.error||'Error', 'error');
+}
+
+// ── MY REQUESTS ──
+async function loadMyRequests() {
+  const r = await fetch('/budget/api/requests');
+  const rows = await r.json();
+  const tbody = $('my-req-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No requests submitted yet</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="text-dim">#${r.request_id}</td>
+      <td style="font-size:.85rem">${r.dept_name}</td>
+      <td class="truncate text-dim" style="font-size:.85rem">${r.item_name}</td>
+      <td><span class="money">${fmt$(r.amount)}</span></td>
+      <td class="truncate" style="font-size:.85rem">${r.description}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="text-dim" style="font-size:.8rem">${fmtDate(r.created_at)}</td>
+    </tr>`).join('');
+}
+
+// ── PENDING ──
+async function loadPending() {
+  const r = await fetch('/budget/api/requests/pending');
+  const rows = await r.json();
+  const badge = $('pending-badge');
+  badge.textContent = rows.length;
+  badge.style.display = rows.length > 0 ? 'inline' : 'none';
+  const tbody = $('pending-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">All caught up</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const spent = parseFloat(r.item_spent||0);
+    const alloc = parseFloat(r.allocated||0);
+    const rem = alloc - spent;
+    return `<tr>
+      <td class="text-dim">#${r.request_id}</td>
+      <td style="font-family:'Cinzel',serif;font-size:.8rem">${r.submitter_name}</td>
+      <td style="font-size:.85rem">${r.dept_name}</td>
+      <td style="font-size:.85rem">${r.item_name}<div class="row-info">${fmt$(rem)} remaining of ${fmt$(alloc)}</div></td>
+      <td><span class="money">${fmt$(r.amount)}</span></td>
+      <td class="truncate" style="font-size:.85rem" title="${r.description}">${r.description}</td>
+      <td class="text-dim" style="font-size:.85rem">${r.vendor||'—'}</td>
+      <td class="text-dim" style="font-size:.8rem">${fmtDate(r.created_at)}</td>
+      <td><div class="action-btns">
+        <button class="btn btn-success btn-sm" onclick="approveRequest(${r.request_id})">✓ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="openReject(${r.request_id})">✕ Reject</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function approveRequest(rid) {
+  const r = await fetch(`/budget/api/requests/${rid}/approve`, {method:'POST'});
+  const d = await r.json();
+  if (d.success) { toast('Request approved!','success'); loadPending(); loadOverview(); }
+  else toast(d.error||'Error','error');
+}
+function openReject(rid) {
+  $('reject-rid').value = rid;
+  $('reject-reason').value = '';
+  openModal('modal-reject');
+}
+async function confirmReject() {
+  const rid = $('reject-rid').value;
+  const reason = $('reject-reason').value.trim();
+  if (!reason) { toast('Please provide a reason','error'); return; }
+  const r = await fetch(`/budget/api/requests/${rid}/reject`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({reason})});
+  const d = await r.json();
+  if (d.success) { toast('Request rejected','info'); closeModal('modal-reject'); loadPending(); }
+  else toast(d.error||'Error','error');
+}
+
+// ── DEPT VIEW ──
+async function loadDeptView(deptId) {
+  const dept = allDepts.find(d => d.dept_id === deptId);
+  if (!dept) return;
+  $('dept-view-name').textContent = dept.name;
+  $('dept-view-desc').textContent = dept.description || '';
+  $('dept-tx-title').textContent = `${dept.name} — Transactions`;
+  if (currentUser.role === 'admin') $('btn-add-item-dept').style.display = 'inline-flex';
+
+  const [itemsR, txR] = await Promise.all([
+    fetch(`/budget/api/departments/${deptId}/items`),
+    fetch(`/budget/api/departments/${deptId}/requests`)
+  ]);
+  const items = await itemsR.json();
+  const txs   = await txR.json();
+
+  const totalAlloc   = items.reduce((s,i)=>s+parseFloat(i.allocated||0),0);
+  const totalSpent   = items.reduce((s,i)=>s+parseFloat(i.spent||0),0);
+  const totalPending = items.reduce((s,i)=>s+parseFloat(i.pending_amount||0),0);
+  const remaining = totalAlloc - totalSpent;
+
+  $('dept-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Budget</div><div class="stat-value">${fmt$(totalAlloc)}</div><div class="stat-sub">${items.length} item${items.length!==1?'s':''}</div></div>
+    <div class="stat-card stat-spent"><div class="stat-label">Spent</div><div class="stat-value red">${fmt$(totalSpent)}</div><div class="stat-sub">approved</div></div>
+    <div class="stat-card stat-remaining"><div class="stat-label">Remaining</div><div class="stat-value green">${fmt$(remaining)}</div><div class="stat-sub">${totalAlloc>0?Math.round((remaining/totalAlloc)*100):0}% left</div></div>
+    <div class="stat-card stat-pending"><div class="stat-label">Pending</div><div class="stat-value">${fmt$(totalPending)}</div><div class="stat-sub">awaiting approval</div></div>
+  `;
+
+  // Item cards
+  $('dept-items-grid').innerHTML = items.length === 0
+    ? `<div class="empty-state"><div class="empty-text">No budget items yet</div></div>`
+    : items.map(i => {
+        const spent = parseFloat(i.spent||0);
+        const pending = parseFloat(i.pending_amount||0);
+        const alloc = parseFloat(i.allocated||0);
+        const rem = alloc - spent;
+        return `<div class="item-card">
+          <div class="item-card-name">${i.name}</div>
+          ${budgetBar(spent, pending, alloc)}
+          <div class="item-figures">
+            <div><div class="item-fig-label">Budget</div><div class="item-fig-val text-gold">${fmt$(alloc)}</div></div>
+            <div><div class="item-fig-label">Spent</div><div class="item-fig-val ${spent>alloc?'money red':'money'}">${fmt$(spent)}</div></div>
+            <div><div class="item-fig-label">Remaining</div><div class="item-fig-val ${rem<0?'money red':'money green'}">${fmt$(Math.abs(rem))}</div></div>
+          </div>
+          ${currentUser.role==='admin'?`<div style="margin-top:.75rem;display:flex;gap:.5rem"><button class="btn btn-ghost btn-sm" onclick="openEditItem(${i.item_id},event)">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteItem(${i.item_id},event)">Remove</button></div>`:''}
+        </div>`;
+      }).join('');
+
+  // Transactions table
+  const tbody = $('dept-tx-body');
+  if (!txs.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-text">No transactions yet</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = txs.map(t => `
+    <tr>
+      <td class="text-dim">#${t.request_id}</td>
+      <td style="font-size:.85rem">${t.item_name}</td>
+      <td style="font-family:'Cinzel',serif;font-size:.8rem">${t.submitter_name}</td>
+      <td><span class="money ${t.status==='approved'?'red':''}">${t.status==='approved'?'−':''}${fmt$(t.amount)}</span></td>
+      <td class="truncate" style="font-size:.85rem" title="${t.description}">${t.description}</td>
+      <td class="text-dim" style="font-size:.85rem">${t.vendor||'—'}</td>
+      <td>${statusBadge(t.status)}</td>
+      <td class="text-dim" style="font-size:.8rem">${fmtDate(t.created_at)}</td>
+      <td>${currentUser.role==='admin' && t.status==='approved' ? `<button class="btn btn-danger btn-sm" onclick="deleteRequest(${t.request_id})">&#x2715; Delete</button>` : ''}</td>
+    </tr>`).join('');
+}
+
+async function deleteRequest(rid) {
+  if(!confirm('Permanently delete this approved request? This will be removed from the budget.')) return;
+  const r = await fetch(`/budget/api/requests/${rid}/delete`, {method:'POST'});
+  const d = await r.json();
+  if(d.success) { toast('Request deleted','info'); loadDeptView(currentDeptId); loadOverview(); }
+  else toast(d.error||'Error','error');
+}
+
+// ── MANAGE DEPTS ──
+async function loadManageDepts() {
+  const r = await fetch('/budget/api/departments');
+  allDepts = await r.json();
+  const container = $('manage-depts-list');
+  if (!allDepts.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-text">No departments yet — create one above</div></div>`;
+    return;
+  }
+  container.innerHTML = allDepts.map(dept => `
+    <div class="card" id="manage-dept-${dept.dept_id}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+        <div>
+          <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold)">${dept.name}</div>
+          ${dept.description?`<div class="text-dim" style="font-style:italic;font-size:.9rem;margin-top:.2rem">${dept.description}</div>`:''}
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openEditDept(${dept.dept_id})">Edit</button>
+          <button class="btn btn-gold btn-sm" onclick="openAddItem(${dept.dept_id})">+ Item</button>
+          ${dept.is_active
+            ? `<button class="btn btn-danger btn-sm" onclick="toggleDept(${dept.dept_id},false)">Archive</button>`
+            : `<button class="btn btn-success btn-sm" onclick="toggleDept(${dept.dept_id},true)">Restore</button>`}
+        </div>
+      </div>
+      <div id="manage-items-${dept.dept_id}">
+        <div class="text-dim" style="font-size:.85rem;font-style:italic">Loading items...</div>
+      </div>
+    </div>`).join('');
+
+  // Load items for each dept
+  allDepts.forEach(async dept => {
+    try {
+      const ir = await fetch(`/budget/api/departments/${dept.dept_id}/items`);
+      const items = await ir.json();
+      const el = $(`manage-items-${dept.dept_id}`);
+      if (!items.length) {
+        el.innerHTML = `<div class="text-dim" style="font-size:.85rem;font-style:italic">No items yet.</div>`;
+        return;
+      }
+      el.innerHTML = `<table style="font-size:.85rem"><thead><tr><th>Item</th><th>Allocated</th><th>Spent</th><th>Remaining</th><th></th></tr></thead><tbody>` +
+        items.map(i => {
+          const rem = parseFloat(i.allocated) - parseFloat(i.spent||0);
+          return `<tr>
+            <td style="font-family:'Cinzel',serif">${i.name}</td>
+            <td><span class="money">${fmt$(i.allocated)}</span></td>
+            <td><span class="money">${fmt$(i.spent||0)}</span></td>
+            <td><span class="money ${rem<0?'red':'green'}">${fmt$(Math.abs(rem))}</span></td>
+            <td><div class="action-btns">
+              <button class="btn btn-ghost btn-sm" onclick="openEditItem(${i.item_id},event)">Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteItem(${i.item_id},event)">Remove</button>
+            </div></td>
+          </tr>`;
+        }).join('') + `</tbody></table>`;
+    } catch(e) {}
+  });
+}
+
+// ── DEPT CRUD ──
+function openAddDept() {
+  $('add-dept-name').value=''; $('add-dept-desc').value='';
+  $('add-dept-error').style.display='none';
+  openModal('modal-add-dept');
+}
+async function createDept() {
+  const name=$('add-dept-name').value.trim(), desc=$('add-dept-desc').value.trim();
+  if(!name){showErr('add-dept-error','Name is required');return;}
+  const r=await fetch('/budget/api/departments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,description:desc})});
+  const d=await r.json();
+  if(d.success){toast('Department created!','success');closeModal('modal-add-dept');await loadDepts();loadManageDepts();}
+  else showErr('add-dept-error',d.error||'Error');
+}
+function openEditDept(id) {
+  const dept=allDepts.find(d=>d.dept_id===id);if(!dept)return;
+  $('edit-dept-id').value=id;$('edit-dept-name').value=dept.name;$('edit-dept-desc').value=dept.description||'';
+  $('edit-dept-error').style.display='none';openModal('modal-edit-dept');
+}
+async function saveDept() {
+  const id=$('edit-dept-id').value,name=$('edit-dept-name').value.trim(),desc=$('edit-dept-desc').value.trim();
+  if(!name){showErr('edit-dept-error','Name is required');return;}
+  const r=await fetch(`/budget/api/departments/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,description:desc})});
+  const d=await r.json();
+  if(d.success){toast('Department updated!','success');closeModal('modal-edit-dept');await loadDepts();loadManageDepts();}
+  else showErr('edit-dept-error',d.error||'Error');
+}
+async function toggleDept(id, active) {
+  const r=await fetch(`/budget/api/departments/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:active})});
+  const d=await r.json();
+  if(d.success){toast(active?'Department restored':'Department archived','info');await loadDepts();loadManageDepts();}
+  else toast('Error','error');
+}
+
+// ── ITEM CRUD ──
+function openAddItem(deptId) {
+  $('add-item-dept-id').value=deptId;$('add-item-name').value='';$('add-item-amount').value='';
+  $('add-item-error').style.display='none';openModal('modal-add-item');
+}
+function openAddItemFromDept() { openAddItem(currentDeptId); }
+async function createItem() {
+  const did=$('add-item-dept-id').value,name=$('add-item-name').value.trim(),amount=$('add-item-amount').value;
+  if(!name||amount===''){showErr('add-item-error','Name and amount are required');return;}
+  const r=await fetch(`/budget/api/departments/${did}/items`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,allocated:parseFloat(amount)})});
+  const d=await r.json();
+  if(d.success){toast('Budget item added!','success');closeModal('modal-add-item');await loadDepts();if(currentDeptId===parseInt(did))loadDeptView(parseInt(did));else loadManageDepts();}
+  else showErr('add-item-error',d.error||'Error');
+}
+async function openEditItem(iid, e) {
+  if(e)e.stopPropagation();
+  // fetch all items across current dept to find this one
+  const r=await fetch(`/budget/api/departments/${currentDeptId||0}/items`);
+  let items=await r.json();
+  let item=items.find(i=>i.item_id===iid);
+  // fallback: search all depts
+  if(!item){
+    for(const d of allDepts){
+      const ir=await fetch(`/budget/api/departments/${d.dept_id}/items`);
+      const its=await ir.json();
+      item=its.find(i=>i.item_id===iid);
+      if(item)break;
+    }
+  }
+  if(!item)return;
+  $('edit-item-id').value=iid;$('edit-item-name').value=item.name;$('edit-item-amount').value=item.allocated;
+  $('edit-item-error').style.display='none';openModal('modal-edit-item');
+}
+async function saveItem() {
+  const iid=$('edit-item-id').value,name=$('edit-item-name').value.trim(),amount=$('edit-item-amount').value;
+  if(!name||amount===''){showErr('edit-item-error','Both fields required');return;}
+  const r=await fetch(`/budget/api/items/${iid}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,allocated:parseFloat(amount)})});
+  const d=await r.json();
+  if(d.success){toast('Item updated!','success');closeModal('modal-edit-item');if(currentDeptId)loadDeptView(currentDeptId);else loadManageDepts();}
+  else showErr('edit-item-error',d.error||'Error');
+}
+async function deleteItem(iid, e) {
+  if(e)e.stopPropagation();
+  if(!confirm('Remove this budget item?'))return;
+  const r=await fetch(`/budget/api/items/${iid}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.success){toast('Item removed','info');if(currentDeptId)loadDeptView(currentDeptId);else loadManageDepts();}
+  else toast('Error','error');
+}
+
+// ── INIT ──
+document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('login-username').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+(async()=>{const r=await fetch('/budget/api/me');const d=await r.json();if(d.authenticated)await loadApp();})();
+</script>
+</body>
+</html>
