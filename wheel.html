@@ -9,8 +9,6 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#0D0910;color:#F0E8D0;font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(92,31,107,.35) 0%,transparent 65%);pointer-events:none;z-index:0}
-
-/* TOPBAR */
 .topbar{position:relative;z-index:10;background:linear-gradient(180deg,#3D0C45 0%,#150D1A 100%);border-bottom:1px solid rgba(201,168,76,.38);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(0,0,0,.4)}
 .topbar-brand{display:flex;align-items:center;gap:1rem}
 .topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:#C9A84C;text-shadow:0 0 20px rgba(201,168,76,.5)}
@@ -19,45 +17,32 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .nav-link{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:#9A8E7A;text-decoration:none;padding:.35rem .8rem;border:1px solid rgba(201,168,76,.18);border-radius:4px;transition:all .2s}
 .nav-link:hover{color:#C9A84C;border-color:rgba(201,168,76,.4)}
 .nav-link.active{color:#C9A84C;border-color:#8A7235;background:rgba(201,168,76,.12)}
-
-/* LAYOUT */
-.main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:2.5rem 1rem;min-height:calc(100vh - 60px)}
-.page-title{font-family:'Cinzel',serif;font-size:1.4rem;color:#C9A84C;letter-spacing:.1em;margin-bottom:.4rem;text-align:center}
-.page-sub{font-style:italic;color:#9A8E7A;font-size:.95rem;margin-bottom:2.5rem;text-align:center}
-
-/* WHEEL CONTAINER */
-.wheel-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:2rem}
-
-/* POINTER */
-.pointer{position:absolute;top:50%;right:-22px;transform:translateY(-50%);width:0;height:0;border-top:18px solid transparent;border-bottom:18px solid transparent;border-left:36px solid #C9A84C;filter:drop-shadow(0 0 8px rgba(201,168,76,.6));z-index:20}
-
-canvas{border-radius:50%;box-shadow:0 0 0 4px rgba(201,168,76,.3),0 0 40px rgba(92,31,107,.5),0 0 80px rgba(0,0,0,.4)}
-
-/* SPIN BUTTON */
-.spin-btn{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;padding:1rem 3rem;background:linear-gradient(135deg,#C9A84C,#8A7235);color:#0D0910;border:none;border-radius:4px;cursor:pointer;transition:all .2s;font-weight:700;box-shadow:0 4px 20px rgba(201,168,76,.3)}
+.main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;min-height:calc(100vh - 60px);gap:2.5rem}
+.page-title{font-family:'Cinzel',serif;font-size:1.4rem;color:#C9A84C;letter-spacing:.1em;text-align:center}
+.page-sub{font-style:italic;color:#9A8E7A;font-size:.95rem;text-align:center;margin-top:.4rem}
+.picker-card{background:#1A0F21;border:2px solid rgba(201,168,76,.3);border-radius:12px;padding:3rem 4rem;text-align:center;position:relative;box-shadow:0 0 60px rgba(92,31,107,.4),inset 0 0 40px rgba(0,0,0,.3);min-width:360px}
+.picker-card::before,.picker-card::after{content:'';position:absolute;width:28px;height:28px;border-color:#C9A84C;border-style:solid}
+.picker-card::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:2px 0 0 0}
+.picker-card::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 2px 0}
+.picker-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.35em;color:#5C5248;text-transform:uppercase;margin-bottom:1.5rem}
+.name-display{font-family:'Cinzel Decorative',serif;font-size:2.8rem;color:#C9A84C;min-height:3.5rem;line-height:1.2;transition:color .08s;text-shadow:0 0 30px rgba(201,168,76,.3)}
+.name-display.rolling{color:#7B3094;text-shadow:0 0 20px rgba(123,48,148,.5)}
+.name-display.winner{color:#C9A84C;text-shadow:0 0 40px rgba(201,168,76,.7),0 0 80px rgba(201,168,76,.3);animation:pulse .6s ease-in-out 3}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.spin-btn{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;padding:1rem 3.5rem;background:linear-gradient(135deg,#C9A84C,#8A7235);color:#0D0910;border:none;border-radius:4px;cursor:pointer;font-weight:700;transition:all .2s;box-shadow:0 4px 20px rgba(201,168,76,.3);margin-top:1.5rem}
 .spin-btn:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 6px 28px rgba(201,168,76,.5);transform:translateY(-2px)}
-.spin-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-
-/* RESULT */
-.result-wrap{margin-top:2rem;text-align:center;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.result-name{font-family:'Cinzel Decorative',serif;font-size:2.2rem;color:#C9A84C;text-shadow:0 0 30px rgba(201,168,76,.5);opacity:0;transform:scale(.8);transition:all .4s cubic-bezier(.175,.885,.32,1.275)}
-.result-name.show{opacity:1;transform:scale(1)}
-.result-label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.3em;color:#5C5248;text-transform:uppercase;margin-bottom:.5rem}
-
-/* MEMBERS SIDEBAR */
-.members-panel{margin-top:2rem;background:#1A0F21;border:1px solid rgba(201,168,76,.18);border-radius:8px;padding:1.25rem;width:100%;max-width:480px}
-.members-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;color:#8A7235;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid rgba(201,168,76,.12)}
+.spin-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.members-panel{background:#1A0F21;border:1px solid rgba(201,168,76,.15);border-radius:8px;padding:1.25rem 1.5rem;width:100%;max-width:500px}
+.members-title{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;color:#8A7235;text-transform:uppercase;margin-bottom:.9rem;padding-bottom:.6rem;border-bottom:1px solid rgba(201,168,76,.1)}
 .members-list{display:flex;flex-wrap:wrap;gap:.5rem}
-.member-chip{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;padding:.25rem .7rem;border-radius:20px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);color:#9A8E7A;cursor:pointer;transition:all .15s;user-select:none}
+.member-chip{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;padding:.25rem .7rem;border-radius:20px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);color:#9A8E7A;cursor:pointer;transition:all .15s;user-select:none}
 .member-chip:hover{border-color:rgba(201,168,76,.4);color:#C9A84C}
 .member-chip.excluded{background:rgba(207,74,74,.08);border-color:rgba(207,74,74,.2);color:#CF4A4A;text-decoration:line-through}
-.members-hint{font-size:.8rem;color:#5C5248;font-style:italic;margin-top:.75rem}
-
-.empty-state{text-align:center;color:#5C5248;font-style:italic;padding:2rem}
+.members-hint{font-size:.78rem;color:#3A2E28;font-style:italic;margin-top:.75rem}
+.empty-state{color:#5C5248;font-style:italic;text-align:center;padding:1rem}
 </style>
 </head>
 <body>
-
 <div class="topbar">
   <div class="topbar-brand">
     <span class="topbar-symbol">ΔΤΔ</span>
@@ -70,46 +55,29 @@ canvas{border-radius:50%;box-shadow:0 0 0 4px rgba(201,168,76,.3),0 0 40px rgba(
     <a class="nav-link active" href="/wheel">🎡 Wheel</a>
   </div>
 </div>
-
 <div class="main">
-  <div class="page-title">Wheel of Brothers</div>
-  <div class="page-sub">Spin to select a random brother</div>
-
+  <div>
+    <div class="page-title">Wheel of Brothers</div>
+    <div class="page-sub">Spin to select a random brother</div>
+  </div>
   <div id="loading" class="empty-state">Loading brothers...</div>
-
-  <div id="wheel-section" style="display:none;flex-direction:column;align-items:center">
-    <div class="wheel-wrap">
-      <canvas id="wheel" width="420" height="420"></canvas>
-      <div class="pointer"></div>
+  <div id="picker-section" style="display:none;flex-direction:column;align-items:center">
+    <div class="picker-card">
+      <div class="picker-label">Selected Brother</div>
+      <div class="name-display" id="name-display">—</div>
     </div>
-
-    <button class="spin-btn" id="spin-btn" onclick="spin()">✦ Spin the Wheel</button>
-
-    <div class="result-wrap">
-      <div class="result-label" id="result-label" style="display:none">Selected Brother</div>
-      <div class="result-name" id="result-name"></div>
-    </div>
-
-    <div class="members-panel">
-      <div class="members-title">Brothers on the Wheel — click to exclude</div>
-      <div class="members-list" id="members-list"></div>
-      <div class="members-hint">Click a name to exclude them from the spin. Click again to re-include.</div>
-    </div>
+    <button class="spin-btn" id="spin-btn" onclick="spin()">✦ Choose a Brother</button>
+  </div>
+  <div class="members-panel" id="members-panel" style="display:none">
+    <div class="members-title">Brothers in the draw — click to exclude</div>
+    <div class="members-list" id="members-list"></div>
+    <div class="members-hint">Click a name to remove them from the draw. Click again to add back.</div>
   </div>
 </div>
-
 <script>
-const COLORS = [
-  '#4A0E4E','#5C1F6B','#3D0C45','#6B2D7A','#2D0935',
-  '#7B3094','#4A1A5C','#3A0A42','#5A1868','#280830',
-];
-const GOLD = '#C9A84C';
-const TEXT_COLOR = '#F0E8D0';
-
 let members = [];
 let excluded = new Set();
 let spinning = false;
-let currentAngle = 0;
 
 async function loadMembers() {
   try {
@@ -118,27 +86,25 @@ async function loadMembers() {
     document.getElementById('loading').style.display = 'none';
     if (members.length < 2) {
       document.getElementById('loading').style.display = 'block';
-      document.getElementById('loading').textContent = 'Need at least 2 active members to spin.';
+      document.getElementById('loading').textContent = 'Need at least 2 active members.';
       return;
     }
-    document.getElementById('wheel-section').style.display = 'flex';
-    renderMemberChips();
-    drawWheel();
+    document.getElementById('picker-section').style.display = 'flex';
+    document.getElementById('members-panel').style.display = 'block';
+    renderChips();
   } catch(e) {
     document.getElementById('loading').textContent = 'Could not load members.';
   }
 }
 
-function activeMembers() {
+function active() {
   return members.filter(m => !excluded.has(m.user_id));
 }
 
-function renderMemberChips() {
-  const list = document.getElementById('members-list');
-  list.innerHTML = members.map(m => `
-    <div class="member-chip ${excluded.has(m.user_id) ? 'excluded' : ''}"
-         onclick="toggleExclude(${m.user_id})">${m.username}</div>
-  `).join('');
+function renderChips() {
+  document.getElementById('members-list').innerHTML = members.map(m =>
+    '<div class="member-chip ' + (excluded.has(m.user_id) ? 'excluded' : '') + '" onclick="toggleExclude(' + m.user_id + ')">' + m.username + '</div>'
+  ).join('');
 }
 
 function toggleExclude(id) {
@@ -146,149 +112,61 @@ function toggleExclude(id) {
   if (excluded.has(id)) {
     excluded.delete(id);
   } else {
-    // Don't exclude if only 2 left
-    if (activeMembers().length <= 2) return;
+    if (active().length <= 2) return;
     excluded.add(id);
   }
-  renderMemberChips();
-  drawWheel();
-  // Clear result
-  document.getElementById('result-name').classList.remove('show');
-  document.getElementById('result-label').style.display = 'none';
-}
-
-function drawWheel(highlightIdx = -1) {
-  const canvas = document.getElementById('wheel');
-  const ctx = canvas.getContext('2d');
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const r = cx - 8;
-  const active = activeMembers();
-  const n = active.length;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (n === 0) return;
-
-  const sliceAngle = (2 * Math.PI) / n;
-
-  for (let i = 0; i < n; i++) {
-    const start = currentAngle + i * sliceAngle;
-    const end = start + sliceAngle;
-
-    // Slice
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, start, end);
-    ctx.closePath();
-    ctx.fillStyle = i === highlightIdx ? GOLD : COLORS[i % COLORS.length];
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(201,168,76,0.3)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Label
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(start + sliceAngle / 2);
-
-    const maxLen = 12;
-    const label = active[i].username.length > maxLen
-      ? active[i].username.slice(0, maxLen) + '…'
-      : active[i].username;
-
-    const fontSize = n > 20 ? 9 : n > 14 ? 11 : n > 8 ? 13 : 15;
-    ctx.font = `600 ${fontSize}px 'Cinzel', serif`;
-    ctx.fillStyle = i === highlightIdx ? '#0D0910' : TEXT_COLOR;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, r - 12, 0);
-    ctx.restore();
-  }
-
-  // Center circle
-  ctx.beginPath();
-  ctx.arc(cx, cy, 26, 0, 2 * Math.PI);
-  ctx.fillStyle = '#0D0910';
-  ctx.fill();
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Center symbol
-  ctx.font = "bold 14px 'Cinzel Decorative', serif";
-  ctx.fillStyle = GOLD;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('ΔΤΔ', cx, cy);
-}
-
-function getWinnerAtAngle(angle) {
-  const active = activeMembers();
-  const n = active.length;
-  const sliceAngle = (2 * Math.PI) / n;
-  // Which slice is under the pointer (angle 0, right side)?
-  // Slice i spans [angle + i*sliceAngle, angle + (i+1)*sliceAngle]
-  // We need 0 to fall inside that range, i.e. find i where (0 - angle) mod 2π is in [i*s, (i+1)*s)
-  const norm = ((0 - angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-  return Math.floor(norm / sliceAngle) % n;
+  renderChips();
 }
 
 function spin() {
-  const active = activeMembers();
-  if (active.length < 2 || spinning) return;
+  const pool = active();
+  if (pool.length < 2 || spinning) return;
 
   spinning = true;
   document.getElementById('spin-btn').disabled = true;
-  document.getElementById('result-name').classList.remove('show');
-  document.getElementById('result-label').style.display = 'none';
 
-  const n = active.length;
-  const sliceAngle = (2 * Math.PI) / n;
+  const display = document.getElementById('name-display');
+  display.classList.remove('winner');
+  display.classList.add('rolling');
 
-  // Pick winner, then compute the exact final angle that puts that slice under the pointer
-  const winnerIdx = Math.floor(Math.random() * n);
-  // Aim for the center of the winner slice to sit at angle 0 (pointer)
-  // finalAngle such that: ((0 - finalAngle) mod 2π) == winnerIdx * sliceAngle + sliceAngle/2
-  const targetNorm = winnerIdx * sliceAngle + sliceAngle / 2;
-  // delta = how much more we need to rotate from currentAngle to reach targetNorm under the pointer
-  const delta = ((- currentAngle - targetNorm) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-  // Add extra full spins for drama (always spin at least 6 full rotations)
-  const extraSpins = (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
-  const totalRotation = extraSpins + delta;
+  // Pick winner up front
+  const winner = pool[Math.floor(Math.random() * pool.length)];
 
-  const duration = 4500 + Math.random() * 1500;
-  const startAngle = currentAngle;
+  const totalDuration = 2800 + Math.random() * 800;
   const startTime = performance.now();
+  let lastSwap = 0;
 
-  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
-
-  function animate(now) {
+  function step(now) {
     const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    currentAngle = startAngle + totalRotation * easeOut(progress);
-    drawWheel();
 
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      currentAngle = startAngle + totalRotation;
-      // Read back who actually landed under the pointer (should match winnerIdx)
-      const actual = getWinnerAtAngle(currentAngle);
-      drawWheel(actual);
+    if (elapsed >= totalDuration) {
+      display.textContent = winner.username;
+      display.classList.remove('rolling');
+      display.classList.add('winner');
       spinning = false;
       document.getElementById('spin-btn').disabled = false;
-
-      const resultEl = document.getElementById('result-name');
-      const labelEl = document.getElementById('result-label');
-      resultEl.textContent = active[actual].username;
-      labelEl.style.display = 'block';
-      setTimeout(() => resultEl.classList.add('show'), 50);
+      return;
     }
+
+    // Interval starts fast (60ms) and slows to 220ms
+    const t = Math.min(elapsed / totalDuration, 1);
+    const interval = 60 + (t * t) * 160;
+
+    if (now - lastSwap >= interval) {
+      const others = pool.filter(m => m.user_id !== winner.user_id);
+      const pick = others.length > 0
+        ? others[Math.floor(Math.random() * others.length)]
+        : pool[Math.floor(Math.random() * pool.length)];
+      display.textContent = pick.username;
+      lastSwap = now;
+    }
+
+    requestAnimationFrame(step);
   }
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(step);
 }
+
 loadMembers();
 </script>
 </body>
