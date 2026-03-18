@@ -223,6 +223,17 @@ function drawWheel(highlightIdx = -1) {
   ctx.fillText('ΔΤΔ', cx, cy);
 }
 
+function getWinnerAtAngle(angle) {
+  const active = activeMembers();
+  const n = active.length;
+  const sliceAngle = (2 * Math.PI) / n;
+  // Which slice is under the pointer (angle 0, right side)?
+  // Slice i spans [angle + i*sliceAngle, angle + (i+1)*sliceAngle]
+  // We need 0 to fall inside that range, i.e. find i where (0 - angle) mod 2π is in [i*s, (i+1)*s)
+  const norm = ((0 - angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+  return Math.floor(norm / sliceAngle) % n;
+}
+
 function spin() {
   const active = activeMembers();
   if (active.length < 2 || spinning) return;
@@ -232,46 +243,45 @@ function spin() {
   document.getElementById('result-name').classList.remove('show');
   document.getElementById('result-label').style.display = 'none';
 
-  // Pick winner
-  const winnerIdx = Math.floor(Math.random() * active.length);
   const n = active.length;
   const sliceAngle = (2 * Math.PI) / n;
 
-  // Calculate total rotation so the winner slice lands under the pointer (pointing right = angle 0)
-  // Pointer is at right side (angle 0), winner should end up there
-  // Winner slice center should be at angle 0 after rotation
-  const winnerCenter = winnerIdx * sliceAngle + sliceAngle / 2;
-  const extraSpins = (5 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
-  const targetAngle = -winnerCenter + extraSpins;
+  // Pick winner, then compute the exact final angle that puts that slice under the pointer
+  const winnerIdx = Math.floor(Math.random() * n);
+  // Aim for the center of the winner slice to sit at angle 0 (pointer)
+  // finalAngle such that: ((0 - finalAngle) mod 2π) == winnerIdx * sliceAngle + sliceAngle/2
+  const targetNorm = winnerIdx * sliceAngle + sliceAngle / 2;
+  // delta = how much more we need to rotate from currentAngle to reach targetNorm under the pointer
+  const delta = ((- currentAngle - targetNorm) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+  // Add extra full spins for drama (always spin at least 6 full rotations)
+  const extraSpins = (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
+  const totalRotation = extraSpins + delta;
 
-  const duration = 4000 + Math.random() * 1500;
+  const duration = 4500 + Math.random() * 1500;
   const startAngle = currentAngle;
   const startTime = performance.now();
 
-  function easeOut(t) {
-    return 1 - Math.pow(1 - t, 4);
-  }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
 
   function animate(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const eased = easeOut(progress);
-
-    currentAngle = startAngle + targetAngle * eased;
+    currentAngle = startAngle + totalRotation * easeOut(progress);
     drawWheel();
 
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      currentAngle = startAngle + targetAngle;
-      drawWheel(winnerIdx);
+      currentAngle = startAngle + totalRotation;
+      // Read back who actually landed under the pointer (should match winnerIdx)
+      const actual = getWinnerAtAngle(currentAngle);
+      drawWheel(actual);
       spinning = false;
       document.getElementById('spin-btn').disabled = false;
 
-      // Show result
       const resultEl = document.getElementById('result-name');
       const labelEl = document.getElementById('result-label');
-      resultEl.textContent = active[winnerIdx].username;
+      resultEl.textContent = active[actual].username;
       labelEl.style.display = 'block';
       setTimeout(() => resultEl.classList.add('show'), 50);
     }
@@ -279,7 +289,6 @@ function spin() {
 
   requestAnimationFrame(animate);
 }
-
 loadMembers();
 </script>
 </body>
