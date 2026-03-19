@@ -362,7 +362,10 @@ function addDays(dateStr, n) {
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0,10);
 }
-function todayStr() { return new Date().toISOString().slice(0,10); }
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 function isOverdue(due, status) {
   if (['approved','missed'].includes(status)) return false;
   return new Date(due + 'T23:59:59') < new Date();
@@ -491,7 +494,7 @@ function renderWeekGrid(assignments) {
       submitted > 0 ? `${submitted} pending review` : `${done}/${total} done`;
 
     card.innerHTML = `
-      <div class="day-name">${DAYS[i]}</div>
+      <div class="day-name">${dt.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()}</div>
       <div class="day-date">${dt.getDate()}</div>
       <div class="day-dots">${dots}</div>
       <div class="day-summary">${summary}</div>`;
