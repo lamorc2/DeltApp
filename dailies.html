@@ -68,7 +68,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* TASK ROWS */
 .task-rows{display:flex;flex-direction:column;gap:.5rem}
-.task-row{display:flex;align-items:center;gap:1rem;padding:.85rem 1rem;border-radius:6px;background:#150D1A;border:1px solid rgba(201,168,76,.08);transition:background .15s;flex-wrap:wrap}
+.task-row{display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;border-radius:6px;background:#150D1A;border:1px solid rgba(201,168,76,.08);transition:background .15s;flex-wrap:wrap}
 .task-row.status-submitted{border-left:3px solid #5B8DD9}
 .task-row.status-approved{border-left:3px solid #4CAF7A;background:rgba(76,175,122,.04)}
 .task-row.status-missed{border-left:3px solid #CF4A4A;background:rgba(207,74,74,.04)}
@@ -112,7 +112,8 @@ textarea.form-input{resize:vertical;min-height:65px}
 .err{color:#CF4A4A;font-size:.82rem;margin-top:.4rem;display:none;font-style:italic}
 
 /* ROTATION GRID */
-.rotation-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.rotation-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rotation-table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:700px}
 .rotation-table th{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;color:#8A7235;text-transform:uppercase;padding:.6rem .8rem;border-bottom:1px solid rgba(201,168,76,.15);text-align:left;white-space:nowrap}
 .rotation-table td{padding:.5rem .8rem;border-bottom:1px solid rgba(201,168,76,.07);vertical-align:middle}
 .rotation-table tr:last-child td{border-bottom:none}
@@ -160,6 +161,40 @@ textarea.form-input{resize:vertical;min-height:65px}
 
 @media(max-width:900px){.sidebar{display:none}.content{padding:1rem}.days-grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:500px){.days-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
+
+  /* ── MOBILE RESPONSIVE ── */
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid rgba(201,168,76,.1);transition:background .15s}
+  .mob-nav-btn:last-child{border-right:none}
+  .mob-nav-btn span:first-child{font-size:1.15rem;line-height:1}
+  .mob-nav-btn.mob-active{background:rgba(201,168,76,.1)}
+  @media(max-width:768px){
+    #mobile-bottom-nav{display:flex !important}
+    body,#app,#main-app{padding-bottom:58px}
+    .topbar{padding:0 .9rem;height:auto;min-height:54px;flex-wrap:wrap;gap:.3rem;padding-top:.4rem;padding-bottom:.4rem}
+    .topbar-nav-links,.topbar-nav{display:none !important}
+    .topbar-title,.topbar-sub{display:none}
+    .topbar-user{gap:.4rem}
+    .user-badge{padding:.25rem .55rem}
+    .sidebar{display:none !important}
+    .content{padding:.9rem .75rem !important}
+    .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{min-width:480px}
+    .page-header{flex-direction:column;align-items:flex-start;gap:.6rem}
+    .card,.modal-body{padding:1rem}
+    .form-input{font-size:16px !important}
+    .stats-row{grid-template-columns:1fr 1fr !important}
+    .items-grid{grid-template-columns:1fr !important}
+    .modal{max-width:calc(100vw - 1rem)}
+    .action-btns{flex-wrap:wrap}
+    .btn-sm{padding:.35rem .65rem;font-size:.58rem}
+  }
+  @media(max-width:420px){
+    .stats-row{grid-template-columns:1fr !important}
+    .podium{grid-template-columns:1fr !important}
+    .days-grid{grid-template-columns:repeat(2,1fr) !important}
+    .form-row{grid-template-columns:1fr !important}
+    .header-actions{flex-direction:column;align-items:flex-start}
+  }
 </style>
 </head>
 <body>
@@ -737,7 +772,7 @@ function renderRotationSetup() {
   el.innerHTML = Object.entries(byCategory).map(([cat, tasks]) => `
     <div class="card">
       <div class="card-title">${catBadge(cat)} ${cat}</div>
-      <table class="rotation-table">
+      <div class="rotation-table-wrap"><table class="rotation-table">
         <thead>
           <tr>
             <th style="min-width:150px">Task</th>
@@ -762,7 +797,7 @@ function renderRotationSetup() {
               }).join('')}
             </tr>`).join('')}
         </tbody>
-      </table>
+      </table></div>
     </div>`).join('');
 }
 
@@ -859,5 +894,13 @@ async function archiveTask(tid) {
 document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('show'); }));
 init();
 </script>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:#150D1A;border-top:1px solid rgba(201,168,76,.25);z-index:500;align-items:stretch">
+    <a href="/points" class="mob-nav-btn" style="color:#9A8E7A"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn" style="color:#9A8E7A"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn" style="color:#9A8E7A"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn" style="color:#C9A84C"><span>📋</span><span>Dailies</span></a>
+  </nav>
 </body>
 </html>
