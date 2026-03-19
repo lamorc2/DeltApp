@@ -135,6 +135,13 @@ def init_db():
             approved_at TIMESTAMP,
             notes TEXT DEFAULT ''
         )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS rotation_template (
+            rotation_id SERIAL PRIMARY KEY,
+            task_id INTEGER NOT NULL REFERENCES daily_tasks(task_id),
+            day_of_week INTEGER NOT NULL,
+            member_id INTEGER NOT NULL REFERENCES users(user_id),
+            UNIQUE(task_id, day_of_week)
+        )''')
     else:
         execute(conn, '''CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -193,6 +200,13 @@ def init_db():
             approved_by INTEGER,
             approved_at TIMESTAMP,
             notes TEXT DEFAULT ''
+        )''')
+        execute(conn, '''CREATE TABLE IF NOT EXISTS rotation_template (
+            rotation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_id INTEGER NOT NULL,
+            day_of_week INTEGER NOT NULL,
+            member_id INTEGER NOT NULL,
+            UNIQUE(task_id, day_of_week)
         )''')
 
     # Budget-specific tables
@@ -1034,123 +1048,166 @@ def dailies_update_task(tid):
     data = request.json or {}
     fields, vals = [], []
     for f in ('title', 'description', 'category', 'is_active'):
-        if f in data: fields.append(f"{f}=?"); vals.append(data[f])
-    pass  # point_value removed - dailies no longer have points attached
-    if not fields: return jsonify({'error': 'Nothing to update'}), 400
+        if f in data:
+            fields.append(f"{f}=?"); vals.append(data[f])
+    if not fields:
+        return jsonify({'error': 'Nothing to update'}), 400
     vals.append(tid)
     conn = get_db()
-    execute(conn, f"UPDATE daily_tasks SET {', '.join(fields)} WHERE task_id=?", vals)
+    execute(conn, "UPDATE daily_tasks SET " + ', '.join(fields) + " WHERE task_id=?", vals)
+    conn.commit(); conn.close()
+    return jsonify({'success': True})
+
+@app.route('/dailies/api/rotation', methods=['GET'])
+@login_required
+def dailies_get_rotation():
+    conn = get_db()
+    rows = fetchall(conn, (
+        "SELECT r.rotation_id, r.task_id, r.day_of_week, r.member_id, "
+        "t.title, t.category, t.description as task_desc, u.username as member_name "
+        "FROM rotation_template r "
+        "JOIN daily_tasks t ON r.task_id = t.task_id "
+        "JOIN users u ON r.member_id = u.user_id "
+        "WHERE t.is_active=true "
+        "ORDER BY t.category, t.title, r.day_of_week"
+    ))
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/dailies/api/rotation', methods=['POST'])
+@login_required
+@admin_required
+def dailies_set_rotation():
+    data = request.json or {}
+    entries = data.get('entries', [])
+    conn = get_db()
+    for e in entries:
+        existing = fetchone(conn,
+            "SELECT rotation_id FROM rotation_template WHERE task_id=? AND day_of_week=?",
+            (e['task_id'], e['day_of_week']))
+        if existing:
+            execute(conn, "UPDATE rotation_template SET member_id=? WHERE rotation_id=?",
+                    (e['member_id'], existing['rotation_id']))
+        else:
+            execute(conn, "INSERT INTO rotation_template (task_id, day_of_week, member_id) VALUES (?,?,?)",
+                    (e['task_id'], e['day_of_week'], e['member_id']))
+    conn.commit(); conn.close()
+    return jsonify({'success': True})
+
+@app.route('/dailies/api/rotation/<int:rid>', methods=['DELETE'])
+@login_required
+@admin_required
+def dailies_delete_rotation(rid):
+    conn = get_db()
+    execute(conn, "DELETE FROM rotation_template WHERE rotation_id=?", (rid,))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
 @app.route('/dailies/api/assignments', methods=['GET'])
 @login_required
 def dailies_get_assignments():
+    import datetime as _dt
     conn = get_db()
     role = session.get('role')
-    week = request.args.get('week')  # YYYY-MM-DD of week start
-    if role in ('admin', 'moderator'):
-        sql = '''SELECT a.*, t.title, t.category, t.point_value, t.description as task_desc,
-                          u.username as member_name, ap.username as approver_name
-                   FROM daily_assignments a
-                   JOIN daily_tasks t ON a.task_id = t.task_id
-                   JOIN users u ON a.member_id = u.user_id
-                   LEFT JOIN users ap ON a.approved_by = ap.user_id'''
-        params = ()
-        if week:
-            sql += ' WHERE a.week_start = ?'; params = (week,)
-        sql += ' ORDER BY a.due_date, t.category, u.username'
+    date_str = request.args.get('date')
+    week_str = request.args.get('week')
+
+    if date_str:
+        dates = [_dt.date.fromisoformat(date_str)]
+    elif week_str:
+        monday = _dt.date.fromisoformat(week_str)
+        dates = [monday + _dt.timedelta(days=i) for i in range(7)]
     else:
-        sql = '''SELECT a.*, t.title, t.category, t.point_value, t.description as task_desc,
-                          u.username as member_name, ap.username as approver_name
-                   FROM daily_assignments a
-                   JOIN daily_tasks t ON a.task_id = t.task_id
-                   JOIN users u ON a.member_id = u.user_id
-                   LEFT JOIN users ap ON a.approved_by = ap.user_id
-                   WHERE a.member_id = ?'''
-        params = (session['user_id'],)
-        if week:
-            sql += ' AND a.week_start = ?'; params = (session['user_id'], week)
-        sql += ' ORDER BY a.due_date, t.category'
-    rows = fetchall(conn, sql, params)
+        dates = [_dt.date.today()]
+
+    rotation = fetchall(conn, (
+        "SELECT r.task_id, r.day_of_week, r.member_id, r.rotation_id, "
+        "t.title, t.category, t.description as task_desc "
+        "FROM rotation_template r "
+        "JOIN daily_tasks t ON r.task_id = t.task_id "
+        "WHERE t.is_active=true"
+    ))
+
+    results = []
+    for day in dates:
+        dow = day.isoweekday()
+        for slot in [r for r in rotation if r['day_of_week'] == dow]:
+            existing = fetchone(conn,
+                "SELECT a.*, u.username as member_name, ap.username as approver_name "
+                "FROM daily_assignments a "
+                "JOIN users u ON a.member_id = u.user_id "
+                "LEFT JOIN users ap ON a.approved_by = ap.user_id "
+                "WHERE a.task_id=? AND a.due_date=?",
+                (slot['task_id'], day.isoformat()))
+            if existing:
+                row = dict(existing)
+                row['title'] = slot['title']
+                row['category'] = slot['category']
+                row['task_desc'] = slot['task_desc']
+                row['due_date'] = day.isoformat()
+            else:
+                u = fetchone(conn, "SELECT username FROM users WHERE user_id=?", (slot['member_id'],))
+                row = {
+                    'assignment_id': None,
+                    'task_id': slot['task_id'],
+                    'member_id': slot['member_id'],
+                    'due_date': day.isoformat(),
+                    'status': 'pending',
+                    'title': slot['title'],
+                    'category': slot['category'],
+                    'task_desc': slot['task_desc'],
+                    'member_name': u['username'] if u else '?',
+                    'approver_name': None,
+                    'notes': '',
+                    'completed_at': None,
+                    'approved_at': None,
+                }
+            if role not in ('admin', 'moderator') and row.get('member_id') != session['user_id']:
+                continue
+            results.append(row)
+
     conn.close()
-    return jsonify(ser(rows))
+    return jsonify(ser(results))
 
-@app.route('/dailies/api/assignments', methods=['POST'])
+@app.route('/dailies/api/assignments/ensure', methods=['POST'])
 @login_required
 @admin_required
-def dailies_create_assignment():
+def dailies_ensure_assignments():
+    import datetime as _dt
     data = request.json or {}
-    task_id   = data.get('task_id')
-    member_id = data.get('member_id')
-    week_start = data.get('week_start')
-    due_date  = data.get('due_date')
-    if not all([task_id, member_id, week_start, due_date]):
-        return jsonify({'error': 'task_id, member_id, week_start, due_date required'}), 400
+    date_str = data.get('date')
+    if not date_str:
+        return jsonify({'error': 'date required'}), 400
+    day = _dt.date.fromisoformat(date_str)
+    dow = day.isoweekday()
+    monday = day - _dt.timedelta(days=day.weekday())
     conn = get_db()
-    execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
-            (task_id, member_id, week_start, due_date))
+    rotation = fetchall(conn, "SELECT * FROM rotation_template WHERE day_of_week=?", (dow,))
+    created = 0
+    for slot in rotation:
+        existing = fetchone(conn,
+            "SELECT assignment_id FROM daily_assignments WHERE task_id=? AND due_date=?",
+            (slot['task_id'], date_str))
+        if not existing:
+            execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
+                    (slot['task_id'], slot['member_id'], monday.isoformat(), date_str))
+            created += 1
     conn.commit(); conn.close()
-    return jsonify({'success': True})
-
-@app.route('/dailies/api/assignments/bulk', methods=['POST'])
-@login_required
-@admin_required
-def dailies_bulk_assign():
-    """Assign multiple tasks at once for a week."""
-    data = request.json or {}
-    assignments = data.get('assignments', [])
-    week_start = data.get('week_start')
-    if not week_start or not assignments:
-        return jsonify({'error': 'week_start and assignments required'}), 400
-    conn = get_db()
-    for a in assignments:
-        execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
-                (a['task_id'], a['member_id'], week_start, a['due_date']))
-    conn.commit(); conn.close()
-    return jsonify({'success': True})
-
-@app.route('/dailies/api/assignments/copy-week', methods=['POST'])
-@login_required
-@admin_required
-def dailies_copy_week():
-    """Copy all assignments from one week to another."""
-    data = request.json or {}
-    from_week = data.get('from_week')
-    to_week   = data.get('to_week')
-    if not from_week or not to_week:
-        return jsonify({'error': 'from_week and to_week required'}), 400
-    conn = get_db()
-    old = fetchall(conn, "SELECT task_id, member_id, due_date FROM daily_assignments WHERE week_start=?", (from_week,))
-    if not old:
-        conn.close()
-        return jsonify({'error': 'No assignments found for that week'}), 404
-    # Calculate day offset
-    from datetime import date, timedelta
-    from_dt = date.fromisoformat(from_week)
-    to_dt   = date.fromisoformat(to_week)
-    offset  = to_dt - from_dt
-    for a in old:
-        old_due = date.fromisoformat(a['due_date'])
-        new_due = old_due + offset
-        execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
-                (a['task_id'], a['member_id'], to_week, new_due.isoformat()))
-    conn.commit(); conn.close()
-    return jsonify({'success': True, 'copied': len(old)})
+    return jsonify({'success': True, 'created': created})
 
 @app.route('/dailies/api/assignments/<int:aid>/complete', methods=['POST'])
 @login_required
 def dailies_mark_complete(aid):
     data = request.json or {}
     conn = get_db()
-    # Members can only complete their own assignments
     if session.get('role') not in ('admin', 'moderator'):
         a = fetchone(conn, "SELECT member_id FROM daily_assignments WHERE assignment_id=?", (aid,))
         if not a or a['member_id'] != session['user_id']:
             conn.close()
             return jsonify({'error': 'Not your assignment'}), 403
-    execute(conn, "UPDATE daily_assignments SET status='submitted', completed_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
-            (data.get('notes',''), aid))
+    execute(conn,
+        "UPDATE daily_assignments SET status='submitted', completed_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
+        (data.get('notes',''), aid))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
@@ -1163,8 +1220,9 @@ def dailies_approve(aid):
     if not a:
         conn.close()
         return jsonify({'error': 'Not found'}), 404
-    execute(conn, "UPDATE daily_assignments SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
-            (session['user_id'], aid))
+    execute(conn,
+        "UPDATE daily_assignments SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
+        (session['user_id'], aid))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
@@ -1180,25 +1238,16 @@ def dailies_mark_missed(aid):
         conn.close()
         return jsonify({'error': 'Not found'}), 404
     task = fetchone(conn, "SELECT title FROM daily_tasks WHERE task_id=?", (a['task_id'],))
-    execute(conn, "UPDATE daily_assignments SET status='missed', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
-            (session['user_id'], aid))
+    execute(conn,
+        "UPDATE daily_assignments SET status='missed', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
+        (session['user_id'], aid))
     if penalty > 0:
         title = task['title'] if task else 'Unknown'
-        execute(conn, "INSERT INTO transactions (member_id, points, description, status, reviewed_by, reviewed_at) VALUES (?,?,?,'approved',?,CURRENT_TIMESTAMP)",
-                (a['member_id'], -penalty, "Missed Daily: " + title, session['username']))
+        execute(conn,
+            "INSERT INTO transactions (member_id, points, description, status, reviewed_by, reviewed_at) VALUES (?,?,?,'approved',?,CURRENT_TIMESTAMP)",
+            (a['member_id'], -penalty, "Missed Daily: " + title, session['username']))
         execute(conn, "UPDATE users SET brotherhood_points=brotherhood_points-? WHERE user_id=?",
                 (penalty, a['member_id']))
-    conn.commit(); conn.close()
-    return jsonify({'success': True})
-
-@app.route('/dailies/api/assignments/<int:aid>/reject', methods=['POST'])
-@login_required
-@admin_required
-def dailies_reject(aid):
-    data = request.json or {}
-    conn = get_db()
-    execute(conn, "UPDATE daily_assignments SET status='rejected', approved_by=?, approved_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
-            (session['user_id'], data.get('reason',''), aid))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
@@ -1219,14 +1268,6 @@ def dailies_get_members():
     conn.close()
     return jsonify(users)
 
-@app.route('/dailies/api/weeks')
-@login_required
-def dailies_get_weeks():
-    """Return list of weeks that have assignments."""
-    conn = get_db()
-    weeks = fetchall(conn, "SELECT DISTINCT week_start FROM daily_assignments ORDER BY week_start DESC LIMIT 20")
-    conn.close()
-    return jsonify([w['week_start'] for w in weeks])
 
 init_db()
 

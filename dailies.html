@@ -8,10 +8,9 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#0D0910;color:#F0E8D0;font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(92,31,107,.3) 0%,transparent 65%);pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(92,31,107,.28) 0%,transparent 65%);pointer-events:none;z-index:0}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#150D1A}::-webkit-scrollbar-thumb{background:#5C1F6B;border-radius:3px}
 
-/* TOPBAR */
 .topbar{position:relative;z-index:10;background:linear-gradient(180deg,#3D0C45 0%,#150D1A 100%);border-bottom:1px solid rgba(201,168,76,.38);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(0,0,0,.4)}
 .topbar-brand{display:flex;align-items:center;gap:1rem}
 .topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:#C9A84C;text-shadow:0 0 20px rgba(201,168,76,.5)}
@@ -21,7 +20,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .nav-link:hover{color:#C9A84C;border-color:rgba(201,168,76,.4)}
 .nav-link.active{color:#C9A84C;border-color:#8A7235;background:rgba(201,168,76,.12)}
 
-/* LAYOUT */
 .app-body{position:relative;z-index:1;display:flex;min-height:calc(100vh - 60px)}
 .sidebar{width:220px;background:#150D1A;border-right:1px solid rgba(201,168,76,.15);padding:1.5rem 0;flex-shrink:0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
 .nav-section{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.3em;color:#5C5248;text-transform:uppercase;padding:0 1.5rem;margin:1.5rem 0 .5rem}
@@ -29,66 +27,71 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .side-item:hover{background:rgba(201,168,76,.05);color:#F0E8D0}
 .side-item.active{color:#C9A84C;background:rgba(201,168,76,.08);border-left-color:#C9A84C}
 .side-divider{height:1px;background:rgba(201,168,76,.1);margin:1rem 1.5rem}
-.content{flex:1;padding:2rem;overflow-x:auto}
+.content{flex:1;padding:2rem;overflow-x:auto;min-width:0}
 .page{display:none}.page.active{display:block}
 
-/* HEADER */
-.page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(201,168,76,.15)}
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(201,168,76,.12)}
 .page-title{font-family:'Cinzel',serif;font-size:1.4rem;color:#C9A84C;letter-spacing:.05em}
 .page-sub{font-style:italic;color:#9A8E7A;font-size:.875rem;margin-top:.25rem}
 .header-actions{display:flex;gap:.5rem;flex-wrap:wrap}
 
-/* WEEK NAV */
-.week-nav{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;background:#1A0F21;border:1px solid rgba(201,168,76,.15);border-radius:6px;padding:.75rem 1.25rem}
-.week-label{font-family:'Cinzel',serif;font-size:.85rem;color:#C9A84C;flex:1;text-align:center;letter-spacing:.05em}
-.week-btn{background:none;border:1px solid rgba(201,168,76,.2);color:#9A8E7A;padding:.3rem .7rem;border-radius:4px;cursor:pointer;font-size:.9rem;transition:all .15s}
+/* WEEK STRIP */
+.week-nav{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
+.week-btn{background:none;border:1px solid rgba(201,168,76,.2);color:#9A8E7A;padding:.3rem .8rem;border-radius:4px;cursor:pointer;font-size:1rem;line-height:1;transition:all .15s}
 .week-btn:hover{border-color:#C9A84C;color:#C9A84C}
-.week-input{background:#1E1227;border:1px solid rgba(201,168,76,.2);color:#F0E8D0;padding:.3rem .7rem;border-radius:4px;font-family:'Cinzel',serif;font-size:.75rem;cursor:pointer}
+.week-label{font-family:'Cinzel',serif;font-size:.8rem;color:#8A7235;letter-spacing:.05em;flex:1;text-align:center}
 
-/* CARDS */
-.card{background:#1A0F21;border:1px solid rgba(201,168,76,.15);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
-.card-title{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.15em;color:#8A7235;text-transform:uppercase;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid rgba(201,168,76,.1)}
+/* DAY CARDS GRID */
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.6rem;margin-bottom:2rem}
+.day-card{background:#1A0F21;border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:.85rem .7rem;cursor:pointer;transition:all .18s;position:relative;min-height:90px}
+.day-card:hover{border-color:rgba(201,168,76,.35);transform:translateY(-2px)}
+.day-card.today{border-color:rgba(201,168,76,.5);box-shadow:0 0 16px rgba(201,168,76,.1)}
+.day-card.selected{border-color:#C9A84C;background:#1E1228}
+.day-card.today .day-name{color:#C9A84C}
+.day-name{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:#5C5248;margin-bottom:.3rem}
+.day-date{font-family:'Cinzel',serif;font-size:1.1rem;color:#F0E8D0;margin-bottom:.6rem}
+.day-card.today .day-date{color:#C9A84C}
+.day-dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:.4rem}
+.day-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-pending{background:#5C5248}
+.dot-submitted{background:#5B8DD9}
+.dot-approved{background:#4CAF7A}
+.dot-missed{background:#CF4A4A}
+.dot-overdue{background:#CF4A4A;opacity:.6}
+.day-summary{font-size:.7rem;color:#5C5248;margin-top:.4rem;font-style:italic}
 
-/* CATEGORY SECTIONS */
-.category-block{margin-bottom:2rem}
-.category-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
-.category-badge{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;padding:.3rem 1rem;border-radius:20px}
-.cat-stew{background:rgba(91,141,217,.15);color:#5B8DD9;border:1px solid rgba(91,141,217,.3)}
-.cat-hm{background:rgba(76,175,122,.15);color:#4CAF7A;border:1px solid rgba(76,175,122,.3)}
-.cat-count{font-size:.8rem;color:#5C5248;font-style:italic}
+/* DAY DETAIL */
+.day-detail{background:#1A0F21;border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:1.5rem}
+.day-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.9rem;border-bottom:1px solid rgba(201,168,76,.1)}
+.day-detail-title{font-family:'Cinzel',serif;font-size:1rem;color:#C9A84C;letter-spacing:.08em}
+.detail-empty{text-align:center;padding:2rem;color:#5C5248;font-style:italic}
 
-/* ASSIGNMENT ROWS */
-.assignment-grid{display:grid;gap:.6rem}
-.assignment-row{display:flex;align-items:center;gap:1rem;background:#150D1A;border:1px solid rgba(201,168,76,.1);border-radius:6px;padding:.85rem 1.1rem;transition:all .2s;flex-wrap:wrap}
-.assignment-row:hover{border-color:rgba(201,168,76,.25)}
-.assignment-row.status-pending{border-left:3px solid rgba(201,168,76,.3)}
-.assignment-row.status-submitted{border-left:3px solid rgba(91,141,217,.6);background:rgba(91,141,217,.04)}
-.assignment-row.status-approved{border-left:3px solid rgba(76,175,122,.6);background:rgba(76,175,122,.04)}
-.assignment-row.status-rejected{border-left:3px solid rgba(207,74,74,.5);background:rgba(207,74,74,.04)}
-.assignment-row.overdue{border-left:3px solid #CF4A4A !important;background:rgba(207,74,74,.06) !important}
+/* TASK ROWS */
+.task-rows{display:flex;flex-direction:column;gap:.5rem}
+.task-row{display:flex;align-items:center;gap:1rem;padding:.85rem 1rem;border-radius:6px;background:#150D1A;border:1px solid rgba(201,168,76,.08);transition:background .15s;flex-wrap:wrap}
+.task-row.status-submitted{border-left:3px solid #5B8DD9}
+.task-row.status-approved{border-left:3px solid #4CAF7A;background:rgba(76,175,122,.04)}
+.task-row.status-missed{border-left:3px solid #CF4A4A;background:rgba(207,74,74,.04)}
+.task-row.overdue{border-left:3px solid #CF4A4A !important;background:rgba(207,74,74,.05) !important}
+.task-title{flex:1;min-width:140px}
+.task-name{font-size:.95rem;color:#F0E8D0}
+.task-desc-small{font-size:.75rem;color:#5C5248;font-style:italic;margin-top:.1rem}
+.task-member{font-family:'Cinzel',serif;font-size:.72rem;color:#9A8E7A;min-width:80px}
+.task-cat{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;padding:.15rem .5rem;border-radius:20px;text-transform:uppercase}
+.cat-stew{background:rgba(91,141,217,.12);color:#5B8DD9;border:1px solid rgba(91,141,217,.25)}
+.cat-hm{background:rgba(76,175,122,.12);color:#4CAF7A;border:1px solid rgba(76,175,122,.25)}
+.task-actions{display:flex;gap:.35rem;margin-left:auto;flex-wrap:wrap}
 
-.assign-task{flex:1;min-width:160px}
-.assign-task-name{font-size:.95rem;color:#F0E8D0}
-.assign-task-desc{font-size:.78rem;color:#5C5248;font-style:italic;margin-top:.15rem}
-.assign-member{font-family:'Cinzel',serif;font-size:.75rem;color:#9A8E7A;min-width:90px}
-.assign-due{font-size:.78rem;color:#5C5248;min-width:80px}
-.assign-due.overdue{color:#CF4A4A;font-weight:600}
-.assign-pts{font-family:'Cinzel',serif;font-size:.75rem;min-width:48px;text-align:right}
-.pts-pos{color:#4CAF7A}.pts-neg{color:#CF4A4A}.pts-zero{color:#5C5248}
-.assign-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-left:auto}
-
-/* STATUS BADGES */
-.badge{display:inline-block;padding:.15rem .55rem;border-radius:20px;font-size:.6rem;font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
-.badge-pending{background:rgba(201,168,76,.12);color:#C9A84C;border:1px solid rgba(201,168,76,.25)}
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:20px;font-size:.58rem;font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.badge-pending{background:rgba(92,82,72,.2);color:#9A8E7A;border:1px solid rgba(92,82,72,.3)}
 .badge-submitted{background:rgba(91,141,217,.12);color:#5B8DD9;border:1px solid rgba(91,141,217,.25)}
 .badge-approved{background:rgba(76,175,122,.12);color:#4CAF7A;border:1px solid rgba(76,175,122,.25)}
-.badge-rejected{background:rgba(207,74,74,.12);color:#CF4A4A;border:1px solid rgba(207,74,74,.25)}
-.badge-missed{background:rgba(207,74,74,.18);color:#CF4A4A;border:1px solid rgba(207,74,74,.4)}
-.badge-overdue{background:rgba(207,74,74,.18);color:#CF4A4A;border:1px solid rgba(207,74,74,.4)}
+.badge-missed{background:rgba(207,74,74,.15);color:#CF4A4A;border:1px solid rgba(207,74,74,.3)}
+.badge-overdue{background:rgba(207,74,74,.2);color:#CF4A4A;border:1px solid rgba(207,74,74,.35);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border:none;border-radius:4px;transition:all .2s;font-weight:600}
-.btn-sm{padding:.3rem .7rem;font-size:.58rem}
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:.45rem 1rem;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border:none;border-radius:4px;transition:all .18s;font-weight:600;white-space:nowrap}
+.btn-sm{padding:.3rem .65rem;font-size:.58rem}
 .btn-gold{background:linear-gradient(135deg,#C9A84C,#8A7235);color:#0D0910}
 .btn-gold:hover{filter:brightness(1.1)}
 .btn-ghost{background:transparent;color:#9A8E7A;border:1px solid rgba(201,168,76,.18)}
@@ -97,57 +100,66 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-success:hover{background:rgba(76,175,122,.25)}
 .btn-danger{background:rgba(207,74,74,.15);color:#CF4A4A;border:1px solid rgba(207,74,74,.3)}
 .btn-danger:hover{background:rgba(207,74,74,.25)}
-.btn-blue{background:rgba(91,141,217,.15);color:#5B8DD9;border:1px solid rgba(91,141,217,.3)}
-.btn-blue:hover{background:rgba(91,141,217,.25)}
 
-/* FORMS */
-.form-group{margin-bottom:1.1rem}
+.form-group{margin-bottom:1rem}
 .form-label{display:block;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;color:#8A7235;text-transform:uppercase;margin-bottom:.4rem}
 .form-input{width:100%;background:#1E1227;border:1px solid rgba(201,168,76,.18);color:#F0E8D0;padding:.65rem .9rem;font-family:'Crimson Pro',serif;font-size:.95rem;outline:none;border-radius:4px;transition:border-color .2s}
 .form-input:focus{border-color:#C9A84C}
 .form-input::placeholder{color:#3A2E28}
 select.form-input option{background:#1E1227}
-textarea.form-input{resize:vertical;min-height:70px}
+textarea.form-input{resize:vertical;min-height:65px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.err{color:#CF4A4A;font-size:.82rem;margin-top:.4rem;display:none;font-style:italic}
+
+/* ROTATION GRID */
+.rotation-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.rotation-table th{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;color:#8A7235;text-transform:uppercase;padding:.6rem .8rem;border-bottom:1px solid rgba(201,168,76,.15);text-align:left;white-space:nowrap}
+.rotation-table td{padding:.5rem .8rem;border-bottom:1px solid rgba(201,168,76,.07);vertical-align:middle}
+.rotation-table tr:last-child td{border-bottom:none}
+.rotation-table select{background:#1E1227;border:1px solid rgba(201,168,76,.15);color:#F0E8D0;padding:.3rem .5rem;border-radius:4px;font-family:'Crimson Pro',serif;font-size:.85rem;width:100%;min-width:110px}
+.rotation-table select:focus{outline:none;border-color:#C9A84C}
+.task-cat-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;padding:.15rem .4rem;border-radius:20px;text-transform:uppercase;margin-right:.4rem}
+
+/* TASK LIBRARY */
+.task-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:#150D1A;border:1px solid rgba(201,168,76,.08);border-radius:6px;margin-bottom:.45rem}
+.task-item-name{flex:1;font-size:.9rem}
+.task-item-desc{font-size:.76rem;color:#5C5248;font-style:italic;margin-top:.1rem}
+
+/* REVIEW */
+.review-row{display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;background:#150D1A;border:1px solid rgba(91,141,217,.15);border-left:3px solid #5B8DD9;border-radius:6px;margin-bottom:.45rem;flex-wrap:wrap}
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s}
 .modal-overlay.show{opacity:1;pointer-events:all}
-.modal{background:#1A0F21;border:1px solid rgba(201,168,76,.35);border-radius:8px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;transform:translateY(16px);transition:transform .2s}
+.modal{background:#1A0F21;border:1px solid rgba(201,168,76,.3);border-radius:8px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;transform:translateY(14px);transition:transform .2s}
 .modal-overlay.show .modal{transform:translateY(0)}
-.modal-header{background:linear-gradient(135deg,#3D0C45,#150D1A);padding:1.1rem 1.5rem;border-bottom:1px solid rgba(201,168,76,.15);display:flex;align-items:center;justify-content:space-between}
-.modal-title{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.15em;color:#C9A84C;text-transform:uppercase}
-.modal-close{background:none;border:none;color:#9A8E7A;font-size:1.2rem;cursor:pointer;padding:.2rem}
+.modal-header{background:linear-gradient(135deg,#3D0C45,#150D1A);padding:1.1rem 1.5rem;border-bottom:1px solid rgba(201,168,76,.12);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.15em;color:#C9A84C;text-transform:uppercase}
+.modal-close{background:none;border:none;color:#9A8E7A;font-size:1.2rem;cursor:pointer}
 .modal-close:hover{color:#F0E8D0}
 .modal-body{padding:1.5rem}
 .modal-footer{padding:.9rem 1.5rem;border-top:1px solid rgba(201,168,76,.1);display:flex;gap:.6rem;justify-content:flex-end}
-.err{color:#CF4A4A;font-size:.82rem;margin-top:.4rem;display:none;font-style:italic}
 
-/* TOAST */
 #toast-container{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
 .toast{background:#1A0F21;border:1px solid rgba(201,168,76,.18);padding:.75rem 1.1rem;border-radius:4px;font-size:.875rem;display:flex;align-items:center;gap:.7rem;min-width:260px;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slideIn .25s ease}
 .toast.success{border-left:3px solid #4CAF7A}.toast.error{border-left:3px solid #CF4A4A}.toast.info{border-left:3px solid #C9A84C}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
 
-/* TASK LIBRARY */
-.task-chip{display:flex;align-items:center;gap:.75rem;background:#150D1A;border:1px solid rgba(201,168,76,.1);border-radius:6px;padding:.7rem 1rem;margin-bottom:.5rem}
-.task-chip-name{flex:1;font-size:.9rem}
-.task-chip-cat{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;padding:.15rem .5rem;border-radius:20px}
-
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem}
-.stat-card{background:#1A0F21;border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:1.1rem 1.3rem;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#8A7235,#C9A84C)}
+.card{background:#1A0F21;border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+.card-title{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.15em;color:#8A7235;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid rgba(201,168,76,.08)}
+.empty{text-align:center;padding:2.5rem;color:#5C5248;font-style:italic}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:#1A0F21;border:1px solid rgba(201,168,76,.1);border-radius:8px;padding:1rem 1.2rem}
+.stat-card::before{content:'';display:block;height:2px;background:linear-gradient(90deg,#8A7235,#C9A84C);margin-bottom:.6rem;border-radius:1px}
 .stat-card.red::before{background:linear-gradient(90deg,#8B1A1A,#CF4A4A)}
 .stat-card.green::before{background:linear-gradient(90deg,#1A5C35,#4CAF7A)}
 .stat-card.blue::before{background:linear-gradient(90deg,#1A3A7A,#5B8DD9)}
 .stat-label{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.2em;color:#5C5248;text-transform:uppercase}
-.stat-value{font-family:'Cinzel Decorative',serif;font-size:1.8rem;color:#C9A84C;line-height:1.2;margin:.2rem 0}
-.stat-value.red{color:#CF4A4A}.stat-value.green{color:#4CAF7A}
+.stat-value{font-family:'Cinzel Decorative',serif;font-size:1.8rem;color:#C9A84C;line-height:1.2}
+.stat-value.red{color:#CF4A4A}.stat-value.green{color:#4CAF7A}.stat-value.blue{color:#5B8DD9}
 
-.empty-state{text-align:center;padding:3rem;color:#5C5248;font-style:italic}
-.action-btns{display:flex;gap:.35rem;flex-wrap:wrap}
-@media(max-width:768px){.sidebar{display:none}.content{padding:1rem}.form-row{grid-template-columns:1fr}}
+@media(max-width:900px){.sidebar{display:none}.content{padding:1rem}.days-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:500px){.days-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -168,86 +180,81 @@ textarea.form-input{resize:vertical;min-height:70px}
 
 <div class="app-body">
   <nav class="sidebar">
-    <div class="nav-section">My Tasks</div>
-    <div class="side-item active" onclick="showPage('my-week',this)" id="nav-my-week">
-      <span>📅</span> This Week
-    </div>
-    <div class="side-item" onclick="showPage('my-history',this)" id="nav-my-history">
-      <span>📜</span> My History
-    </div>
+    <div class="nav-section">Schedule</div>
+    <div class="side-item active" onclick="showPage('week',this)" id="nav-week"><span>🗓</span> Week View</div>
+    <div class="side-item" onclick="showPage('my-tasks',this)" id="nav-my-tasks"><span>👤</span> My Tasks</div>
+
     <div class="side-divider"></div>
-    <div class="nav-section" id="admin-section" style="display:none">Admin</div>
-    <div class="side-item" onclick="showPage('admin-week',this)" id="nav-admin-week" style="display:none">
-      <span>🗓</span> Schedule
-    </div>
-    <div class="side-item" onclick="showPage('admin-review',this)" id="nav-admin-review" style="display:none">
-      <span>⏳</span> Review
-      <span id="review-badge" style="margin-left:auto;background:#CF4A4A;color:#fff;font-size:.6rem;font-family:'Cinzel',serif;padding:.1rem .4rem;border-radius:10px;display:none">0</span>
-    </div>
-    <div class="side-item" onclick="showPage('task-library',this)" id="nav-tasks" style="display:none">
-      <span>⚙</span> Task Library
+    <div id="admin-nav" style="display:none">
+      <div class="nav-section">Admin</div>
+      <div class="side-item" onclick="showPage('review',this)" id="nav-review">
+        <span>⏳</span> Review
+        <span id="review-badge" style="margin-left:auto;background:#CF4A4A;color:#fff;font-size:.58rem;font-family:'Cinzel',serif;padding:.1rem .4rem;border-radius:10px;display:none">0</span>
+      </div>
+      <div class="side-item" onclick="showPage('rotation',this)" id="nav-rotation"><span>🔄</span> Rotation</div>
+      <div class="side-item" onclick="showPage('tasks',this)" id="nav-tasks"><span>⚙</span> Task Library</div>
     </div>
   </nav>
 
   <main class="content">
 
-    <!-- MY WEEK -->
-    <div class="page active" id="page-my-week">
+    <!-- WEEK VIEW -->
+    <div class="page active" id="page-week">
       <div class="page-header">
-        <div><div class="page-title">My Tasks</div><div class="page-sub">Your assignments for the week</div></div>
-        <button class="btn btn-ghost btn-sm" onclick="loadMyWeek()">↻ Refresh</button>
+        <div><div class="page-title">Week at a Glance</div><div class="page-sub">Click any day to see tasks and status</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadWeek()">↻ Refresh</button>
       </div>
       <div class="week-nav">
         <button class="week-btn" onclick="shiftWeek(-1)">‹</button>
-        <div class="week-label" id="my-week-label">—</div>
+        <div class="week-label" id="week-range-label"></div>
         <button class="week-btn" onclick="shiftWeek(1)">›</button>
       </div>
-      <div id="my-week-body"></div>
-    </div>
-
-    <!-- MY HISTORY -->
-    <div class="page" id="page-my-history">
-      <div class="page-header">
-        <div><div class="page-title">My History</div><div class="page-sub">All your past task completions</div></div>
-        <button class="btn btn-ghost btn-sm" onclick="loadMyHistory()">↻ Refresh</button>
-      </div>
-      <div id="my-history-body"></div>
-    </div>
-
-    <!-- ADMIN SCHEDULE -->
-    <div class="page" id="page-admin-week">
-      <div class="page-header">
-        <div><div class="page-title">Weekly Schedule</div><div class="page-sub">Assign tasks to brothers for the week</div></div>
-        <div class="header-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openCopyWeek()">⧉ Copy Last Week</button>
-          <button class="btn btn-gold btn-sm" onclick="openAssign()">+ Assign Task</button>
+      <div class="days-grid" id="days-grid"></div>
+      <div id="day-detail-wrap" style="display:none">
+        <div class="day-detail">
+          <div class="day-detail-header">
+            <div class="day-detail-title" id="day-detail-title"></div>
+            <div style="display:flex;gap:.5rem" id="day-detail-admin-btns"></div>
+          </div>
+          <div id="day-detail-body"></div>
         </div>
       </div>
-      <div class="week-nav">
-        <button class="week-btn" onclick="shiftAdminWeek(-1)">‹</button>
-        <div class="week-label" id="admin-week-label">—</div>
-        <button class="week-btn" onclick="shiftAdminWeek(1)">›</button>
-      </div>
-      <div class="stats-row" id="admin-stats"></div>
-      <div id="admin-week-body"></div>
     </div>
 
-    <!-- ADMIN REVIEW -->
-    <div class="page" id="page-admin-review">
+    <!-- MY TASKS -->
+    <div class="page" id="page-my-tasks">
       <div class="page-header">
-        <div><div class="page-title">Review Completions</div><div class="page-sub">Approve or reject submitted tasks</div></div>
-        <button class="btn btn-ghost btn-sm" onclick="loadAdminReview()">↻ Refresh</button>
+        <div><div class="page-title">My Tasks</div><div class="page-sub">Your assignments this week</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadMyTasks()">↻ Refresh</button>
+      </div>
+      <div id="my-tasks-body"></div>
+    </div>
+
+    <!-- REVIEW -->
+    <div class="page" id="page-review">
+      <div class="page-header">
+        <div><div class="page-title">Review Completions</div><div class="page-sub">Approve or mark missed</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadReview()">↻ Refresh</button>
       </div>
       <div id="review-body"></div>
     </div>
 
-    <!-- TASK LIBRARY -->
-    <div class="page" id="page-task-library">
+    <!-- ROTATION SETUP -->
+    <div class="page" id="page-rotation">
       <div class="page-header">
-        <div><div class="page-title">Task Library</div><div class="page-sub">Define reusable tasks for Stew Crew and HM Crew</div></div>
+        <div><div class="page-title">Rotation Setup</div><div class="page-sub">Assign a brother to each task for each day of the week — this repeats every week automatically</div></div>
+        <button class="btn btn-gold btn-sm" onclick="saveRotation()">💾 Save Rotation</button>
+      </div>
+      <div id="rotation-body"></div>
+    </div>
+
+    <!-- TASK LIBRARY -->
+    <div class="page" id="page-tasks">
+      <div class="page-header">
+        <div><div class="page-title">Task Library</div><div class="page-sub">Define the recurring tasks for Stew Crew and HM Crew</div></div>
         <button class="btn btn-gold btn-sm" onclick="openAddTask()">+ New Task</button>
       </div>
-      <div id="task-library-body"></div>
+      <div id="tasks-body"></div>
     </div>
 
   </main>
@@ -255,12 +262,14 @@ textarea.form-input{resize:vertical;min-height:70px}
 
 <div id="toast-container"></div>
 
-<!-- MARK COMPLETE MODAL -->
+<!-- COMPLETE MODAL -->
 <div class="modal-overlay" id="modal-complete">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title">Mark as Complete</span><button class="modal-close" onclick="closeModal('modal-complete')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">Mark Complete</span><button class="modal-close" onclick="closeModal('modal-complete')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="complete-aid">
+      <input type="hidden" id="complete-date">
+      <input type="hidden" id="complete-task-id">
       <div class="form-group"><label class="form-label">Notes <span style="color:#3A2E28">(optional)</span></label><textarea class="form-input" id="complete-notes" placeholder="Any notes for the admin..."></textarea></div>
     </div>
     <div class="modal-footer">
@@ -270,21 +279,18 @@ textarea.form-input{resize:vertical;min-height:70px}
   </div>
 </div>
 
-<!-- MARK MISSED MODAL -->
+<!-- MISS MODAL -->
 <div class="modal-overlay" id="modal-miss">
   <div class="modal">
     <div class="modal-header"><span class="modal-title">Mark as Missed</span><button class="modal-close" onclick="closeModal('modal-miss')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="miss-aid">
-      <p style="font-size:.9rem;color:#9A8E7A;margin-bottom:1.25rem;font-style:italic">This will deduct points from the member and mark the task as missed.</p>
-      <div class="form-group">
-        <label class="form-label">Points to Deduct</label>
-        <input class="form-input" type="number" id="miss-penalty" value="1" min="0" placeholder="1">
-      </div>
+      <p style="font-size:.9rem;color:#9A8E7A;margin-bottom:1.25rem;font-style:italic">Points will be deducted from the member automatically.</p>
+      <div class="form-group"><label class="form-label">Points to Deduct</label><input class="form-input" type="number" id="miss-penalty" value="1" min="0"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-miss')">Cancel</button>
-      <button class="btn btn-danger btn-sm" onclick="submitMiss()">Mark Missed &amp; Deduct Points</button>
+      <button class="btn btn-danger btn-sm" onclick="submitMiss()">Mark Missed &amp; Deduct</button>
     </div>
   </div>
 </div>
@@ -292,86 +298,38 @@ textarea.form-input{resize:vertical;min-height:70px}
 <!-- ADD TASK MODAL -->
 <div class="modal-overlay" id="modal-add-task">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title">New Task</span><button class="modal-close" onclick="closeModal('modal-add-task')">✕</button></div>
+    <div class="modal-header"><span class="modal-title" id="task-modal-title">New Task</span><button class="modal-close" onclick="closeModal('modal-add-task')">✕</button></div>
     <div class="modal-body">
+      <input type="hidden" id="edit-task-id">
       <div class="form-group"><label class="form-label">Task Title</label><input class="form-input" id="task-title" placeholder="e.g. Mop kitchen floor"></div>
-      <div class="form-group"><label class="form-label">Description <span style="color:#3A2E28">(optional)</span></label><textarea class="form-input" id="task-desc" placeholder="Details about the task..."></textarea></div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Category</label>
-          <select class="form-input" id="task-category">
-            <option value="Stew Crew">Stew Crew</option>
-            <option value="HM Crew">HM Crew</option>
-          </select>
-        </div>
-
+      <div class="form-group"><label class="form-label">Description <span style="color:#3A2E28">(optional)</span></label><textarea class="form-input" id="task-desc" placeholder="Details..."></textarea></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-input" id="task-category">
+          <option value="Stew Crew">Stew Crew</option>
+          <option value="HM Crew">HM Crew</option>
+        </select>
       </div>
-      <div class="err" id="add-task-err"></div>
+      <div class="err" id="task-err"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-task')">Cancel</button>
-      <button class="btn btn-gold btn-sm" onclick="saveTask()">Create Task</button>
-    </div>
-  </div>
-</div>
-
-<!-- ASSIGN MODAL -->
-<div class="modal-overlay" id="modal-assign">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title">Assign Task</span><button class="modal-close" onclick="closeModal('modal-assign')">✕</button></div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Task</label>
-        <select class="form-input" id="assign-task"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Brother</label>
-        <select class="form-input" id="assign-member"></select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Due Date</label>
-          <input class="form-input" type="date" id="assign-due">
-        </div>
-      </div>
-      <div class="err" id="assign-err"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-assign')">Cancel</button>
-      <button class="btn btn-gold btn-sm" onclick="saveAssignment()">Assign</button>
-    </div>
-  </div>
-</div>
-
-<!-- COPY WEEK MODAL -->
-<div class="modal-overlay" id="modal-copy">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title">Copy Week Schedule</span><button class="modal-close" onclick="closeModal('modal-copy')">✕</button></div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Copy From Week</label>
-        <select class="form-input" id="copy-from"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Copy To Week (start date)</label>
-        <input class="form-input" type="date" id="copy-to">
-      </div>
-      <p style="font-size:.82rem;color:#5C5248;font-style:italic;margin-top:.5rem">All assignments from the source week will be duplicated with dates shifted accordingly.</p>
-      <div class="err" id="copy-err"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-copy')">Cancel</button>
-      <button class="btn btn-gold btn-sm" onclick="doCopyWeek()">Copy Schedule</button>
+      <button class="btn btn-gold btn-sm" id="task-save-btn" onclick="saveTask()">Create Task</button>
     </div>
   </div>
 </div>
 
 <script>
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
 let currentUser = null;
-let currentMyWeek = null;
-let currentAdminWeek = null;
+let currentWeekMonday = null;
+let selectedDate = null;
 let allTasks = [];
 let allMembers = [];
+let rotationData = [];
+// pendingRotation: {task_id -> {dow -> member_id}}
+let pendingRotation = {};
 
 // ── UTILS ──
 function toast(msg, type='info') {
@@ -383,62 +341,57 @@ function toast(msg, type='info') {
 }
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-function showErr(id, msg) { const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; }
-function fmtDate(d) { if(!d) return '—'; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
-function isOverdue(due, status) {
-  if (status === 'approved') return false;
-  return new Date(due+'T23:59:59') < new Date();
+function fmtDate(d) {
+  if(!d) return '—';
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+}
+function fmtDateShort(d) {
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
 function getMonday(d) {
-  const dt = new Date(d);
+  const dt = new Date(typeof d === 'string' ? d + 'T12:00:00' : d);
   const day = dt.getDay();
   const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
   dt.setDate(diff);
   return dt.toISOString().slice(0,10);
 }
-function addWeeks(weekStr, n) {
-  const d = new Date(weekStr+'T12:00:00');
-  d.setDate(d.getDate() + n * 7);
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + n);
   return d.toISOString().slice(0,10);
 }
-function fmtWeek(w) {
-  const d = new Date(w+'T12:00:00');
-  const end = new Date(d); end.setDate(end.getDate()+6);
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' – ' + end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function isOverdue(due, status) {
+  if (['approved','missed'].includes(status)) return false;
+  return new Date(due + 'T23:59:59') < new Date();
 }
 function catBadge(cat) {
   const cls = cat === 'Stew Crew' ? 'cat-stew' : 'cat-hm';
-  return `<span class="badge ${cls}">${cat}</span>`;
+  return `<span class="task-cat ${cls}">${cat}</span>`;
 }
 function statusBadge(status, due) {
-  if (isOverdue(due, status) && status !== 'approved') return '<span class="badge badge-overdue">Overdue</span>';
-  const map = {pending:'badge-pending',submitted:'badge-submitted',approved:'badge-approved',rejected:'badge-rejected',missed:'badge-missed'};
+  if (isOverdue(due, status)) return '<span class="badge badge-overdue">Overdue</span>';
+  const map = {pending:'badge-pending',submitted:'badge-submitted',approved:'badge-approved',missed:'badge-missed'};
   return `<span class="badge ${map[status]||'badge-pending'}">${status}</span>`;
 }
 
-
-// ── AUTH ──
+// ── INIT ──
 async function init() {
-  const r = await fetch('/dailies/api/members');
-  // First check login
-  const me = await fetch('/points/api/me');
-  const d = await me.json();
+  const r = await fetch('/points/api/me');
+  const d = await r.json();
   if (!d.authenticated) { window.location.href = '/points'; return; }
   currentUser = d;
 
   if (d.role === 'admin' || d.role === 'moderator') {
-    document.getElementById('admin-section').style.display = 'block';
-    document.getElementById('nav-admin-week').style.display = 'flex';
-    document.getElementById('nav-admin-review').style.display = 'flex';
-    if (d.role === 'admin') document.getElementById('nav-tasks').style.display = 'flex';
+    document.getElementById('admin-nav').style.display = 'block';
+    pollReview();
   }
 
-  currentMyWeek = getMonday(new Date());
-  currentAdminWeek = getMonday(new Date());
-
-  await Promise.all([loadTasks(), loadMembers()]);
-  loadMyWeek();
-  if (d.role !== 'member') pollReview();
+  currentWeekMonday = getMonday(new Date());
+  await Promise.all([loadTasks(), loadMembers(), loadRotation()]);
+  showPage('week', document.getElementById('nav-week'));
 }
 
 async function loadTasks() {
@@ -449,14 +402,23 @@ async function loadMembers() {
   const r = await fetch('/dailies/api/members');
   allMembers = await r.json();
 }
+async function loadRotation() {
+  const r = await fetch('/dailies/api/rotation');
+  rotationData = await r.json();
+  // Build pendingRotation map
+  pendingRotation = {};
+  rotationData.forEach(e => {
+    if (!pendingRotation[e.task_id]) pendingRotation[e.task_id] = {};
+    pendingRotation[e.task_id][e.day_of_week] = e.member_id;
+  });
+}
 async function pollReview() {
   try {
-    const r = await fetch('/dailies/api/assignments');
+    const r = await fetch('/dailies/api/assignments?week=' + currentWeekMonday);
     const all = await r.json();
-    const submitted = all.filter(a => a.status === 'submitted');
+    const sub = all.filter(a => a.status === 'submitted').length;
     const b = document.getElementById('review-badge');
-    if (submitted.length > 0) { b.textContent = submitted.length; b.style.display = 'inline'; }
-    else b.style.display = 'none';
+    b.textContent = sub; b.style.display = sub > 0 ? 'inline' : 'none';
   } catch(e) {}
   setTimeout(pollReview, 30000);
 }
@@ -467,201 +429,242 @@ function showPage(page, el) {
   document.querySelectorAll('.side-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   if (el) el.classList.add('active');
-  if (page === 'my-week') loadMyWeek();
-  else if (page === 'my-history') loadMyHistory();
-  else if (page === 'admin-week') loadAdminWeek();
-  else if (page === 'admin-review') loadAdminReview();
-  else if (page === 'task-library') loadTaskLibrary();
+  if (page === 'week') loadWeek();
+  else if (page === 'my-tasks') loadMyTasks();
+  else if (page === 'review') loadReview();
+  else if (page === 'rotation') renderRotationSetup();
+  else if (page === 'tasks') renderTaskLibrary();
 }
 
-// ── WEEK NAV ──
-function shiftWeek(n) { currentMyWeek = addWeeks(currentMyWeek, n); loadMyWeek(); }
-function shiftAdminWeek(n) { currentAdminWeek = addWeeks(currentAdminWeek, n); loadAdminWeek(); }
+// ── WEEK VIEW ──
+function shiftWeek(n) {
+  currentWeekMonday = addDays(currentWeekMonday, n * 7);
+  selectedDate = null;
+  loadWeek();
+}
 
-// ── MY WEEK ──
-async function loadMyWeek() {
-  document.getElementById('my-week-label').textContent = fmtWeek(currentMyWeek);
-  const r = await fetch(`/dailies/api/assignments?week=${currentMyWeek}`);
+async function loadWeek() {
+  const r = await fetch('/dailies/api/assignments?week=' + currentWeekMonday);
   const assignments = await r.json();
-  renderMyWeek(assignments);
+  renderWeekGrid(assignments);
+  if (selectedDate) renderDayDetail(selectedDate, assignments);
 }
 
-function renderMyWeek(assignments) {
-  const el = document.getElementById('my-week-body');
-  if (!assignments.length) {
-    el.innerHTML = '<div class="empty-state">No tasks assigned for this week.</div>'; return;
+function renderWeekGrid(assignments) {
+  const today = todayStr();
+  const endDate = addDays(currentWeekMonday, 6);
+  document.getElementById('week-range-label').textContent =
+    fmtDateShort(currentWeekMonday) + ' – ' + fmtDateShort(endDate);
+
+  const grid = document.getElementById('days-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < 7; i++) {
+    const date = addDays(currentWeekMonday, i);
+    const dayAssignments = assignments.filter(a => a.due_date === date);
+    const isToday = date === today;
+    const isSelected = date === selectedDate;
+
+    const card = document.createElement('div');
+    card.className = 'day-card' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '');
+    card.onclick = () => selectDay(date, assignments);
+
+    const dt = new Date(date + 'T12:00:00');
+    const total = dayAssignments.length;
+    const done = dayAssignments.filter(a => a.status === 'approved').length;
+    const submitted = dayAssignments.filter(a => a.status === 'submitted').length;
+    const missed = dayAssignments.filter(a => a.status === 'missed').length;
+    const overdue = dayAssignments.filter(a => isOverdue(a.due_date, a.status)).length;
+
+    const dots = dayAssignments.map(a => {
+      let cls = 'dot-pending';
+      if (a.status === 'approved') cls = 'dot-approved';
+      else if (a.status === 'submitted') cls = 'dot-submitted';
+      else if (a.status === 'missed') cls = 'dot-missed';
+      else if (isOverdue(a.due_date, a.status)) cls = 'dot-overdue';
+      return `<div class="day-dot ${cls}" title="${a.title}"></div>`;
+    }).join('');
+
+    const summary = total === 0 ? 'No tasks' :
+      done === total ? 'All done ✓' :
+      overdue > 0 ? `${overdue} overdue` :
+      submitted > 0 ? `${submitted} pending review` : `${done}/${total} done`;
+
+    card.innerHTML = `
+      <div class="day-name">${DAYS[i]}</div>
+      <div class="day-date">${dt.getDate()}</div>
+      <div class="day-dots">${dots}</div>
+      <div class="day-summary">${summary}</div>`;
+    grid.appendChild(card);
   }
+}
+
+function selectDay(date, assignments) {
+  selectedDate = date;
+  renderWeekGrid(assignments); // re-render to update selected highlight
+  renderDayDetail(date, assignments);
+}
+
+function renderDayDetail(date, assignments) {
+  const wrap = document.getElementById('day-detail-wrap');
+  const title = document.getElementById('day-detail-title');
+  const body = document.getElementById('day-detail-body');
+  const adminBtns = document.getElementById('day-detail-admin-btns');
+  wrap.style.display = 'block';
+
+  const dt = new Date(date + 'T12:00:00');
+  title.textContent = dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const dayAssignments = assignments.filter(a => a.due_date === date);
+
+  // Admin: show ensure button if there are rotation entries but no stored assignments
+  if (currentUser.role === 'admin' || currentUser.role === 'moderator') {
+    adminBtns.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="ensureDay('${date}')">↻ Sync Day</button>`;
+  } else {
+    adminBtns.innerHTML = '';
+  }
+
+  if (!dayAssignments.length) {
+    body.innerHTML = '<div class="detail-empty">No tasks scheduled. ' +
+      (rotationData.length === 0 ? 'Set up the rotation first.' : 'Use Sync Day to generate from rotation.') + '</div>';
+    return;
+  }
+
+  // Group by category
   const byCategory = {};
-  assignments.forEach(a => { (byCategory[a.category] = byCategory[a.category]||[]).push(a); });
-  el.innerHTML = Object.entries(byCategory).map(([cat, items]) => `
-    <div class="category-block">
-      <div class="category-header">${catBadge(cat)}<span class="cat-count">${items.length} task${items.length!==1?'s':''}</span></div>
-      <div class="assignment-grid">
-        ${items.map(a => {
-          const over = isOverdue(a.due_date, a.status);
-          const canComplete = a.status === 'pending' || a.status === 'rejected';
-          return `<div class="assignment-row status-${a.status}${over?' overdue':''}">
-            <div class="assign-task">
-              <div class="assign-task-name">${a.title}</div>
-              ${a.task_desc ? `<div class="assign-task-desc">${a.task_desc}</div>` : ''}
-            </div>
-            <div class="assign-due ${over?'overdue':''}">${fmtDate(a.due_date)}</div>
-            ${statusBadge(a.status, a.due_date)}
-            ${a.status === 'submitted' ? '<span style="font-size:.75rem;color:#5C5248;font-style:italic">Awaiting approval</span>' : ''}
-            ${a.status === 'approved' ? `<span style="font-size:.75rem;color:#4CAF7A">✓ Approved by ${a.approver_name||'admin'}</span>` : ''}
-            ${a.status === 'rejected' ? `<span style="font-size:.75rem;color:#CF4A4A">Rejected: ${a.notes||''}</span>` : ''}
-            ${canComplete ? `<button class="btn btn-success btn-sm" onclick="openComplete(${a.assignment_id})">Mark Complete</button>` : ''}
-          </div>`;
-        }).join('')}
+  dayAssignments.forEach(a => { (byCategory[a.category] = byCategory[a.category]||[]).push(a); });
+
+  body.innerHTML = Object.entries(byCategory).map(([cat, items]) => `
+    <div style="margin-bottom:1.25rem">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem">${catBadge(cat)}</div>
+      <div class="task-rows">
+        ${items.map(a => renderTaskRow(a)).join('')}
       </div>
     </div>`).join('');
 }
 
-// ── MY HISTORY ──
-async function loadMyHistory() {
-  const r = await fetch('/dailies/api/assignments');
-  const all = await r.json();
-  const el = document.getElementById('my-history-body');
-  if (!all.length) { el.innerHTML = '<div class="empty-state">No task history yet.</div>'; return; }
-  const total = all.length;
-  const approved = all.filter(a=>a.status==='approved').length;
-  const missed = all.filter(a=>isOverdue(a.due_date,a.status)&&a.status==='pending').length;
+function renderTaskRow(a) {
+  const over = isOverdue(a.due_date, a.status);
+  const isOwn = a.member_id === currentUser.user_id;
+  const isAdmin = ['admin','moderator'].includes(currentUser.role);
+  const canComplete = isOwn && (a.status === 'pending' || a.status === 'rejected') && a.assignment_id;
+  const canAdminAct = isAdmin && a.assignment_id;
+
+  let actions = '';
+  if (canComplete) {
+    actions += `<button class="btn btn-success btn-sm" onclick="openComplete(${a.assignment_id},'${a.due_date}',${a.task_id})">✓ Done</button>`;
+  }
+  if (canAdminAct) {
+    if (a.status === 'submitted') {
+      actions += `<button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓ Approve</button>`;
+    }
+    if (!['approved','missed'].includes(a.status)) {
+      actions += `<button class="btn btn-danger btn-sm" onclick="openMiss(${a.assignment_id})">✕ Miss</button>`;
+    }
+  }
+  // Virtual task (not yet stored) — admin can still mark miss or sync day
+  if (!a.assignment_id && isAdmin) {
+    actions += `<span style="font-size:.72rem;color:#5C5248;font-style:italic">Sync day to track</span>`;
+  }
+
+  return `<div class="task-row status-${a.status}${over?' overdue':''}">
+    <div class="task-title">
+      <div class="task-name">${a.title}</div>
+      ${a.task_desc ? `<div class="task-desc-small">${a.task_desc}</div>` : ''}
+    </div>
+    <div class="task-member">${a.member_name}</div>
+    ${statusBadge(a.status, a.due_date)}
+    ${a.notes && a.status !== 'pending' ? `<span style="font-size:.75rem;color:#5C5248;font-style:italic">${a.notes}</span>` : ''}
+    <div class="task-actions">${actions}</div>
+  </div>`;
+}
+
+async function ensureDay(date) {
+  const r = await fetch('/dailies/api/assignments/ensure', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({date})
+  });
+  const d = await r.json();
+  if (d.success) {
+    toast(`Synced ${d.created} task${d.created!==1?'s':''} from rotation`, d.created > 0 ? 'success' : 'info');
+    loadWeek();
+  } else toast(d.error||'Error','error');
+}
+
+// ── MY TASKS ──
+async function loadMyTasks() {
+  const monday = getMonday(new Date());
+  const r = await fetch('/dailies/api/assignments?week=' + monday);
+  const assignments = await r.json();
+  const mine = assignments.filter(a => a.member_id === currentUser.user_id);
+  const el = document.getElementById('my-tasks-body');
+
+  const today = todayStr();
+
+  if (!mine.length) {
+    el.innerHTML = '<div class="empty">No tasks assigned to you this week.</div>'; return;
+  }
+
+  const done = mine.filter(a=>a.status==='approved').length;
+  const overdue = mine.filter(a=>isOverdue(a.due_date,a.status)).length;
+
   el.innerHTML = `
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Total Assigned</div><div class="stat-value">${total}</div></div>
-      <div class="stat-card green"><div class="stat-label">Completed</div><div class="stat-value green">${approved}</div></div>
-      <div class="stat-card red"><div class="stat-label">Missed/Overdue</div><div class="stat-value red">${missed}</div></div>
+      <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value">${mine.length}</div></div>
+      <div class="stat-card green"><div class="stat-label">Approved</div><div class="stat-value green">${done}</div></div>
+      <div class="stat-card red"><div class="stat-label">Overdue</div><div class="stat-value red">${overdue}</div></div>
     </div>
-    <div class="card">
-      <div class="card-title">All Tasks</div>
-      <div class="assignment-grid">
-        ${all.map(a => {
-          const over = isOverdue(a.due_date, a.status);
-          return `<div class="assignment-row status-${a.status}${over?' overdue':''}">
-            <div class="assign-task"><div class="assign-task-name">${a.title}</div></div>
-            ${catBadge(a.category)}
-            <div class="assign-due ${over?'overdue':''}">${fmtDate(a.due_date)}</div>
-            ${statusBadge(a.status, a.due_date)}
-          </div>`;
-        }).join('')}
-      </div>
+    <div class="task-rows">
+      ${mine.map(a => {
+        const over = isOverdue(a.due_date, a.status);
+        const canComplete = (a.status === 'pending' || a.status === 'rejected') && a.assignment_id;
+        return `<div class="task-row status-${a.status}${over?' overdue':''}">
+          <div class="task-title">
+            <div class="task-name">${a.title}</div>
+            <div style="font-size:.75rem;color:#5C5248;margin-top:.1rem">${fmtDate(a.due_date)}</div>
+          </div>
+          ${catBadge(a.category)}
+          ${statusBadge(a.status, a.due_date)}
+          ${a.notes && a.status !== 'pending' ? `<span style="font-size:.75rem;color:#5C5248;font-style:italic">${a.notes}</span>` : ''}
+          <div class="task-actions">
+            ${canComplete ? `<button class="btn btn-success btn-sm" onclick="openComplete(${a.assignment_id},'${a.due_date}',${a.task_id})">✓ Mark Done</button>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
 }
 
-// ── ADMIN WEEK ──
-async function loadAdminWeek() {
-  document.getElementById('admin-week-label').textContent = fmtWeek(currentAdminWeek);
-  const r = await fetch(`/dailies/api/assignments?week=${currentAdminWeek}`);
-  const assignments = await r.json();
-  renderAdminWeek(assignments);
-}
-
-function renderAdminWeek(assignments) {
-  const el = document.getElementById('admin-week-body');
-  const total = assignments.length;
-  const done = assignments.filter(a=>a.status==='approved').length;
-  const overdue = assignments.filter(a=>isOverdue(a.due_date,a.status)).length;
-  const pending = assignments.filter(a=>a.status==='submitted').length;
-  document.getElementById('admin-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-value">${total}</div></div>
-    <div class="stat-card green"><div class="stat-label">Approved</div><div class="stat-value green">${done}</div></div>
-    <div class="stat-card blue"><div class="stat-label">Awaiting Review</div><div class="stat-value" style="color:#5B8DD9">${pending}</div></div>
-    <div class="stat-card red"><div class="stat-label">Overdue</div><div class="stat-value red">${overdue}</div></div>`;
-  if (!assignments.length) { el.innerHTML = '<div class="empty-state">No tasks assigned this week. Use "+ Assign Task" to add some, or copy a previous week.</div>'; return; }
-  const byCategory = {};
-  assignments.forEach(a => { (byCategory[a.category]=byCategory[a.category]||[]).push(a); });
-  el.innerHTML = Object.entries(byCategory).map(([cat, items]) => `
-    <div class="category-block">
-      <div class="category-header">${catBadge(cat)}<span class="cat-count">${items.length} assignment${items.length!==1?'s':''}</span></div>
-      <div class="assignment-grid">
-        ${items.map(a => {
-          const over = isOverdue(a.due_date, a.status);
-          return `<div class="assignment-row status-${a.status}${over?' overdue':''}">
-            <div class="assign-task"><div class="assign-task-name">${a.title}</div></div>
-            <div class="assign-member">${a.member_name}</div>
-            <div class="assign-due ${over?'overdue':''}">${fmtDate(a.due_date)}</div>
-            ${statusBadge(a.status, a.due_date)}
-            <div class="action-btns" style="margin-left:auto">
-              ${a.status==='submitted' ? `<button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓ Approve</button>` : ''}
-              ${a.status!=='approved'&&a.status!=='missed' ? `<button class="btn btn-danger btn-sm" onclick="openMiss(${a.assignment_id})">✕ Miss</button>` : ''}
-              <button class="btn btn-ghost btn-sm" onclick="deleteAssignment(${a.assignment_id})" title="Remove">🗑</button>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`).join('');
-}
-
-// ── ADMIN REVIEW ──
-async function loadAdminReview() {
-  const r = await fetch('/dailies/api/assignments');
+// ── REVIEW ──
+async function loadReview() {
+  const r = await fetch('/dailies/api/assignments?week=' + currentWeekMonday);
   const all = await r.json();
-  const pending = all.filter(a => a.status === 'submitted');
-  const el = document.getElementById('review-body');
+  const submitted = all.filter(a => a.status === 'submitted');
   const b = document.getElementById('review-badge');
-  b.textContent = pending.length; b.style.display = pending.length > 0 ? 'inline' : 'none';
-  if (!pending.length) { el.innerHTML = '<div class="empty-state">No completions waiting for review. ✓</div>'; return; }
-  el.innerHTML = `<div class="assignment-grid">` +
-    pending.map(a => `
-      <div class="assignment-row status-submitted">
-        <div class="assign-task">
-          <div class="assign-task-name">${a.title}</div>
-          ${a.notes ? `<div class="assign-task-desc">Notes: ${a.notes}</div>` : ''}
-        </div>
-        ${catBadge(a.category)}
-        <div class="assign-member">${a.member_name}</div>
-        <div class="assign-due">${fmtDate(a.due_date)}</div>
-        <div class="action-btns" style="margin-left:auto">
-          <button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓ Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="openMiss(${a.assignment_id})">✕ Mark Missed</button>
-        </div>
-      </div>`).join('') + '</div>';
+  b.textContent = submitted.length; b.style.display = submitted.length > 0 ? 'inline' : 'none';
+
+  const el = document.getElementById('review-body');
+  if (!submitted.length) { el.innerHTML = '<div class="empty">Nothing to review right now ✓</div>'; return; }
+
+  el.innerHTML = '<div class="task-rows">' + submitted.map(a => `
+    <div class="review-row">
+      <div class="task-title">
+        <div class="task-name">${a.title}</div>
+        ${a.notes ? `<div class="task-desc-small">Notes: ${a.notes}</div>` : ''}
+      </div>
+      ${catBadge(a.category)}
+      <div class="task-member">${a.member_name}</div>
+      <div style="font-size:.75rem;color:#5C5248">${fmtDate(a.due_date)}</div>
+      <div class="task-actions">
+        <button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="openMiss(${a.assignment_id})">✕ Miss</button>
+      </div>
+    </div>`).join('') + '</div>';
 }
 
-// ── TASK LIBRARY ──
-async function loadTaskLibrary() {
-  await loadTasks();
-  const el = document.getElementById('task-library-body');
-  if (!allTasks.length) { el.innerHTML = '<div class="empty-state">No tasks yet. Create some to start scheduling.</div>'; return; }
-  const byCategory = {};
-  allTasks.forEach(t => { (byCategory[t.category]=byCategory[t.category]||[]).push(t); });
-  el.innerHTML = Object.entries(byCategory).map(([cat, tasks]) => `
-    <div class="card">
-      <div class="card-title">${catBadge(cat)} <span style="margin-left:.5rem">${cat}</span></div>
-      ${tasks.map(t => `
-        <div class="task-chip">
-          <div style="flex:1">
-            <div style="font-size:.9rem">${t.title}</div>
-            ${t.description ? `<div style="font-size:.78rem;color:#5C5248;font-style:italic">${t.description}</div>` : ''}
-          </div>
-          <div class="action-btns">
-            <button class="btn btn-ghost btn-sm" onclick="editTask(${t.task_id})">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="archiveTask(${t.task_id})">Archive</button>
-          </div>
-        </div>`).join('')}
-    </div>`).join('');
-}
-
-// ── COMPLETE ──
-function openComplete(aid) {
-  document.getElementById('complete-aid').value = aid;
-  document.getElementById('complete-notes').value = '';
-  openModal('modal-complete');
-}
-async function submitComplete() {
-  const aid = document.getElementById('complete-aid').value;
-  const notes = document.getElementById('complete-notes').value.trim();
-  const r = await fetch(`/dailies/api/assignments/${aid}/complete`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes})});
-  const d = await r.json();
-  if (d.success) { toast('Submitted for approval!','success'); closeModal('modal-complete'); loadMyWeek(); }
-  else toast(d.error||'Error','error');
-}
-
-// ── APPROVE / REJECT ──
+// ── APPROVE / MISS ──
 async function approveAssignment(aid) {
   const r = await fetch(`/dailies/api/assignments/${aid}/approve`, {method:'POST'});
   const d = await r.json();
-  if (d.success) { toast('Approved!','success'); loadAdminReview(); loadAdminWeek(); }
+  if (d.success) { toast('Approved!','success'); loadWeek(); loadReview(); }
   else toast(d.error||'Error','error');
 }
 function openMiss(aid) {
@@ -671,115 +674,173 @@ function openMiss(aid) {
 }
 async function submitMiss() {
   const aid = document.getElementById('miss-aid').value;
-  const penalty = parseInt(document.getElementById('miss-penalty').value) || 0;
-  const r = await fetch(`/dailies/api/assignments/${aid}/miss`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({penalty})});
+  const penalty = parseInt(document.getElementById('miss-penalty').value)||0;
+  const r = await fetch(`/dailies/api/assignments/${aid}/miss`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({penalty})
+  });
   const d = await r.json();
-  if (d.success) { toast('Marked as missed — points deducted','info'); closeModal('modal-miss'); loadAdminReview(); loadAdminWeek(); }
+  if (d.success) { toast('Marked missed — points deducted','info'); closeModal('modal-miss'); loadWeek(); loadReview(); }
   else toast(d.error||'Error','error');
 }
-async function deleteAssignment(aid) {
-  if (!confirm('Remove this assignment?')) return;
-  const r = await fetch(`/dailies/api/assignments/${aid}`, {method:'DELETE'});
+
+// ── COMPLETE ──
+function openComplete(aid, date, taskId) {
+  document.getElementById('complete-aid').value = aid;
+  document.getElementById('complete-date').value = date;
+  document.getElementById('complete-task-id').value = taskId;
+  document.getElementById('complete-notes').value = '';
+  openModal('modal-complete');
+}
+async function submitComplete() {
+  const aid = document.getElementById('complete-aid').value;
+  const notes = document.getElementById('complete-notes').value.trim();
+  const r = await fetch(`/dailies/api/assignments/${aid}/complete`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes})
+  });
   const d = await r.json();
-  if (d.success) { toast('Removed','info'); loadAdminWeek(); }
-  else toast('Error','error');
+  if (d.success) { toast('Submitted for approval!','success'); closeModal('modal-complete'); loadWeek(); loadMyTasks(); }
+  else toast(d.error||'Error','error');
 }
 
-// ── TASKS ──
+// ── ROTATION SETUP ──
+function renderRotationSetup() {
+  const el = document.getElementById('rotation-body');
+  if (!allTasks.length) {
+    el.innerHTML = '<div class="empty">No tasks yet. Add some in the Task Library first.</div>'; return;
+  }
+  if (!allMembers.length) {
+    el.innerHTML = '<div class="empty">No active members found.</div>'; return;
+  }
+
+  const memberOptions = allMembers.map(m => `<option value="${m.user_id}">${m.username}</option>`).join('');
+  const unassignedOpt = '<option value="">— Unassigned —</option>';
+
+  const byCategory = {};
+  allTasks.forEach(t => { (byCategory[t.category]=byCategory[t.category]||[]).push(t); });
+
+  el.innerHTML = Object.entries(byCategory).map(([cat, tasks]) => `
+    <div class="card">
+      <div class="card-title">${catBadge(cat)} ${cat}</div>
+      <table class="rotation-table">
+        <thead>
+          <tr>
+            <th style="min-width:150px">Task</th>
+            ${DAYS.map(d => `<th>${d}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${tasks.map(t => `
+            <tr>
+              <td>
+                <div style="font-size:.88rem">${t.title}</div>
+                ${t.description ? `<div style="font-size:.72rem;color:#5C5248;font-style:italic">${t.description}</div>` : ''}
+              </td>
+              ${[1,2,3,4,5,6,7].map(dow => {
+                const assigned = (pendingRotation[t.task_id]||{})[dow] || '';
+                return `<td>
+                  <select id="rot-${t.task_id}-${dow}" onchange="updatePendingRotation(${t.task_id},${dow},this.value)">
+                    ${unassignedOpt}
+                    ${allMembers.map(m => `<option value="${m.user_id}" ${parseInt(assigned)===m.user_id?'selected':''}>${m.username}</option>`).join('')}
+                  </select>
+                </td>`;
+              }).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`).join('');
+}
+
+function updatePendingRotation(taskId, dow, memberId) {
+  if (!pendingRotation[taskId]) pendingRotation[taskId] = {};
+  if (memberId) pendingRotation[taskId][dow] = parseInt(memberId);
+  else delete pendingRotation[taskId][dow];
+}
+
+async function saveRotation() {
+  const entries = [];
+  allTasks.forEach(t => {
+    [1,2,3,4,5,6,7].forEach(dow => {
+      const sel = document.getElementById(`rot-${t.task_id}-${dow}`);
+      if (sel && sel.value) {
+        entries.push({task_id: t.task_id, day_of_week: dow, member_id: parseInt(sel.value)});
+      }
+    });
+  });
+  const r = await fetch('/dailies/api/rotation', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({entries})
+  });
+  const d = await r.json();
+  if (d.success) { toast('Rotation saved!','success'); await loadRotation(); }
+  else toast(d.error||'Error','error');
+}
+
+// ── TASK LIBRARY ──
+function renderTaskLibrary() {
+  const el = document.getElementById('tasks-body');
+  if (!allTasks.length) { el.innerHTML = '<div class="empty">No tasks yet.</div>'; return; }
+  const byCategory = {};
+  allTasks.forEach(t => { (byCategory[t.category]=byCategory[t.category]||[]).push(t); });
+  el.innerHTML = Object.entries(byCategory).map(([cat, tasks]) => `
+    <div class="card">
+      <div class="card-title">${catBadge(cat)} ${cat}</div>
+      ${tasks.map(t => `
+        <div class="task-item">
+          <div class="task-item-name">
+            <div>${t.title}</div>
+            ${t.description ? `<div class="task-item-desc">${t.description}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:.35rem">
+            <button class="btn btn-ghost btn-sm" onclick="openEditTask(${t.task_id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="archiveTask(${t.task_id})">Archive</button>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
 function openAddTask() {
-  ['task-title','task-desc'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('task-category').value='Stew Crew';
-  document.getElementById('add-task-err').style.display='none';
+  document.getElementById('edit-task-id').value = '';
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-desc').value = '';
+  document.getElementById('task-category').value = 'Stew Crew';
+  document.getElementById('task-err').style.display = 'none';
+  document.getElementById('task-modal-title').textContent = 'New Task';
+  document.getElementById('task-save-btn').textContent = 'Create Task';
   openModal('modal-add-task');
 }
-async function saveTask() {
-  const title = document.getElementById('task-title').value.trim();
-  const category = document.getElementById('task-category').value;
-  const description = document.getElementById('task-desc').value.trim();
-  if (!title) { showErr('add-task-err','Title is required'); return; }
-  const r = await fetch('/dailies/api/tasks', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,category,description})});
-  const d = await r.json();
-  if (d.success) { toast('Task created!','success'); closeModal('modal-add-task'); await loadTasks(); loadTaskLibrary(); }
-  else showErr('add-task-err', d.error||'Error');
-}
-async function archiveTask(tid) {
-  if (!confirm('Archive this task?')) return;
-  const r = await fetch(`/dailies/api/tasks/${tid}`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:false})});
-  const d = await r.json();
-  if (d.success) { toast('Task archived','info'); await loadTasks(); loadTaskLibrary(); }
-  else toast('Error','error');
-}
-function editTask(tid) {
-  const t = allTasks.find(x=>x.task_id===tid); if(!t) return;
+function openEditTask(tid) {
+  const t = allTasks.find(x => x.task_id === tid); if (!t) return;
+  document.getElementById('edit-task-id').value = tid;
   document.getElementById('task-title').value = t.title;
   document.getElementById('task-desc').value = t.description||'';
   document.getElementById('task-category').value = t.category;
-  document.getElementById('add-task-err').style.display='none';
-  // Repurpose save button to update
-  const btn = document.querySelector('#modal-add-task .btn-gold');
-  btn.textContent='Save Changes';
-  btn.onclick = async () => {
-    const title = document.getElementById('task-title').value.trim();
-    if (!title) { showErr('add-task-err','Title required'); return; }
-    const r = await fetch(`/dailies/api/tasks/${tid}`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      title, description:document.getElementById('task-desc').value.trim(),
-      category:document.getElementById('task-category').value,
-    })});
-    const d = await r.json();
-    if (d.success) { toast('Task updated!','success'); closeModal('modal-add-task'); await loadTasks(); loadTaskLibrary(); btn.textContent='Create Task'; btn.onclick=saveTask; }
-    else showErr('add-task-err', d.error||'Error');
-  };
+  document.getElementById('task-err').style.display = 'none';
+  document.getElementById('task-modal-title').textContent = 'Edit Task';
+  document.getElementById('task-save-btn').textContent = 'Save Changes';
   openModal('modal-add-task');
 }
-
-// ── ASSIGN ──
-function openAssign() {
-  const taskSel = document.getElementById('assign-task');
-  taskSel.innerHTML = allTasks.map(t=>`<option value="${t.task_id}">[${t.category}] ${t.title}</option>`).join('');
-  const memberSel = document.getElementById('assign-member');
-  memberSel.innerHTML = allMembers.map(m=>`<option value="${m.user_id}">${m.username}</option>`).join('');
-  // Default due date to end of current admin week (Sunday)
-  const d = new Date(currentAdminWeek+'T12:00:00'); d.setDate(d.getDate()+6);
-  document.getElementById('assign-due').value = d.toISOString().slice(0,10);
-  document.getElementById('assign-err').style.display='none';
-  openModal('modal-assign');
-}
-async function saveAssignment() {
-  const task_id = document.getElementById('assign-task').value;
-  const member_id = document.getElementById('assign-member').value;
-  const due_date = document.getElementById('assign-due').value;
-  if (!due_date) { showErr('assign-err','Due date required'); return; }
-  const r = await fetch('/dailies/api/assignments', {method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({task_id,member_id,week_start:currentAdminWeek,due_date})});
+async function saveTask() {
+  const tid = document.getElementById('edit-task-id').value;
+  const title = document.getElementById('task-title').value.trim();
+  const desc = document.getElementById('task-desc').value.trim();
+  const cat = document.getElementById('task-category').value;
+  const errEl = document.getElementById('task-err');
+  if (!title) { errEl.textContent='Title is required'; errEl.style.display='block'; return; }
+  const url = tid ? `/dailies/api/tasks/${tid}` : '/dailies/api/tasks';
+  const method = tid ? 'PUT' : 'POST';
+  const r = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify({title,description:desc,category:cat})});
   const d = await r.json();
-  if (d.success) { toast('Task assigned!','success'); closeModal('modal-assign'); loadAdminWeek(); }
-  else showErr('assign-err', d.error||'Error');
+  if (d.success) { toast(tid?'Task updated!':'Task created!','success'); closeModal('modal-add-task'); await loadTasks(); renderTaskLibrary(); renderRotationSetup(); }
+  else { errEl.textContent = d.error||'Error'; errEl.style.display = 'block'; }
 }
-
-// ── COPY WEEK ──
-async function openCopyWeek() {
-  const r = await fetch('/dailies/api/weeks');
-  const weeks = await r.json();
-  const sel = document.getElementById('copy-from');
-  if (!weeks.length) { toast('No previous weeks found','error'); return; }
-  sel.innerHTML = weeks.map(w=>`<option value="${w}">${fmtWeek(w)}</option>`).join('');
-  // Default copy-to to currentAdminWeek
-  document.getElementById('copy-to').value = currentAdminWeek;
-  document.getElementById('copy-err').style.display='none';
-  openModal('modal-copy');
-}
-async function doCopyWeek() {
-  const from_week = document.getElementById('copy-from').value;
-  const to_week = document.getElementById('copy-to').value;
-  if (!to_week) { showErr('copy-err','Please select a target week'); return; }
-  if (from_week === to_week) { showErr('copy-err','From and to weeks must be different'); return; }
-  const r = await fetch('/dailies/api/assignments/copy-week', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from_week,to_week})});
+async function archiveTask(tid) {
+  if (!confirm('Archive this task? It will be removed from the rotation.')) return;
+  const r = await fetch(`/dailies/api/tasks/${tid}`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:false})});
   const d = await r.json();
-  if (d.success) { toast(`Copied ${d.copied} assignments!`,'success'); closeModal('modal-copy'); currentAdminWeek=getMonday(to_week); loadAdminWeek(); }
-  else showErr('copy-err', d.error||'Error');
+  if (d.success) { toast('Task archived','info'); await loadTasks(); renderTaskLibrary(); renderRotationSetup(); }
+  else toast('Error','error');
 }
 
-document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show')}));
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('show'); }));
 init();
 </script>
 </body>
