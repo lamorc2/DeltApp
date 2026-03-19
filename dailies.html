@@ -562,6 +562,7 @@ function renderTaskRow(a) {
       actions += `<button class="btn btn-success btn-sm" onclick="approveAssignment(${a.assignment_id})">✓ Approve</button>`;
     }
     if (!['approved','missed'].includes(a.status)) {
+      actions += `<button class="btn btn-ghost btn-sm" onclick="adminMarkDone(${a.assignment_id})">✓ Mark Done</button>`;
       actions += `<button class="btn btn-danger btn-sm" onclick="openMiss(${a.assignment_id})">✕ Miss</button>`;
     }
   }
@@ -669,6 +670,18 @@ async function approveAssignment(aid) {
   const d = await r.json();
   if (d.success) { toast('Approved!','success'); loadWeek(); loadReview(); }
   else toast(d.error||'Error','error');
+}
+async function adminMarkDone(aid) {
+  // Admin marks a task as complete on behalf of a member, then auto-approves it
+  const r1 = await fetch(`/dailies/api/assignments/${aid}/complete`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes:'Marked complete by admin'})
+  });
+  const d1 = await r1.json();
+  if (!d1.success) { toast(d1.error||'Error','error'); return; }
+  const r2 = await fetch(`/dailies/api/assignments/${aid}/approve`, {method:'POST'});
+  const d2 = await r2.json();
+  if (d2.success) { toast('Marked as complete','success'); loadWeek(); loadReview(); }
+  else toast(d2.error||'Error','error');
 }
 function openMiss(aid) {
   document.getElementById('miss-aid').value = aid;
