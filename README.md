@@ -12,8 +12,8 @@ password: test
 This is a staging website available for anyone to view/test. Please send any bug finds to lamorc2@rpi.edu
 
 ### AI USE DISCLOSURE ###
-This was created with heavy usage of Anthropic's Claude AI (especially the UI). An original barebones application was created in C++, and using Claude, iterated to add a 
-better looking front end as well as add extra features. 
+This was created with the assistance of Anthropic's Claude AI (especially the UI). An original barebones application was created in C++, and using Claude, iterated to add a 
+cleaner front end, as well as add extra features. 
 
 Motivations:
 I work as the Steward of the Upsilon chapter, which means I balance budgeting, cooking and management all at the same time. We had no centralized system for most of these things, 
