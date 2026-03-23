@@ -1173,6 +1173,10 @@ async function loadApp() {
   showPage('leaderboard', document.getElementById('nav-leaderboard'));
   loadLeaderboard();
   if (role !== 'member') pollPending();
+  // Hide budget link for non-officers
+  if (!['officer','moderator','admin'].includes(role)) {
+    document.querySelectorAll('a[href="/budget"]').forEach(el => el.style.display = 'none');
+  }
 }
 
 async function pollPending() {

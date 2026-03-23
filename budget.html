@@ -577,12 +577,28 @@ async function loadApp() {
   const d = await r.json();
   if (!d.authenticated) return;
   currentUser = d;
+
+  // Budget is restricted to officers, moderators, and admins
+  if (!['officer','moderator','admin'].includes(d.role)) {
+    $('login-screen').style.display = 'none';
+    document.getElementById('app').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem">
+        <div style="text-align:center;max-width:400px">
+          <div style="font-family:'Cinzel Decorative',serif;font-size:3rem;color:#C9A84C;margin-bottom:1.5rem">ΔΤΔ</div>
+          <div style="font-family:'Cinzel',serif;font-size:1rem;color:#CF4A4A;letter-spacing:.1em;margin-bottom:1rem">Access Restricted</div>
+          <p style="color:#9A8E7A;font-style:italic;margin-bottom:2rem">The Treasury is only accessible to chapter officers.</p>
+          <a href="/" style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;color:#C9A84C;text-decoration:none;padding:.6rem 1.5rem;border:1px solid rgba(201,168,76,.3);border-radius:4px">← Back to Portal</a>
+        </div>
+      </div>`;
+    return;
+  }
+
   $('login-screen').style.display = 'none';
   $('main-app').style.display = 'flex';
   $('topbar-username').textContent = d.username.toUpperCase();
   const rb = $('topbar-role'); rb.textContent = d.role; rb.className = `role-tag role-${d.role}`;
 
-  if (d.role !== 'member') {
+  if (['officer','moderator','admin'].includes(d.role)) {
     $('nav-pending').style.display = 'flex';
     $('mod-label').style.display = 'block';
   }

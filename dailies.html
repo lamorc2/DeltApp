@@ -428,6 +428,9 @@ async function init() {
   }
 
   currentWeekMonday = getMonday(new Date());
+  if (!['officer','moderator','admin'].includes(d.role)) {
+    document.querySelectorAll('a[href="/budget"]').forEach(el => el.style.display = 'none');
+  }
   await Promise.all([loadTasks(), loadMembers(), loadRotation()]);
   showPage('week', document.getElementById('nav-week'));
 }

@@ -676,6 +676,7 @@ def api_reject(tid):
 
 @app.route('/budget/api/departments', methods=['GET'])
 @login_required
+@officer_required
 def api_get_depts():
     conn = get_db()
     depts = fetchall(conn, '''
@@ -742,6 +743,7 @@ def api_delete_dept(did):
 
 @app.route('/budget/api/departments/<int:did>/items', methods=['GET'])
 @login_required
+@officer_required
 def api_get_items(did):
     conn = get_db()
     items = fetchall(conn, '''
@@ -813,6 +815,7 @@ def api_delete_item(iid):
 
 @app.route('/budget/api/requests', methods=['GET'])
 @login_required
+@officer_required
 def api_get_requests():
     conn = get_db()
     role = session.get('role')
@@ -878,6 +881,7 @@ def api_pending_requests():
 
 @app.route('/budget/api/departments/<int:did>/requests', methods=['GET'])
 @login_required
+@officer_required
 def api_dept_requests(did):
     conn = get_db()
     rows = fetchall(conn, '''
@@ -897,6 +901,7 @@ def api_dept_requests(did):
 
 @app.route('/budget/api/requests', methods=['POST'])
 @login_required
+@officer_required
 def api_submit_request():
     data = request.json or {}
     item_id = data.get('item_id')
@@ -971,6 +976,7 @@ def api_delete_request(rid):
 
 @app.route('/budget/api/summary')
 @login_required
+@officer_required
 def api_summary():
     conn = get_db()
     total_budget = fetchone(conn, "SELECT COALESCE(SUM(allocated),0) as v FROM budget_items WHERE is_active=true")
@@ -1007,6 +1013,8 @@ def points_app():
     return _read_html('points.html')
 
 @app.route('/budget')
+@login_required
+@officer_required
 def budget_app_route():
     return _read_html('budget.html')
 
