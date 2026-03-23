@@ -72,6 +72,7 @@ textarea.form-input{resize:vertical;min-height:80px}
 .role-admin{background:rgba(201,168,76,.2);color:var(--gold);border:1px solid var(--gold-dim)}
 .role-moderator{background:rgba(192,132,208,.15);color:#C084D0;border:1px solid var(--purple-light)}
 .role-member{background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid var(--border)}
+.role-officer{background:rgba(91,141,217,.15);color:#5B8DD9;border:1px solid rgba(91,141,217,.3)}
 
 /* LAYOUT */
 .app-body{display:flex;flex:1}
@@ -377,7 +378,7 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
       <!-- PENDING MODERATION -->
       <div class="page" id="page-pending">
         <div class="page-header">
-          <div><div class="page-title">Pending Requests</div><div class="page-subtitle">Review and approve or reject budget requests</div></div>
+          <div><div class="page-title">Pending Requests</div><div class="page-subtitle">Review budget requests</div></div>
           <button class="btn btn-ghost btn-sm" onclick="loadPending()">↻ Refresh</button>
         </div>
         <div class="card">
@@ -597,7 +598,7 @@ async function loadApp() {
 }
 
 async function pollPending() {
-  if (!currentUser || currentUser.role === 'member') return;
+  if (!currentUser || !['admin','moderator','officer'].includes(currentUser.role)) return;
   try {
     const r = await fetch('/budget/api/requests/pending');
     const d = await r.json();
@@ -805,8 +806,9 @@ async function loadPending() {
       <td class="text-dim" style="font-size:.85rem">${r.vendor||'—'}</td>
       <td class="text-dim" style="font-size:.8rem">${fmtDate(r.created_at)}</td>
       <td><div class="action-btns">
-        <button class="btn btn-success btn-sm" onclick="approveRequest(${r.request_id})">✓ Approve</button>
-        <button class="btn btn-danger btn-sm" onclick="openReject(${r.request_id})">✕ Reject</button>
+        ${currentUser.role==='admin' ? `<button class="btn btn-success btn-sm" onclick="approveRequest(${r.request_id})">✓ Approve</button>` : ''}
+        ${currentUser.role==='admin' ? `<button class="btn btn-danger btn-sm" onclick="openReject(${r.request_id})">✕ Reject</button>` : ''}
+        ${currentUser.role==='officer' ? '<span style="font-size:.78rem;color:#5C5248;font-style:italic">View only</span>' : ''}
       </div></td>
     </tr>`;
   }).join('');

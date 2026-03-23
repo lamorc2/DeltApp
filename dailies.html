@@ -477,7 +477,7 @@ function showPage(page, el) {
 // ── WEEK VIEW ──
 function shiftWeek(n) {
   currentWeekMonday = addDays(currentWeekMonday, n * 7);
-  selectedDate = null;
+  selectedDate = null; // will be auto-set in loadWeek
   loadWeek();
 }
 
@@ -585,12 +585,17 @@ function renderTaskRow(a) {
   const over = isOverdue(a.due_date, a.status);
   const isOwn = a.member_id === currentUser.user_id;
   const isAdmin = ['admin','moderator'].includes(currentUser.role);
-  const canComplete = isOwn && (a.status === 'pending' || a.status === 'rejected') && a.assignment_id;
+  const canComplete = isOwn && (a.status === 'pending' || a.status === 'rejected');
   const canAdminAct = isAdmin && a.assignment_id;
 
   let actions = '';
   if (canComplete) {
-    actions += `<button class="btn btn-success btn-sm" onclick="openComplete(${a.assignment_id},'${a.due_date}',${a.task_id})">✓ Done</button>`;
+    if (a.assignment_id) {
+      actions += `<button class="btn btn-success btn-sm" onclick="openComplete(${a.assignment_id},'${a.due_date}',${a.task_id})">✓ Done</button>`;
+    } else {
+      // Virtual task — ensure it gets stored first, then complete
+      actions += `<button class="btn btn-success btn-sm" onclick="ensureAndComplete('${a.due_date}',${a.task_id},${a.member_id})">✓ Done</button>`;
+    }
   }
   if (canAdminAct) {
     if (a.status === 'submitted') {
@@ -751,6 +756,20 @@ async function submitComplete() {
   const d = await r.json();
   if (d.success) { toast('Submitted for approval!','success'); closeModal('modal-complete'); loadWeek(); loadMyTasks(); }
   else toast(d.error||'Error','error');
+}
+async function ensureAndComplete(date, taskId, memberId) {
+  // Store the virtual assignment first, then open the complete modal
+  const r = await fetch('/dailies/api/assignments/ensure', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({date})
+  });
+  const d = await r.json();
+  if (!d.success) { toast(d.error||'Error storing assignment','error'); return; }
+  // Now fetch the stored assignment_id
+  const r2 = await fetch(`/dailies/api/assignments?date=${date}`);
+  const assignments = await r2.json();
+  const a = assignments.find(x => x.task_id === taskId && x.member_id === memberId);
+  if (!a || !a.assignment_id) { toast('Could not find assignment','error'); return; }
+  openComplete(a.assignment_id, date, taskId);
 }
 
 // ── ROTATION SETUP ──

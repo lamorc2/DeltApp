@@ -265,6 +265,7 @@
   .role-admin { background: rgba(201,168,76,0.2); color: var(--gold); border: 1px solid var(--gold-dim); }
   .role-moderator { background: rgba(92,31,107,0.4); color: #C084D0; border: 1px solid var(--purple-light); }
   .role-member { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
+  .role-officer { background: rgba(91,141,217,.15); color: #5B8DD9; border: 1px solid rgba(91,141,217,.3); }
 
   /* LAYOUT */
   .app-body { display: flex; flex: 1; }
@@ -958,6 +959,7 @@
         <label class="form-label">Role</label>
         <select class="form-input" id="add-role">
           <option value="member">Member</option>
+          <option value="officer">Officer</option>
           <option value="moderator">Moderator</option>
           <option value="admin">Admin</option>
         </select>
@@ -987,6 +989,7 @@
         <label class="form-label">Role</label>
         <select class="form-input" id="edit-role">
           <option value="member">Member</option>
+          <option value="officer">Officer</option>
           <option value="moderator">Moderator</option>
           <option value="admin">Admin</option>
         </select>

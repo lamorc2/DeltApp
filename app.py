@@ -381,6 +381,15 @@ def moderator_required(f):
 # Alias for budget app compatibility
 mod_required = moderator_required
 
+def officer_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if session.get('role') not in ('admin', 'moderator', 'officer'):
+            return jsonify({'error': 'Forbidden'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
 # ============================================================================
 # SHARED AUTH ROUTES  (one login serves both apps)
 # ============================================================================
@@ -839,7 +848,7 @@ def api_get_requests():
 
 @app.route('/budget/api/requests/pending', methods=['GET'])
 @login_required
-@admin_required
+@officer_required
 def api_pending_requests():
     conn = get_db()
     rows = fetchall(conn, '''
