@@ -1605,13 +1605,16 @@ async function saveUser() {
     username: document.getElementById('edit-username').value.trim(),
     email: document.getElementById('edit-email').value.trim(),
     role: document.getElementById('edit-role').value,
-    is_active: parseInt(document.getElementById('edit-active').value),
+    is_active: document.getElementById('edit-active').value,
     password: document.getElementById('edit-password').value
   };
-  const r = await fetch(`/points/api/users/${uid}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-  const d = await r.json();
-  if (d.success) { toast('Member updated!','success'); closeModal('modal-edit-user'); loadUsers(); }
-  else showErr('edit-error', d.error||'Error saving user');
+  if (!data.username || !data.email) { showErr('edit-error','Username and email are required'); return; }
+  try {
+    const r = await fetch(`/points/api/users/${uid}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+    const d = await r.json();
+    if (d.success) { toast('Member updated!','success'); closeModal('modal-edit-user'); loadUsers(); }
+    else showErr('edit-error', d.error||'Error saving user');
+  } catch(e) { showErr('edit-error','Network error — please try again'); }
 }
 
 async function deactivateUser(uid) {

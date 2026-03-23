@@ -471,12 +471,16 @@ def api_create_user():
 @login_required
 @admin_required
 def api_update_user(uid):
-    data = request.json
+    data = request.json or {}
     fields, vals = [], []
-    for f in ('username', 'email', 'role', 'is_active'):
+    for f in ('username', 'email', 'role'):
         if f in data:
             fields.append(f"{f}=?")
             vals.append(data[f])
+    if 'is_active' in data:
+        fields.append("is_active=?")
+        # Normalise to Python bool so psycopg2 sends true/false, not 1/0
+        vals.append(bool(int(data['is_active'])))
     if 'password' in data and data['password']:
         fields.append("password_hash=?")
         vals.append(hash_pw(data['password']))
@@ -485,14 +489,14 @@ def api_update_user(uid):
     vals.append(uid)
     try:
         conn = get_db()
-        execute(conn, f"UPDATE users SET {', '.join(fields)} WHERE user_id=?", vals)
+        execute(conn, "UPDATE users SET " + ', '.join(f + '=?' for f in [x.split('=')[0] for x in fields]) + " WHERE user_id=?", vals)
         conn.commit()
         conn.close()
         return jsonify({'success': True})
     except Exception as e:
         if is_integrity_error(e):
             return jsonify({'error': 'Username or email already exists'}), 400
-        raise
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/points/api/users/<int:uid>', methods=['DELETE'])
 @login_required
