@@ -286,7 +286,7 @@ textarea.form-input{resize:vertical;min-height:65px}
     <!-- TASK LIBRARY -->
     <div class="page" id="page-tasks">
       <div class="page-header">
-        <div><div class="page-title">Task Library</div><div class="page-sub">Define the recurring tasks for Stew Crew and HM Crew</div></div>
+        <div><div class="page-title">Task Library</div><div class="page-sub">Define the recurring tasks for Dailies and Waiting</div></div>
         <button class="btn btn-gold btn-sm" onclick="openAddTask()">+ New Task</button>
       </div>
       <div id="tasks-body"></div>
@@ -340,8 +340,8 @@ textarea.form-input{resize:vertical;min-height:65px}
       <div class="form-group"><label class="form-label">Description <span style="color:#3A2E28">(optional)</span></label><textarea class="form-input" id="task-desc" placeholder="Details..."></textarea></div>
       <div class="form-group"><label class="form-label">Category</label>
         <select class="form-input" id="task-category">
-          <option value="Stew Crew">Stew Crew</option>
-          <option value="HM Crew">HM Crew</option>
+          <option value="Waiting">Waiting</option>
+          <option value="Dailies">Dailies</option>
         </select>
       </div>
       <div class="err" id="task-err"></div>
@@ -406,7 +406,7 @@ function isOverdue(due, status) {
   return new Date(due + 'T23:59:59') < new Date();
 }
 function catBadge(cat) {
-  const cls = cat === 'Stew Crew' ? 'cat-stew' : 'cat-hm';
+  const cls = cat === 'Waiting' ? 'cat-stew' : 'cat-hm';
   return `<span class="task-cat ${cls}">${cat}</span>`;
 }
 function statusBadge(status, due) {
@@ -874,7 +874,7 @@ function openAddTask() {
   document.getElementById('edit-task-id').value = '';
   document.getElementById('task-title').value = '';
   document.getElementById('task-desc').value = '';
-  document.getElementById('task-category').value = 'Stew Crew';
+  document.getElementById('task-category').value = 'Waiting';
   document.getElementById('task-err').style.display = 'none';
   document.getElementById('task-modal-title').textContent = 'New Task';
   document.getElementById('task-save-btn').textContent = 'Create Task';

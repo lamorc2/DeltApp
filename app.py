@@ -6,16 +6,25 @@ Local:   pip install flask psycopg2-binary && python app.py
 Railway: set DATABASE_URL env var
 
 Routes:
-  /          → Landing page
-  /points    → Brotherhood Points app
-  /budget    → Budget & Bookkeeping app
+  /          
+  /points    
+  /budget    
+  /dailies
 """
 
+
+"""
+Push Notes: 
+- Fixed XSS vulnerability (thanks Lance) -- we assume people with officer/admin/moderator roles don't make XSS attempts though, only block custom points 
+-Removed import calls in function definitions
+
+"""
+from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
 import hashlib
 import os
-from functools import wraps
-
+import bleach
+import datetime
 # Postgres when DATABASE_URL is set (Railway), SQLite locally as fallback
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -47,6 +56,7 @@ def get_db():
 def fetchone(conn, sql, params=()):
     """Unified fetchone that always returns a dict-like row."""
     sql = sql.replace('?', PH)
+
     if DATABASE_URL:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(sql, params)
@@ -304,39 +314,9 @@ def is_integrity_error(e):
     else:
         return isinstance(e, sqlite3.IntegrityError)
 
-# ============================================================================
-# AUTH DECORATORS
-# ============================================================================
-
-def login_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session:
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, **kwargs)
-    return decorated
-
-def admin_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if session.get('role') != 'admin':
-            return jsonify({'error': 'Forbidden'}), 403
-        return f(*args, **kwargs)
-    return decorated
-
-def moderator_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if session.get('role') not in ('admin', 'moderator'):
-            return jsonify({'error': 'Forbidden'}), 403
-        return f(*args, **kwargs)
-    return decorated
-
-
 
 def ser(rows):
     """Make datetime fields JSON-serialisable."""
-    import datetime
     for r in rows:
         for k, v in r.items():
             if isinstance(v, (datetime.datetime, datetime.date)):
@@ -352,7 +332,6 @@ app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 # ============================================================================
 
 def login_required(f):
-    from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
@@ -361,7 +340,6 @@ def login_required(f):
     return decorated
 
 def admin_required(f):
-    from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
         if session.get('role') != 'admin':
@@ -370,7 +348,7 @@ def admin_required(f):
     return decorated
 
 def moderator_required(f):
-    from functools import wraps
+    
     @wraps(f)
     def decorated(*args, **kwargs):
         if session.get('role') not in ('admin', 'moderator'):
@@ -382,7 +360,6 @@ def moderator_required(f):
 mod_required = moderator_required
 
 def officer_required(f):
-    from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
         if session.get('role') not in ('admin', 'moderator', 'officer'):
@@ -437,6 +414,7 @@ def api_me():
 def api_get_users():
     conn = get_db()
     users = fetchall(conn, "SELECT user_id, username, email, role, brotherhood_points, is_active, created_at FROM users ORDER BY brotherhood_points DESC")
+
     conn.close()
     return jsonify(users)
 
@@ -466,6 +444,7 @@ def api_create_user():
         if is_integrity_error(e):
             return jsonify({'error': 'Username or email already exists'}), 400
         raise
+
 
 @app.route('/points/api/users/<int:uid>', methods=['PUT'])
 @login_required
@@ -551,6 +530,7 @@ def api_pending_transactions():
 @login_required
 def api_submit_transaction():
     data = request.json
+    desc = clean(data.get('description',''))
     # Allow submitting on behalf of another member (any logged-in user can do this)
     target_member_id = data.get('member_id', session['user_id'])
     conn = get_db()
@@ -560,7 +540,7 @@ def api_submit_transaction():
         conn.close()
         return jsonify({'error': 'Member not found'}), 404
     execute(conn, "INSERT INTO transactions (member_id, points, description) VALUES (?,?,?)",
-            (target_member_id, data['points'], data['description']))
+            (target_member_id, data['points'], desc))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -997,10 +977,8 @@ def api_summary():
 # ============================================================================
 
 
-import os as _os
-
 def _read_html(name):
-    path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), name)
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
     with open(path) as f:
         return f.read()
 
@@ -1127,19 +1105,18 @@ def dailies_delete_rotation(rid):
 @app.route('/dailies/api/assignments', methods=['GET'])
 @login_required
 def dailies_get_assignments():
-    import datetime as _dt
     conn = get_db()
     role = session.get('role')
     date_str = request.args.get('date')
     week_str = request.args.get('week')
 
     if date_str:
-        dates = [_dt.date.fromisoformat(date_str)]
+        dates = [datetime.date.fromisoformat(date_str)]
     elif week_str:
-        monday = _dt.date.fromisoformat(week_str)
-        dates = [monday + _dt.timedelta(days=i) for i in range(7)]
+        monday = datetime.date.fromisoformat(week_str)
+        dates = [monday + datetime.timedelta(days=i) for i in range(7)]
     else:
-        dates = [_dt.date.today()]
+        dates = [datetime.date.today()]
 
     rotation = fetchall(conn, (
         "SELECT r.task_id, r.day_of_week, r.member_id, r.rotation_id, "
@@ -1194,14 +1171,13 @@ def dailies_get_assignments():
 @login_required
 @admin_required
 def dailies_ensure_assignments():
-    import datetime as _dt
     data = request.json or {}
     date_str = data.get('date')
     if not date_str:
         return jsonify({'error': 'date required'}), 400
-    day = _dt.date.fromisoformat(date_str)
+    day = datetime.date.fromisoformat(date_str)
     dow = day.isoweekday()
-    monday = day - _dt.timedelta(days=day.weekday())
+    monday = day - datetime.timedelta(days=day.weekday())
     conn = get_db()
     rotation = fetchall(conn, "SELECT * FROM rotation_template WHERE day_of_week=?", (dow,))
     created = 0
