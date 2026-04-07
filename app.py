@@ -24,6 +24,7 @@ from flask import Flask, request, jsonify, session, redirect
 import hashlib
 import os
 import datetime
+import bleach
 # Postgres when DATABASE_URL is set (Railway), SQLite locally as fallback
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
