@@ -1112,7 +1112,7 @@ def dailies_get_assignments():
 
     if date_str:
         dates = [datetime.date.fromisoformat(date_str)]
-    elif week_str:
+    elif week_str and week_str != "null":
         monday = datetime.date.fromisoformat(week_str)
         dates = [monday + datetime.timedelta(days=i) for i in range(7)]
     else:

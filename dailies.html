@@ -455,6 +455,7 @@ async function loadRotation() {
 }
 async function pollReview() {
   try {
+    console.log("WEEK PARAM: (poll Review)", currentWeekMonday);
     const r = await fetch('/dailies/api/assignments?week=' + currentWeekMonday);
     const all = await r.json();
     const sub = all.filter(a => a.status === 'submitted').length;
@@ -485,6 +486,7 @@ function shiftWeek(n) {
 }
 
 async function loadWeek() {
+  console.log("WEEK PARAM:(loadWeek)", currentWeekMonday);
   const r = await fetch('/dailies/api/assignments?week=' + currentWeekMonday);
   const assignments = await r.json();
   renderWeekGrid(assignments);
@@ -640,6 +642,7 @@ async function ensureDay(date) {
 // ── MY TASKS ──
 async function loadMyTasks() {
   const monday = getMonday(new Date());
+  console.log("WEEK PARAM: (loadMyTasks)", currentWeekMonday);
   const r = await fetch('/dailies/api/assignments?week=' + monday);
   const assignments = await r.json();
   const mine = assignments.filter(a => a.member_id === currentUser.user_id);
