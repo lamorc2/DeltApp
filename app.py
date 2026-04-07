@@ -530,7 +530,7 @@ def api_pending_transactions():
 @login_required
 def api_submit_transaction():
     data = request.json
-    desc = clean(data.get('description',''))
+    desc = data.get('description','')
     # Allow submitting on behalf of another member (any logged-in user can do this)
     target_member_id = data.get('member_id', session['user_id'])
     conn = get_db()
