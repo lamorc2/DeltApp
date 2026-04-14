@@ -1108,11 +1108,11 @@ def dailies_get_assignments():
     conn = get_db()
     role = session.get('role')
     date_str = request.args.get('date')
-    week_str = request.args.get('week')
+    week_str = request.args.get('week').strip()
 
     if date_str:
         dates = [datetime.date.fromisoformat(date_str)]
-    elif week_str and week_str != "null":
+    elif week_str and week_str.strip().lower() not in ("null", "none", "",'null'):
         monday = datetime.date.fromisoformat(week_str)
         dates = [monday + datetime.timedelta(days=i) for i in range(7)]
     else:
