@@ -1172,6 +1172,45 @@ def dailies_get_assignments():
     conn.close()
     return jsonify(ser(results))
 
+@app.route('/dailies/api/assignments/complete-by-slot', methods=['POST'])
+@login_required
+def dailies_complete_by_slot():
+    data = request.json or {}
+    task_id = data.get('task_id')
+    due_date = data.get('due_date')
+    if not task_id or not due_date:
+        return jsonify({'error': 'task_id and due_date required'}), 400
+
+    day = datetime.date.fromisoformat(due_date)
+    monday = day - datetime.timedelta(days=day.weekday())
+    conn = get_db()
+
+    slot = fetchone(conn, "SELECT member_id FROM rotation_template WHERE task_id=? AND day_of_week=?",
+                    (task_id, day.isoweekday()))
+    if not slot:
+        conn.close()
+        return jsonify({'error': 'No rotation slot found'}), 404
+    if session.get('role') not in ('admin', 'moderator') and slot['member_id'] != session['user_id']:
+        conn.close()
+        return jsonify({'error': 'Not your assignment'}), 403
+
+    existing = fetchone(conn, "SELECT assignment_id FROM daily_assignments WHERE task_id=? AND due_date=?",
+                        (task_id, due_date))
+    if not existing:
+        execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
+                (task_id, slot['member_id'], monday.isoformat(), due_date))
+        conn.commit()
+        existing = fetchone(conn, "SELECT assignment_id FROM daily_assignments WHERE task_id=? AND due_date=?",
+                            (task_id, due_date))
+
+    execute(conn,
+        "UPDATE daily_assignments SET status='submitted', completed_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
+        (data.get('notes', ''), existing['assignment_id']))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+    
+
 @app.route('/dailies/api/assignments/ensure', methods=['POST'])
 @login_required
 @admin_required

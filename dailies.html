@@ -747,7 +747,7 @@ async function submitMiss() {
 
 // ── COMPLETE ──
 function openComplete(aid, date, taskId) {
-  document.getElementById('complete-aid').value = aid;
+  document.getElementById('complete-aid').value = aid || '';
   document.getElementById('complete-date').value = date;
   document.getElementById('complete-task-id').value = taskId;
   document.getElementById('complete-notes').value = '';
@@ -755,27 +755,36 @@ function openComplete(aid, date, taskId) {
 }
 async function submitComplete() {
   const aid = document.getElementById('complete-aid').value;
+  const date = document.getElementById('complete-date').value;
+  const taskId = parseInt(document.getElementById('complete-task-id').value);
   const notes = document.getElementById('complete-notes').value.trim();
-  const r = await fetch(`/dailies/api/assignments/${aid}/complete`, {
-    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes})
-  });
+
+  let r;
+  if (aid) {
+    // Real assignment row exists
+    r = await fetch(`/dailies/api/assignments/${aid}/complete`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({notes})
+    });
+  } else {
+    // Virtual assignment — use new endpoint
+    r = await fetch('/dailies/api/assignments/complete-by-slot', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({task_id: taskId, due_date: date, notes})
+    });
+  }
+
   const d = await r.json();
-  if (d.success) { toast('Submitted for approval!','success'); closeModal('modal-complete'); loadWeek(); loadMyTasks(); }
-  else toast(d.error||'Error','error');
+  if (d.success) {
+    toast('Submitted for approval!', 'success');
+    closeModal('modal-complete');
+    loadWeek();
+    loadMyTasks();
+  } else toast(d.error || 'Error', 'error');
 }
-async function ensureAndComplete(date, taskId, memberId) {
-  // Store the virtual assignment first, then open the complete modal
-  const r = await fetch('/dailies/api/assignments/ensure', {
-    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({date})
-  });
-  const d = await r.json();
-  if (!d.success) { toast(d.error||'Error storing assignment','error'); return; }
-  // Now fetch the stored assignment_id
-  const r2 = await fetch(`/dailies/api/assignments?date=${date}`);
-  const assignments = await r2.json();
-  const a = assignments.find(x => x.task_id === taskId && x.member_id === memberId);
-  if (!a || !a.assignment_id) { toast('Could not find assignment','error'); return; }
-  openComplete(a.assignment_id, date, taskId);
+
+function ensureAndComplete(date, taskId, memberId) {
+  openComplete(null, date, taskId);
 }
 
 // ── ROTATION SETUP ──
