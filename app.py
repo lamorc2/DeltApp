@@ -1107,16 +1107,21 @@ def dailies_delete_rotation(rid):
 def dailies_get_assignments():
     conn = get_db()
     role = session.get('role')
-    date_str = request.args.get('date')
-    week_str = request.args.get('week').strip()
+    date_str = request.args.get('date','').strip()
+    week_str = request.args.get('week','').strip()
 
-    if date_str:
-        dates = [datetime.date.fromisoformat(date_str)]
-    elif week_str and week_str.strip().lower() not in ("null", "none", "",'null'):
-        monday = datetime.date.fromisoformat(week_str)
+    try:
+        if date_str:
+            dates = [datetime.date.fromisoformat(date_str)]
+        elif week_str:
+            monday = datetime.date.fromisoformat(week_str)
+            dates = [monday + datetime.timedelta(days=i) for i in range(7)]
+        else:
+            raise ValueError("default to today's week")
+    except ValueError:
+        today = datetime.date.today()
+        monday = today - datetime.timedelta(days=today.weekday())
         dates = [monday + datetime.timedelta(days=i) for i in range(7)]
-    else:
-        dates = [datetime.date.today()]
 
     rotation = fetchall(conn, (
         "SELECT r.task_id, r.day_of_week, r.member_id, r.rotation_id, "
