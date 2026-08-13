@@ -775,7 +775,7 @@
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>#</th><th>Member</th><th>Email</th><th>Role</th><th>Points</th><th>Status</th></tr>
+                <tr><th>#</th><th>Member</th><th>Points</th></tr>
               </thead>
               <tbody id="leaderboard-body"></tbody>
             </table>
@@ -1215,7 +1215,7 @@ function showPage(page, el) {
 
 // ---- LEADERBOARD ----
 async function loadLeaderboard() {
-  const r = await fetch('/points/api/users');
+  const r = await fetch('/points/api/leaderboard');
   const users = await r.json();
   const active = users.filter(u => u.is_active);
 
@@ -1245,17 +1245,14 @@ async function loadLeaderboard() {
   // Table
   const tbody = document.getElementById('leaderboard-body');
   if (active.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">No members yet</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">No members yet</div></div></td></tr>`;
     return;
   }
   tbody.innerHTML = active.map((u, i) => `
     <tr>
       <td><span class="rank-${i+1}">${i < 3 ? ['🥇','🥈','🥉'][i] : '#' + (i+1)}</span></td>
       <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${u.username}</td>
-      <td class="text-dim" style="font-size:0.85rem;">${u.email}</td>
-      <td>${roleBadge(u.role)}</td>
       <td><span class="points-num">${u.brotherhood_points}</span></td>
-      <td>${u.is_active ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-inactive">Inactive</span>'}</td>
     </tr>
   `).join('');
 }
@@ -1264,7 +1261,7 @@ async function loadLeaderboard() {
 async function loadSubmitForm() {
   // Load members into dropdown
   // All roles can submit for any member - they all go through approval anyway
-  const r = await fetch('/points/api/users');
+  const r = await fetch('/points/api/members');
   const users = await r.json();
   const sel = document.getElementById('sub-member');
   sel.innerHTML = users.filter(u => u.is_active).map(u =>

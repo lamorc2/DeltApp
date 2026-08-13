@@ -115,7 +115,10 @@ let spinning = false;
 
 async function loadMembers() {
   try {
+    const me = await fetch('/api/me').then(r => r.json());
+    if (!me.authenticated) { window.location.href = '/points'; return; }
     const r = await fetch('/wheel/api/members');
+    if (r.status === 401) { window.location.href = '/points'; return; }
     members = await r.json();
     document.getElementById('loading').style.display = 'none';
     if (members.length < 2) {
