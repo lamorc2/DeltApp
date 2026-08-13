@@ -148,6 +148,10 @@
     border-color: var(--gold);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 12%, transparent);
   }
+  .form-input.invalid, .form-input.invalid:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 18%, transparent);
+  }
   .form-input::placeholder { color: var(--text-muted); }
   select.form-input option { background: var(--dark-3); }
 
@@ -857,7 +861,8 @@
             </div>
             <div class="form-group">
               <label class="form-label">Points Value <span class="text-dim">(use negative for deductions)</span></label>
-              <input class="form-input" type="number" id="sub-custom-points" placeholder="e.g. 5 or -2">
+              <input class="form-input" type="number" id="sub-custom-points" placeholder="e.g. 5 or -2" min="-99" max="99" oninput="validateCustomPoints()">
+              <div class="error-msg" id="sub-custom-points-err">Points must be between -99 and 99</div>
             </div>
           </div>
 
@@ -1262,7 +1267,34 @@ function toggleCustom() {
   document.getElementById('custom-fields').style.display = checked ? 'block' : 'none';
   document.getElementById('sub-action').disabled = checked;
   document.getElementById('action-preview').style.opacity = checked ? '0.35' : '1';
-  if (!checked) updateActionPreview();
+  if (!checked) {
+    const el = document.getElementById('sub-custom-points');
+    el.classList.remove('invalid');
+    document.getElementById('sub-custom-points-err').style.display = 'none';
+    updateActionPreview();
+  } else {
+    validateCustomPoints();
+  }
+}
+
+function validateCustomPoints() {
+  const el = document.getElementById('sub-custom-points');
+  const err = document.getElementById('sub-custom-points-err');
+  const raw = el.value.trim();
+  if (raw === '') {
+    el.classList.remove('invalid');
+    err.style.display = 'none';
+    return true;
+  }
+  const n = parseInt(raw, 10);
+  if (isNaN(n) || n > 99 || n < -99) {
+    el.classList.add('invalid');
+    err.style.display = 'block';
+    return false;
+  }
+  el.classList.remove('invalid');
+  err.style.display = 'none';
+  return true;
 }
 
 async function submitPoints() {
@@ -1273,15 +1305,17 @@ async function submitPoints() {
 
   if (isCustom) {
     description = document.getElementById('sub-custom-desc').value.trim();
-    points = parseInt(document.getElementById('sub-custom-points').value);
+    points = parseInt(document.getElementById('sub-custom-points').value, 10);
     if (!description) { toast('Please enter a description','error'); return; }
     if (isNaN(points) || points === 0) { toast('Please enter a valid point value','error'); return; }
+    if (!validateCustomPoints()) return;
   } else {
     const asel = document.getElementById('sub-action');
     const opt = asel.options[asel.selectedIndex];
     if (!opt || !opt.value) { toast('Please select an action','error'); return; }
     points = parseInt(opt.dataset.pts);
     description = opt.text.split('(')[0].trim();
+    if (points > 99 || points < -99) { toast('Points must be between -99 and 99','error'); return; }
   }
 
   if (!memberId) { toast('Please select a member','error'); return; }

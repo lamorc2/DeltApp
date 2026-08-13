@@ -454,7 +454,7 @@ async function init() {
   rb.className = `role-tag role-${d.role}`;
   if (window.initBugHelp) initBugHelp(d);
 
-  if (d.role === 'admin' || d.role === 'moderator') {
+  if (d.role === 'admin') {
     document.getElementById('admin-nav').style.display = 'block';
     pollReview();
   }
@@ -500,6 +500,7 @@ async function pollReview() {
 
 // ── NAV ──
 function showPage(page, el) {
+  if (['review','rotation','tasks'].includes(page) && currentUser.role !== 'admin') return;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.side-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
@@ -622,7 +623,7 @@ function renderDayDetail(date, assignments) {
 function renderTaskRow(a) {
   const over = isOverdue(a.due_date, a.status);
   const isOwn = a.member_id === currentUser.user_id;
-  const isAdmin = ['admin','moderator'].includes(currentUser.role);
+  const isAdmin = currentUser.role === 'admin';
   const canComplete = isOwn && (a.status === 'pending' || a.status === 'rejected');
   const canAdminAct = isAdmin && a.assignment_id;
 
@@ -718,6 +719,7 @@ async function loadMyTasks() {
 
 // ── REVIEW ──
 async function loadReview() {
+  if (currentUser.role !== 'admin') return;
   const r = await fetch('/dailies/api/assignments?week=' + currentWeekMonday);
   const all = await r.json();
   const submitted = all.filter(a => a.status === 'submitted');

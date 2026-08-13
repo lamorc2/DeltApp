@@ -854,10 +854,16 @@ def api_pending_transactions():
 @app.route('/points/api/transactions', methods=['POST'])
 @login_required
 def api_submit_transaction():
-    data = request.json
+    data = request.json or {}
     desc = sanitize_text(data.get('description', ''))
     if not desc:
         return jsonify({'error': 'Description is required'}), 400
+    try:
+        points = int(data.get('points'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Points must be a number'}), 400
+    if points < -99 or points > 99:
+        return jsonify({'error': 'Points must be between -99 and 99'}), 400
     # Allow submitting on behalf of another member (any logged-in user can do this)
     target_member_id = data.get('member_id', session['user_id'])
     conn = get_db()
@@ -867,7 +873,7 @@ def api_submit_transaction():
         conn.close()
         return jsonify({'error': 'Member not found'}), 404
     execute(conn, "INSERT INTO transactions (member_id, points, description) VALUES (?,?,?)",
-            (target_member_id, data['points'], desc))
+            (target_member_id, points, desc))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -1652,17 +1658,45 @@ def dailies_set_rotation():
     data = request.json or {}
     entries = data.get('entries', [])
     conn = get_db()
-    for e in entries:
-        existing = fetchone(conn,
-            "SELECT rotation_id FROM rotation_template WHERE task_id=? AND day_of_week=?",
-            (e['task_id'], e['day_of_week']))
-        if existing:
-            execute(conn, "UPDATE rotation_template SET member_id=? WHERE rotation_id=?",
-                    (e['member_id'], existing['rotation_id']))
-        else:
+    try:
+        execute(conn, "DELETE FROM rotation_template")
+        slots = {}
+        for e in entries:
+            task_id = int(e['task_id'])
+            dow = int(e['day_of_week'])
+            member_id = int(e['member_id'])
+            if dow < 1 or dow > 7:
+                conn.rollback()
+                conn.close()
+                return jsonify({'error': 'Invalid day_of_week'}), 400
             execute(conn, "INSERT INTO rotation_template (task_id, day_of_week, member_id) VALUES (?,?,?)",
-                    (e['task_id'], e['day_of_week'], e['member_id']))
-    conn.commit(); conn.close()
+                    (task_id, dow, member_id))
+            slots[(task_id, dow)] = member_id
+        # Drop still-pending copies of slots that were unassigned (or retarget if the brother changed).
+        pending = fetchall(conn,
+            "SELECT assignment_id, task_id, member_id, due_date FROM daily_assignments WHERE status='pending'")
+        for a in pending:
+            due = a['due_date']
+            if isinstance(due, datetime.datetime):
+                due = due.date()
+            elif not isinstance(due, datetime.date):
+                due = datetime.date.fromisoformat(str(due)[:10])
+            key = (a['task_id'], due.isoweekday())
+            if key not in slots:
+                execute(conn, "DELETE FROM daily_assignments WHERE assignment_id=?", (a['assignment_id'],))
+            elif a['member_id'] != slots[key]:
+                execute(conn, "UPDATE daily_assignments SET member_id=? WHERE assignment_id=?",
+                        (slots[key], a['assignment_id']))
+        conn.commit()
+    except (KeyError, TypeError, ValueError):
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Invalid rotation entries'}), 400
+    except Exception:
+        conn.rollback()
+        conn.close()
+        raise
+    conn.close()
     return jsonify({'success': True})
 
 @app.route('/dailies/api/rotation/<int:rid>', methods=['DELETE'])
@@ -1800,7 +1834,7 @@ def dailies_complete_by_slot():
     if not slot:
         conn.close()
         return jsonify({'error': 'No rotation slot found'}), 404
-    if session.get('role') not in ('admin', 'moderator') and slot['member_id'] != session['user_id']:
+    if session.get('role') != 'admin' and slot['member_id'] != session['user_id']:
         conn.close()
         return jsonify({'error': 'Not your assignment'}), 403
 
@@ -1839,7 +1873,7 @@ def dailies_ensure_assignments():
 def dailies_mark_complete(aid):
     data = request.json or {}
     conn = get_db()
-    if session.get('role') not in ('admin', 'moderator'):
+    if session.get('role') != 'admin':
         a = fetchone(conn, "SELECT member_id FROM daily_assignments WHERE assignment_id=?", (aid,))
         if not a or a['member_id'] != session['user_id']:
             conn.close()
