@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>__BRAND_LETTERS__ Brotherhood Points</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -692,10 +692,7 @@
     body,#app,#main-app{padding-bottom:58px}
     .topbar{padding:0 .9rem;height:auto;min-height:54px;flex-wrap:wrap;gap:.3rem;padding-top:.4rem;padding-bottom:.4rem}
     .topbar-nav-links,.topbar-nav{display:none !important}
-    .topbar-title,.topbar-sub{display:none}
     .topbar-user{gap:.4rem}
-    .user-badge{padding:.25rem .55rem}
-    .sidebar{display:none !important}
     .content{padding:.9rem .75rem !important}
     .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
     table{min-width:480px}
@@ -745,8 +742,11 @@
 
 <!-- MAIN APP -->
 <div id="main-app">
+  <input type="checkbox" id="nav-toggle" class="nav-toggle">
+  <label class="nav-backdrop" for="nav-toggle"></label>
   <div class="topbar">
     <div class="topbar-brand">
+      <label class="hamburger" for="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></label>
       <span class="topbar-symbol">__BRAND_LETTERS__</span>
       <span class="topbar-title">Brotherhood Points</span>
     </div>
@@ -1087,6 +1087,7 @@ async function loadApp() {
 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
+  document.body.classList.add('logged-in');
 
   document.getElementById('topbar-username').textContent = d.username.toUpperCase();
   const rb = document.getElementById('topbar-role');
@@ -1507,7 +1508,7 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 </script>
 
   <!-- MOBILE BOTTOM NAV -->
-  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:500;align-items:stretch">
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:90;align-items:stretch">
     <a href="/points" class="mob-nav-btn" style="color:var(--gold)"><span>⚔</span><span>Points</span></a>
     <a href="/budget" class="mob-nav-btn" style="color:var(--text-dim)"><span>◈</span><span>Budget</span></a>
     <a href="/wheel" class="mob-nav-btn" style="color:var(--text-dim)"><span>🎡</span><span>Wheel</span></a>

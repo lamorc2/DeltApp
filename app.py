@@ -478,7 +478,36 @@ def _theme_css(s):
         f'{derived}'
         f'  --brand-letters:{letters};\n'
         '}\n'
+        + _MOBILE_CHROME_CSS
     )
+
+# Shared mobile chrome: hamburger opens the existing sidebar (no cloned menu).
+_MOBILE_CHROME_CSS = '''
+.nav-toggle{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:44px;height:44px;margin:-8px 8px -8px -8px;cursor:pointer;flex-shrink:0}
+.hamburger span{display:block;width:18px;height:2px;background:var(--gold);border-radius:1px}
+.nav-backdrop{display:none}
+@media(max-width:768px){
+  .hamburger{display:inline-flex}
+  .topbar-brand:has(.hamburger) .topbar-symbol{display:none}
+  .topbar{z-index:160}
+  .nav-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:140}
+  #nav-toggle:checked ~ .nav-backdrop{display:block}
+  .sidebar{display:none;position:fixed;top:54px;left:0;width:min(300px,86vw);height:auto;max-height:calc(100dvh - 54px - 58px - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:150}
+  #nav-toggle:checked ~ .app-body{z-index:auto}
+  #nav-toggle:checked ~ .app-body > .sidebar{display:block !important;z-index:150}
+  #mobile-bottom-nav{z-index:90 !important;height:calc(58px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
+  body:has(#mobile-bottom-nav),#app:has(+ #mobile-bottom-nav),#main-app{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  body:has(#login-screen):not(.logged-in) #mobile-bottom-nav{display:none !important}
+  .admin-page .topbar-symbol,.admin-page .topbar-title,.admin-page .topbar-brand{display:none}
+  .admin-page .topbar{padding:0 .9rem;height:auto;min-height:54px}
+  .admin-page .topbar-user{gap:.4rem}
+  .admin-page .user-badge{display:none}
+}
+.mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid color-mix(in srgb, var(--gold) 10%, transparent);color:var(--text-dim)}
+.mob-nav-btn:last-child{border-right:none}
+.mob-nav-btn span:first-child{font-size:1.15rem;line-height:1}
+'''
 
 def _clean_brand_text(value, max_len):
     text = sanitize_text(value)

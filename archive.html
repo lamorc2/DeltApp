@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Archive Current Term — __BRAND_NAME__</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -32,6 +32,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
 .btn-danger{background:rgba(207,74,74,.15);color:var(--red);border:1px solid rgba(207,74,74,.3)}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:var(--dark);border:none}
+a.btn{text-decoration:none}
+.header-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
 .content{position:relative;z-index:1;padding:2rem;max-width:560px;margin:0 auto}
 .page-title{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold);margin-bottom:.35rem}
 .page-subtitle{font-style:italic;color:var(--text-dim);margin-bottom:1.75rem}
@@ -55,12 +57,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 ul{margin:0 0 0 1.1rem;color:var(--text-dim);font-size:.95rem}
 li{margin:.25rem 0}
 .reset-label{display:block;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.16em;color:var(--gold-dim);text-transform:uppercase;margin:1.25rem 0 .45rem}
-@media(max-width:768px){.topbar-nav-links{display:none}.content{padding:1rem}}
+@media(max-width:768px){
+  #mobile-bottom-nav{display:flex !important}
+  .topbar-nav-links{display:none}
+  .content{padding:1rem}
+}
 </style>
 <link rel="stylesheet" href="/theme.css">
 <script src="/bug-report.js"></script>
 </head>
-<body>
+<body class="admin-page">
 <div class="topbar">
   <div class="topbar-brand">
     <span class="topbar-symbol">__BRAND_LETTERS__</span>
@@ -82,6 +88,9 @@ li{margin:.25rem 0}
 </div>
 
 <div class="content">
+  <div class="header-actions">
+    <a class="btn btn-ghost btn-sm" href="/">← Home</a>
+  </div>
   <div class="page-title">Archive Current Term</div>
   <div class="page-subtitle">Snapshot live term data, then reset points, budget, and dailies.</div>
   <div class="card">
@@ -197,5 +206,11 @@ document.getElementById('confirm-modal').addEventListener('click', e => {
   initAdminCog(d);
 })();
 </script>
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:90;align-items:stretch">
+    <a href="/points" class="mob-nav-btn"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn"><span>📋</span><span>Dailies</span></a>
+  </nav>
 </body>
 </html>

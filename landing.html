@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>__BRAND_LETTERS__ — Brotherhood Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -13,7 +13,7 @@
   --text: #F0E8D0; --text-dim: #9A8E7A; --text-muted: #5C5248;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--dark);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;overflow:hidden}
+body{background:var(--dark);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;overflow-x:hidden;overflow-y:auto}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,color-mix(in srgb,var(--purple-mid) 35%,transparent) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,color-mix(in srgb,var(--purple) 25%,transparent) 0%,transparent 55%);pointer-events:none}
 .portal{position:relative;z-index:1;text-align:center;max-width:700px;width:100%}
 .symbol{font-family:'Cinzel Decorative',serif;font-size:5rem;color:var(--gold);text-shadow:0 0 60px color-mix(in srgb,var(--gold) 40%,transparent);line-height:1;display:block;margin-bottom:1rem}
@@ -28,7 +28,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .app-name{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:.5rem}
 .app-desc{font-size:.9rem;color:var(--text-dim);font-style:italic;line-height:1.5}
 .footer{font-size:.75rem;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:.2em}
-@media(max-width:600px){.apps{grid-template-columns:1fr}.symbol{font-size:3.5rem}.tagline{margin-bottom:2rem}}
+@media(max-width:600px){
+  body{padding:1rem .75rem;align-items:flex-start;min-height:100dvh}
+  .symbol{font-size:2.2rem;margin-bottom:.4rem}
+  .org-name{font-size:.7rem;margin-bottom:.2rem}
+  .tagline{font-size:.95rem;margin-bottom:1rem}
+  .apps{grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1rem}
+  .app-card{padding:.85rem .55rem}
+  .app-icon{font-size:1.35rem;margin-bottom:.35rem}
+  .app-name{font-size:.62rem;letter-spacing:.08em;margin-bottom:0}
+  .app-desc{display:none}
+  .footer{font-size:.65rem}
+}
 </style>
 <link rel="stylesheet" href="/theme.css">
 </head>

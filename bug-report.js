@@ -108,4 +108,17 @@
       }
     });
   };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('nav-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    if (!toggle || !sidebar) return;
+    function closeNav() { toggle.checked = false; }
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.closest('.nav-item, .side-item, .nav-dept, a')) closeNav();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeNav();
+    });
+  });
 })();
