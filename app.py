@@ -20,7 +20,7 @@ Push Notes:
 
 """
 from functools import wraps
-from flask import Flask, request, jsonify, session, redirect, Response
+from flask import Flask, request, jsonify, session, redirect, Response, send_from_directory
 from werkzeug.security import check_password_hash, generate_password_hash
 from html import escape as html_escape
 from dotenv import load_dotenv
@@ -321,6 +321,23 @@ def init_db():
         if DATABASE_URL:
             conn.rollback()
 
+    if DATABASE_URL:
+        execute(conn, '''CREATE TABLE IF NOT EXISTS term_archives (
+            archive_id SERIAL PRIMARY KEY,
+            label TEXT UNIQUE NOT NULL,
+            payload TEXT NOT NULL,
+            created_by INTEGER REFERENCES users(user_id),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+    else:
+        execute(conn, '''CREATE TABLE IF NOT EXISTS term_archives (
+            archive_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            label TEXT UNIQUE NOT NULL,
+            payload TEXT NOT NULL,
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+
     conn.commit()
     # Seed default admin if no users exist
     row = fetchone(conn, "SELECT COUNT(*) as cnt FROM users")
@@ -544,6 +561,14 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         if session.get('role') != 'admin':
             return jsonify({'error': 'Forbidden'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+def admin_page_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if session.get('role') != 'admin':
+            return redirect('/')
         return f(*args, **kwargs)
     return decorated
 
@@ -1327,6 +1352,159 @@ def setup_page():
 
 
 # ============================================================================
+# TERM ARCHIVE
+# ============================================================================
+
+def _money(v):
+    return round(float(v or 0), 2)
+
+def _snapshot_points(conn):
+    users = fetchall(conn,
+        "SELECT username, brotherhood_points FROM users WHERE is_active=true ORDER BY brotherhood_points DESC")
+    return [{'username': u['username'], 'points': int(u['brotherhood_points'] or 0)} for u in users]
+
+def _snapshot_dailies(conn):
+    rows = fetchall(conn, (
+        "SELECT r.day_of_week, t.title, t.category, u.username as member_name "
+        "FROM rotation_template r "
+        "JOIN daily_tasks t ON r.task_id = t.task_id "
+        "JOIN users u ON r.member_id = u.user_id "
+        "WHERE t.is_active=true "
+        "ORDER BY t.category, t.title, r.day_of_week"
+    ))
+    return [{
+        'title': r['title'],
+        'category': r['category'],
+        'day_of_week': int(r['day_of_week']),
+        'member_name': r['member_name'],
+    } for r in rows]
+
+def _snapshot_budget(conn):
+    depts = fetchall(conn,
+        "SELECT dept_id, name FROM budget_departments WHERE is_active=true ORDER BY name")
+    out = []
+    for d in depts:
+        items = fetchall(conn, '''
+            SELECT i.item_id, i.name, i.allocated,
+                   COALESCE(SUM(CASE WHEN r.status = 'approved' THEN r.amount ELSE 0 END), 0) as spent
+            FROM budget_items i
+            LEFT JOIN budget_requests r ON r.item_id = i.item_id
+            WHERE i.dept_id = ? AND i.is_active = true
+            GROUP BY i.item_id, i.name, i.allocated
+            ORDER BY i.name
+        ''', (d['dept_id'],))
+        item_rows = []
+        alloc_t = 0.0
+        spent_t = 0.0
+        for i in items:
+            allocated = _money(i['allocated'])
+            spent = _money(i['spent'])
+            item_rows.append({
+                'name': i['name'],
+                'allocated': allocated,
+                'spent': spent,
+                'remainder': _money(allocated - spent),
+            })
+            alloc_t += allocated
+            spent_t += spent
+        out.append({
+            'name': d['name'],
+            'allocated': _money(alloc_t),
+            'spent': _money(spent_t),
+            'remainder': _money(alloc_t - spent_t),
+            'items': item_rows,
+        })
+    return out
+
+def _archive_and_reset(conn, label, user_id):
+    payload = {
+        'points': _snapshot_points(conn),
+        'dailies': _snapshot_dailies(conn),
+        'budget': _snapshot_budget(conn),
+    }
+    execute(conn, "INSERT INTO term_archives (label, payload, created_by) VALUES (?,?,?)",
+            (label, json.dumps(payload, ensure_ascii=False), user_id))
+    execute(conn, "UPDATE users SET brotherhood_points=0 WHERE is_active=true")
+    execute(conn, "DELETE FROM transactions WHERE status <> 'pending'")
+    execute(conn,
+        "UPDATE budget_requests SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, "
+        "rejection_reason=? WHERE status='pending'",
+        (user_id, 'Term archived'))
+    execute(conn, "DELETE FROM budget_requests")
+    execute(conn, "DELETE FROM budget_items")
+    execute(conn, "DELETE FROM daily_assignments")
+    execute(conn, "DELETE FROM rotation_template")
+
+@app.route('/api/admin/archives', methods=['GET'])
+@login_required
+@admin_required
+def api_list_archives():
+    conn = get_db()
+    rows = fetchall(conn, "SELECT label, created_at FROM term_archives ORDER BY created_at DESC")
+    conn.close()
+    return jsonify(ser(rows))
+
+@app.route('/api/admin/archives/<path:label>', methods=['GET'])
+@login_required
+@admin_required
+def api_get_archive(label):
+    conn = get_db()
+    row = fetchone(conn, "SELECT label, payload, created_at FROM term_archives WHERE label=?", (label,))
+    conn.close()
+    if not row:
+        return jsonify({'error': 'Not found'}), 404
+    out = {
+        'label': row['label'],
+        'created_at': row['created_at'],
+        'payload': json.loads(row['payload']),
+    }
+    return jsonify(ser([out])[0])
+
+@app.route('/api/admin/archive', methods=['POST'])
+@login_required
+@admin_required
+def api_create_archive():
+    label = sanitize_text((request.json or {}).get('label', ''))
+    if not label:
+        return jsonify({'error': 'Label is required'}), 400
+    conn = get_db()
+    try:
+        _archive_and_reset(conn, label, session['user_id'])
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        if is_integrity_error(e):
+            return jsonify({'error': 'Term Label is Already in use, Try a Different one'}), 409
+        raise
+    conn.close()
+    log_audit(session['user_id'], 'ARCHIVE_TERM', label)
+    return jsonify({'success': True})
+
+@app.route('/admin-settings.js')
+def admin_settings_js():
+    return send_from_directory(BASE_DIR, 'admin-settings.js', mimetype='application/javascript')
+
+@app.route('/users')
+@setup_gate
+@admin_page_required
+def users_page():
+    return _read_html('users.html')
+
+@app.route('/archive')
+@setup_gate
+@admin_page_required
+def archive_page():
+    return _read_html('archive.html')
+
+@app.route('/archives')
+@setup_gate
+@admin_page_required
+def archives_page():
+    return _read_html('archives.html')
+
+
+# ============================================================================
 # PAGE ROUTES
 # ============================================================================
 
@@ -1691,6 +1869,9 @@ if __name__ == '__main__':
     print(f"  → Wheel:        http://localhost:5000/wheel")
     print(f"  → Dailies:      http://localhost:5000/dailies")
     print(f"  → Setup:        http://localhost:5000/setup")
+    print(f"  → Users:        http://localhost:5000/users")
+    print(f"  → Archive:      http://localhost:5000/archive")
+    print(f"  → Archives:     http://localhost:5000/archives")
     print(f"  → Default login: admin / admin123")
     print(f"  → DB: {'PostgreSQL' if DATABASE_URL else 'SQLite (local)'}")
     print("="*55 + "\n")

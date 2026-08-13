@@ -516,6 +516,7 @@ tbody tr:hover{background:color-mix(in srgb, var(--gold) 4%, transparent)}
   </div>
 </div>
 
+<script src="/admin-settings.js"></script>
 <script>
 let currentUser = null;
 let allDepts = [];
@@ -620,6 +621,7 @@ async function loadApp() {
   await loadDepts();
   showPage('overview', $('nav-overview'));
   pollPending();
+  initAdminCog(d);
 }
 
 async function pollPending() {

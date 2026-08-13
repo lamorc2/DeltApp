@@ -136,6 +136,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="members-hint">Click a name to remove them from the draw. Click again to add back.</div>
   </div>
 </div>
+<script src="/admin-settings.js"></script>
 <script>
 let members = [];
 let excluded = new Set();
@@ -154,6 +155,7 @@ async function loadMembers() {
     rb.textContent = me.role;
     rb.className = `role-tag role-${me.role}`;
     if (window.initBugHelp) initBugHelp(me);
+    initAdminCog(me);
     const r = await fetch('/wheel/api/members');
     if (r.status === 401) { window.location.href = '/points'; return; }
     members = await r.json();

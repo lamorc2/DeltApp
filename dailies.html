@@ -376,6 +376,7 @@ textarea.form-input{resize:vertical;min-height:65px}
   </div>
 </div>
 
+<script src="/admin-settings.js"></script>
 <script>
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const DAYS_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -465,6 +466,7 @@ async function init() {
   }
   await Promise.all([loadTasks(), loadMembers(), loadRotation()]);
   showPage('week', document.getElementById('nav-week'));
+  initAdminCog(d);
 }
 
 async function loadTasks() {
