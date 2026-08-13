@@ -301,12 +301,19 @@ def init_db():
         letters TEXT NOT NULL,
         org_name TEXT NOT NULL,
         tagline TEXT NOT NULL,
+        footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858',
         primary_color TEXT NOT NULL,
         accent_color TEXT NOT NULL,
         bg_color TEXT NOT NULL,
         text_color TEXT NOT NULL,
         configured INTEGER NOT NULL DEFAULT 0
     )''')
+    try:
+        execute(conn, "ALTER TABLE org_settings ADD COLUMN footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858'")
+        conn.commit()
+    except Exception:
+        if DATABASE_URL:
+            conn.rollback()
 
     conn.commit()
     # Seed default admin if no users exist
@@ -323,9 +330,9 @@ def init_db():
         # Existing deploys keep the Delts look and skip the wizard.
         configured = 0 if was_fresh else 1
         execute(conn, '''INSERT INTO org_settings
-            (id, letters, org_name, tagline, primary_color, accent_color, bg_color, text_color, configured)
-            VALUES (?,?,?,?,?,?,?,?,?)''',
-            (1, d['letters'], d['org_name'], d['tagline'],
+            (id, letters, org_name, tagline, footer, primary_color, accent_color, bg_color, text_color, configured)
+            VALUES (?,?,?,?,?,?,?,?,?,?)''',
+            (1, d['letters'], d['org_name'], d['tagline'], d['footer'],
              d['primary_color'], d['accent_color'], d['bg_color'], d['text_color'], configured))
         conn.commit()
     conn.close()
@@ -353,6 +360,7 @@ DEFAULT_THEME = {
     'letters': 'ΔΤΔ',
     'org_name': 'Delta Tau Delta',
     'tagline': 'Brotherhood Management Portal',
+    'footer': 'ΔΤΔ — Est. 1858',
     'primary_color': '#3D0C45',
     'accent_color': '#C9A84C',
     'bg_color': '#0D0910',
@@ -365,10 +373,16 @@ def _settings_from_row(row):
         d = dict(DEFAULT_THEME)
         d['configured'] = 0
         return d
+    footer = DEFAULT_THEME['footer']
+    try:
+        footer = row['footer'] or DEFAULT_THEME['footer']
+    except (KeyError, IndexError):
+        pass
     return {
         'letters': row['letters'],
         'org_name': row['org_name'],
         'tagline': row['tagline'],
+        'footer': footer,
         'primary_color': row['primary_color'],
         'accent_color': row['accent_color'],
         'bg_color': row['bg_color'],
@@ -1177,6 +1191,7 @@ def api_theme_get():
         'letters': s['letters'],
         'org_name': s['org_name'],
         'tagline': s['tagline'],
+        'footer': s['footer'],
         'primary_color': s['primary_color'],
         'accent_color': s['accent_color'],
         'bg_color': s['bg_color'],
@@ -1193,6 +1208,9 @@ def api_theme_save():
     letters = _clean_brand_text(data.get('letters', ''), 32)
     org_name = _clean_brand_text(data.get('org_name', ''), 80)
     tagline = _clean_brand_text(data.get('tagline', ''), 120)
+    footer = _clean_brand_text(data.get('footer', ''), 120)
+    if not footer:
+        footer = DEFAULT_THEME['footer']
     if not letters or not org_name or not tagline:
         return jsonify({'error': 'Letters, org name, and tagline are required'}), 400
     colors = {}
@@ -1204,17 +1222,17 @@ def api_theme_save():
     conn = get_db()
     if fetchone(conn, "SELECT id FROM org_settings WHERE id=1"):
         execute(conn, '''UPDATE org_settings SET
-            letters=?, org_name=?, tagline=?,
+            letters=?, org_name=?, tagline=?, footer=?,
             primary_color=?, accent_color=?, bg_color=?, text_color=?,
             configured=1 WHERE id=1''',
-            (letters, org_name, tagline,
+            (letters, org_name, tagline, footer,
              colors['primary_color'], colors['accent_color'],
              colors['bg_color'], colors['text_color']))
     else:
         execute(conn, '''INSERT INTO org_settings
-            (id, letters, org_name, tagline, primary_color, accent_color, bg_color, text_color, configured)
-            VALUES (?,?,?,?,?,?,?,?,1)''',
-            (1, letters, org_name, tagline,
+            (id, letters, org_name, tagline, footer, primary_color, accent_color, bg_color, text_color, configured)
+            VALUES (?,?,?,?,?,?,?,?,?,1)''',
+            (1, letters, org_name, tagline, footer,
              colors['primary_color'], colors['accent_color'],
              colors['bg_color'], colors['text_color']))
     conn.commit()
@@ -1244,6 +1262,7 @@ def _read_html(name):
         .replace('__BRAND_LETTERS__', html_escape(s['letters']))
         .replace('__BRAND_NAME__', html_escape(s['org_name']))
         .replace('__BRAND_TAGLINE__', html_escape(s['tagline']))
+        .replace('__BRAND_FOOTER__', html_escape(s['footer']))
     )
 
 @app.route('/')

@@ -22,6 +22,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .crest-symbol{font-family:'Cinzel Decorative',serif;font-size:4.2rem;color:var(--gold);display:block;line-height:1;text-shadow:0 0 40px color-mix(in srgb,var(--gold) 40%,transparent);letter-spacing:.1em}
 .crest-name{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-top:.6rem}
 .crest-sub{font-family:'Crimson Pro',serif;font-style:italic;font-size:1.05rem;color:var(--text-dim);margin-top:.35rem}
+.crest-footer{font-size:.7rem;color:var(--text-muted);font-family:'Cinzel',serif;letter-spacing:.18em;margin-top:1.25rem}
 .card{background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:1.75rem 1.75rem 1.5rem;position:relative}
 .card::before,.card::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--gold);border-style:solid}
 .card::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
@@ -54,6 +55,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <span class="crest-symbol" id="preview-letters">__BRAND_LETTERS__</span>
     <div class="crest-name" id="preview-name">__BRAND_NAME__</div>
     <div class="crest-sub" id="preview-tagline">__BRAND_TAGLINE__</div>
+    <div class="crest-footer" id="preview-footer">__BRAND_FOOTER__</div>
   </div>
   <div class="card">
     <div class="card-title" id="form-title">Chapter Style</div>
@@ -69,6 +71,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="form-group">
       <label class="form-label">Tagline</label>
       <input class="form-input" id="tagline" maxlength="120" value="__BRAND_TAGLINE__">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Home footer</label>
+      <input class="form-input" id="footer" maxlength="120" value="__BRAND_FOOTER__">
     </div>
     <div class="colors">
       <div class="form-group">
@@ -125,6 +131,7 @@ function applyPreview() {
   document.getElementById('preview-letters').textContent = document.getElementById('letters').value;
   document.getElementById('preview-name').textContent = document.getElementById('org_name').value;
   document.getElementById('preview-tagline').textContent = document.getElementById('tagline').value;
+  document.getElementById('preview-footer').textContent = document.getElementById('footer').value;
   document.getElementById('primary_hex').textContent = p;
   document.getElementById('accent_hex').textContent = a;
   document.getElementById('bg_hex').textContent = bg;
@@ -142,6 +149,7 @@ async function loadTheme() {
   document.getElementById('letters').value = d.letters || '';
   document.getElementById('org_name').value = d.org_name || '';
   document.getElementById('tagline').value = d.tagline || '';
+  document.getElementById('footer').value = d.footer || 'ΔΤΔ — Est. 1858';
   setColor('primary_color', d.primary_color);
   setColor('accent_color', d.accent_color);
   setColor('bg_color', d.bg_color);
@@ -166,6 +174,7 @@ async function saveTheme() {
     letters: document.getElementById('letters').value,
     org_name: document.getElementById('org_name').value,
     tagline: document.getElementById('tagline').value,
+    footer: document.getElementById('footer').value,
     primary_color: document.getElementById('primary_color').value,
     accent_color: document.getElementById('accent_color').value,
     bg_color: document.getElementById('bg_color').value,
@@ -192,7 +201,7 @@ async function saveTheme() {
   }
 }
 
-['letters','org_name','tagline'].forEach(id => {
+['letters','org_name','tagline','footer'].forEach(id => {
   document.getElementById(id).addEventListener('input', applyPreview);
 });
 FIELDS.forEach(id => {
