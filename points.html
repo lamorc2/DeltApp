@@ -791,12 +791,6 @@
       <div class="nav-item" onclick="showPage('actions', this)" id="nav-actions" style="display:none">
         <span class="icon">⚙</span> Point Actions
       </div>
-      <div class="nav-item" onclick="showPage('users', this)" id="nav-users" style="display:none">
-        <span class="icon">👥</span> User Management
-      </div>
-      <a class="nav-item" href="/setup" id="nav-style" style="display:none;text-decoration:none">
-        <span class="icon">◈</span> Chapter Style
-      </a>
     </nav>
 
     <main class="content">
@@ -936,30 +930,6 @@
           </div>
         </div>
       </div>
-
-      <!-- User Management -->
-      <div class="page" id="page-users">
-        <div class="page-header">
-          <div>
-            <div class="page-title">User Management</div>
-            <div class="page-subtitle">Manage brotherhood member accounts</div>
-          </div>
-          <button class="btn btn-gold btn-sm" onclick="openAddUser()">+ Add Member</button>
-        </div>
-        <div class="card">
-          <div class="search-bar">
-            <input class="search-input" id="user-search" placeholder="Search members..." oninput="filterUsers()">
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Points</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
-              </thead>
-              <tbody id="users-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
       <!-- Point Actions Management -->
       <div class="page" id="page-actions">
         <div class="page-header">
@@ -984,73 +954,6 @@
 <!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
 
-<!-- ADD USER MODAL -->
-<div class="modal-overlay" id="modal-add-user">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Add New Member</span>
-      <button class="modal-close" onclick="closeModal('modal-add-user')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="add-username" placeholder="Username"></div>
-      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="add-email" placeholder="email@example.com"></div>
-      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="add-password" placeholder="Password"></div>
-      <div class="form-group">
-        <label class="form-label">Role</label>
-        <select class="form-input" id="add-role">
-          <option value="member">Member</option>
-          <option value="officer">Officer</option>
-          <option value="moderator">Moderator</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <div class="error-msg" id="add-error"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-gold btn-sm" onclick="createUser()">Create Member</button>
-    </div>
-  </div>
-</div>
-
-<!-- EDIT USER MODAL -->
-<div class="modal-overlay" id="modal-edit-user">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Edit Member</span>
-      <button class="modal-close" onclick="closeModal('modal-edit-user')">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="edit-uid">
-      <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="edit-username" placeholder="Username"></div>
-      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="edit-email"></div>
-      <div class="form-group"><label class="form-label">New Password <span class="text-dim">(leave blank to keep)</span></label><input class="form-input" type="password" id="edit-password" placeholder="New password"></div>
-      <div class="form-group">
-        <label class="form-label">Role</label>
-        <select class="form-input" id="edit-role">
-          <option value="member">Member</option>
-          <option value="officer">Officer</option>
-          <option value="moderator">Moderator</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select class="form-input" id="edit-active">
-          <option value="1">Active</option>
-          <option value="0">Inactive</option>
-        </select>
-      </div>
-      <div class="error-msg" id="edit-error"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-edit-user')">Cancel</button>
-      <button class="btn btn-gold btn-sm" onclick="saveUser()">Save Changes</button>
-    </div>
-  </div>
-</div>
-
-<!-- REJECT MODAL -->
 <div class="modal-overlay" id="modal-reject">
   <div class="modal">
     <div class="modal-header">
@@ -1110,9 +1013,9 @@
   </div>
 </div>
 
+<script src="/admin-settings.js"></script>
 <script>
 let currentUser = null;
-let allUsers = [];
 let allTransactions = [];
 let allActions = [];
 
@@ -1198,18 +1101,19 @@ async function loadApp() {
 
   if (role === 'member') {
     show('nav-submit'); show('nav-my-tx');
-    hide('nav-pending'); hide('nav-all-tx'); hide('nav-users'); hide('nav-style');
+    hide('nav-pending'); hide('nav-all-tx'); hide('nav-actions');
     hide('mod-section'); hide('admin-section'); hide('admin-divider');
   } else if (role === 'moderator') {
     show('nav-submit'); show('nav-my-tx');
     show('nav-pending'); show('nav-all-tx');
+    hide('nav-actions');
     document.getElementById('mod-section').style.display = 'block';
-    hide('nav-users'); hide('nav-style'); hide('admin-section'); hide('admin-divider');
+    hide('admin-section'); hide('admin-divider');
   } else if (role === 'admin') {
     show('nav-submit'); show('nav-my-tx');
     show('nav-pending'); show('nav-all-tx');
     document.getElementById('mod-section').style.display = 'block';
-    show('nav-actions'); show('nav-users'); show('nav-style');
+    show('nav-actions');
     document.getElementById('admin-section').style.display = 'block';
     document.getElementById('admin-divider').style.display = 'block';
   }
@@ -1221,6 +1125,7 @@ async function loadApp() {
   if (!['officer','moderator','admin'].includes(role)) {
     document.querySelectorAll('a[href="/budget"]').forEach(el => el.style.display = 'none');
   }
+  initAdminCog(d);
 }
 
 async function pollPending() {
@@ -1253,7 +1158,6 @@ function showPage(page, el) {
   else if (page === 'my-transactions') loadMyTransactions();
   else if (page === 'pending') loadPending();
   else if (page === 'all-transactions') loadAllTransactions();
-  else if (page === 'users') loadUsers();
   else if (page === 'actions') loadActions();
 }
 
@@ -1296,8 +1200,6 @@ async function loadLeaderboard() {
     <tr>
       <td><span class="rank-${i+1}">${i < 3 ? ['🥇','🥈','🥉'][i] : '#' + (i+1)}</span></td>
       <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${esc(u.username)}</td>
-      <td class="text-dim" style="font-size:0.85rem;">${u.email}</td>
-      <td>${roleBadge(u.role)}</td>
       <td><span class="points-num">${u.brotherhood_points}</span></td>
     </tr>
   `).join('');
@@ -1577,99 +1479,6 @@ function filterTransactions() {
   renderAllTransactions(allTransactions.filter(t =>
     t.member_name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
   ));
-}
-
-// ---- USERS ----
-async function loadUsers() {
-  const r = await fetch('/points/api/users');
-  allUsers = await r.json();
-  renderUsers(allUsers);
-}
-function renderUsers(users) {
-  const tbody = document.getElementById('users-body');
-  if (users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-text">No users found</div></div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = users.map(u => `
-    <tr>
-      <td class="text-dim">${u.user_id}</td>
-      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${esc(u.username)}</td>
-      <td class="text-dim" style="font-size:0.85rem;">${esc(u.email)}</td>
-      <td>${roleBadge(u.role)}</td>
-      <td><span class="points-num">${u.brotherhood_points}</span></td>
-      <td>${u.is_active ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-inactive">Inactive</span>'}</td>
-      <td class="text-dim" style="font-size:0.8rem;">${fmtDate(u.created_at)}</td>
-      <td>
-        <div class="action-btns">
-          <button class="btn btn-ghost btn-sm" onclick="openEditUser(${u.user_id})">Edit</button>
-          ${u.is_active ? `<button class="btn btn-danger btn-sm" onclick="deactivateUser(${u.user_id})">Deactivate</button>` : ''}
-        </div>
-      </td>
-    </tr>
-  `).join('');
-}
-function filterUsers() {
-  const q = document.getElementById('user-search').value.toLowerCase();
-  renderUsers(allUsers.filter(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
-}
-
-function openAddUser() {
-  ['add-username','add-email','add-password'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('add-role').value = 'member';
-  document.getElementById('add-error').style.display = 'none';
-  openModal('modal-add-user');
-}
-async function createUser() {
-  const data = {
-    username: document.getElementById('add-username').value.trim(),
-    email: document.getElementById('add-email').value.trim(),
-    password: document.getElementById('add-password').value,
-    role: document.getElementById('add-role').value
-  };
-  if (!data.username || !data.email || !data.password) { showErr('add-error','All fields are required'); return; }
-  const r = await fetch('/points/api/users', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-  const d = await r.json();
-  if (d.success) { toast('Member created!','success'); closeModal('modal-add-user'); loadUsers(); }
-  else showErr('add-error', d.error||'Error creating user');
-}
-
-function openEditUser(uid) {
-  const u = allUsers.find(x => x.user_id === uid);
-  if (!u) return;
-  document.getElementById('edit-uid').value = uid;
-  document.getElementById('edit-username').value = u.username;
-  document.getElementById('edit-email').value = u.email;
-  document.getElementById('edit-password').value = '';
-  document.getElementById('edit-role').value = u.role;
-  document.getElementById('edit-active').value = u.is_active ? '1' : '0';
-  document.getElementById('edit-error').style.display = 'none';
-  openModal('modal-edit-user');
-}
-async function saveUser() {
-  const uid = document.getElementById('edit-uid').value;
-  const data = {
-    username: document.getElementById('edit-username').value.trim(),
-    email: document.getElementById('edit-email').value.trim(),
-    role: document.getElementById('edit-role').value,
-    is_active: document.getElementById('edit-active').value,
-    password: document.getElementById('edit-password').value
-  };
-  if (!data.username || !data.email) { showErr('edit-error','Username and email are required'); return; }
-  try {
-    const r = await fetch(`/points/api/users/${uid}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-    const d = await r.json();
-    if (d.success) { toast('Member updated!','success'); closeModal('modal-edit-user'); loadUsers(); }
-    else showErr('edit-error', d.error||'Error saving user');
-  } catch(e) { showErr('edit-error','Network error — please try again'); }
-}
-
-async function deactivateUser(uid) {
-  if (!confirm('Deactivate this member?')) return;
-  const r = await fetch(`/points/api/users/${uid}`, {method:'DELETE'});
-  const d = await r.json();
-  if (d.success) { toast('Member deactivated','info'); loadUsers(); }
-  else toast('Error','error');
 }
 
 function showErr(id, msg) {
