@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Δ Τ Δ — Wheel of Brothers</title>
+<title>__BRAND_LETTERS__ — Wheel of Brothers</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -12,22 +12,23 @@
   --dark: #0D0910; --dark-2: #150D1A;
   --border: rgba(201,168,76,0.18); --border-strong: rgba(201,168,76,0.38);
   --text: #F0E8D0; --text-dim: #9A8E7A; --text-muted: #5C5248;
+ --surface: #1A0F21; --dark-3: #1E1227;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0D0910;color:#F0E8D0;font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(92,31,107,.35) 0%,transparent 65%);pointer-events:none;z-index:0}
+body{background:var(--dark);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb, var(--purple-mid) 35%, transparent) 0%,transparent 65%);pointer-events:none;z-index:0}
 .topbar{background:linear-gradient(180deg,var(--purple) 0%,var(--dark-2) 100%);border-bottom:1px solid var(--border-strong);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.4)}
 .topbar-brand{display:flex;align-items:center;gap:1rem;min-width:0;overflow:hidden;position:relative;z-index:1}
-.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5);flex-shrink:0}
+.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px color-mix(in srgb, var(--gold) 50%, transparent);flex-shrink:0}
 .topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar-nav-links{display:flex;gap:.5rem;position:absolute;left:50%;transform:translateX(-50%)}
 .topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px;white-space:nowrap}
-.topbar-nav-links a.active{color:var(--gold);border-color:var(--gold-dim);background:rgba(201,168,76,.12)}
+.topbar-nav-links a.active{color:var(--gold);border-color:var(--gold-dim);background:color-mix(in srgb, var(--gold) 12%, transparent)}
 .topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem;flex-shrink:0;position:relative;z-index:1;margin-left:auto}
-.user-badge{display:flex;align-items:center;gap:.6rem;background:rgba(201,168,76,.08);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
+.user-badge{display:flex;align-items:center;gap:.6rem;background:color-mix(in srgb, var(--gold) 8%, transparent);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
 .user-name{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em}
 .role-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;font-family:'Cinzel',serif}
-.role-admin{background:rgba(201,168,76,.2);color:var(--gold);border:1px solid var(--gold-dim)}
+.role-admin{background:color-mix(in srgb, var(--gold) 20%, transparent);color:var(--gold);border:1px solid var(--gold-dim)}
 .role-moderator{background:rgba(192,132,208,.15);color:#C084D0;border:1px solid var(--purple-light)}
 .role-member{background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid var(--border)}
 .role-officer{background:rgba(91,141,217,.15);color:#5B8DD9;border:1px solid rgba(91,141,217,.3)}
@@ -36,34 +37,34 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
 .main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;min-height:calc(100vh - 60px);gap:2.5rem}
-.page-title{font-family:'Cinzel',serif;font-size:1.4rem;color:#C9A84C;letter-spacing:.1em;text-align:center}
-.page-sub{font-style:italic;color:#9A8E7A;font-size:.95rem;text-align:center;margin-top:.4rem}
-.picker-card{background:#1A0F21;border:2px solid rgba(201,168,76,.3);border-radius:12px;padding:3rem 4rem;text-align:center;position:relative;box-shadow:0 0 60px rgba(92,31,107,.4),inset 0 0 40px rgba(0,0,0,.3);min-width:360px}
-.picker-card::before,.picker-card::after{content:'';position:absolute;width:28px;height:28px;border-color:#C9A84C;border-style:solid}
+.page-title{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);letter-spacing:.1em;text-align:center}
+.page-sub{font-style:italic;color:var(--text-dim);font-size:.95rem;text-align:center;margin-top:.4rem}
+.picker-card{background:var(--surface);border:2px solid color-mix(in srgb, var(--gold) 30%, transparent);border-radius:12px;padding:3rem 4rem;text-align:center;position:relative;box-shadow:0 0 60px color-mix(in srgb, var(--purple-mid) 40%, transparent),inset 0 0 40px rgba(0,0,0,.3);min-width:360px}
+.picker-card::before,.picker-card::after{content:'';position:absolute;width:28px;height:28px;border-color:var(--gold);border-style:solid}
 .picker-card::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:2px 0 0 0}
 .picker-card::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 2px 0}
-.picker-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.35em;color:#5C5248;text-transform:uppercase;margin-bottom:1.5rem}
-.name-display{font-family:'Cinzel Decorative',serif;font-size:2.8rem;color:#C9A84C;min-height:3.5rem;line-height:1.2;transition:color .08s;text-shadow:0 0 30px rgba(201,168,76,.3)}
-.name-display.rolling{color:#7B3094;text-shadow:0 0 20px rgba(123,48,148,.5)}
-.name-display.winner{color:#C9A84C;text-shadow:0 0 40px rgba(201,168,76,.7),0 0 80px rgba(201,168,76,.3);animation:pulse .6s ease-in-out 3}
+.picker-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.35em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1.5rem}
+.name-display{font-family:'Cinzel Decorative',serif;font-size:2.8rem;color:var(--gold);min-height:3.5rem;line-height:1.2;transition:color .08s;text-shadow:0 0 30px color-mix(in srgb, var(--gold) 30%, transparent)}
+.name-display.rolling{color:var(--purple-light);text-shadow:0 0 20px color-mix(in srgb, var(--purple-light) 50%, transparent)}
+.name-display.winner{color:var(--gold);text-shadow:0 0 40px color-mix(in srgb, var(--gold) 70%, transparent),0 0 80px color-mix(in srgb, var(--gold) 30%, transparent);animation:pulse .6s ease-in-out 3}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-.spin-btn{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;padding:1rem 3.5rem;background:linear-gradient(135deg,#C9A84C,#8A7235);color:#0D0910;border:none;border-radius:4px;cursor:pointer;font-weight:700;transition:all .2s;box-shadow:0 4px 20px rgba(201,168,76,.3);margin-top:1.5rem}
-.spin-btn:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 6px 28px rgba(201,168,76,.5);transform:translateY(-2px)}
+.spin-btn{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;padding:1rem 3.5rem;background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:var(--dark);border:none;border-radius:4px;cursor:pointer;font-weight:700;transition:all .2s;box-shadow:0 4px 20px color-mix(in srgb, var(--gold) 30%, transparent);margin-top:1.5rem}
+.spin-btn:hover:not(:disabled){filter:brightness(1.1);box-shadow:0 6px 28px color-mix(in srgb, var(--gold) 50%, transparent);transform:translateY(-2px)}
 .spin-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.members-panel{background:#1A0F21;border:1px solid rgba(201,168,76,.15);border-radius:8px;padding:1.25rem 1.5rem;width:100%;max-width:500px}
-.members-title{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;color:#8A7235;text-transform:uppercase;margin-bottom:.9rem;padding-bottom:.6rem;border-bottom:1px solid rgba(201,168,76,.1)}
+.members-panel{background:var(--surface);border:1px solid color-mix(in srgb, var(--gold) 15%, transparent);border-radius:8px;padding:1.25rem 1.5rem;width:100%;max-width:500px}
+.members-title{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.9rem;padding-bottom:.6rem;border-bottom:1px solid color-mix(in srgb, var(--gold) 10%, transparent)}
 .members-list{display:flex;flex-wrap:wrap;gap:.5rem}
-.member-chip{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;padding:.25rem .7rem;border-radius:20px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);color:#9A8E7A;cursor:pointer;transition:all .15s;user-select:none}
-.member-chip:hover{border-color:rgba(201,168,76,.4);color:#C9A84C}
+.member-chip{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;padding:.25rem .7rem;border-radius:20px;background:color-mix(in srgb, var(--gold) 7%, transparent);border:1px solid color-mix(in srgb, var(--gold) 15%, transparent);color:var(--text-dim);cursor:pointer;transition:all .15s;user-select:none}
+.member-chip:hover{border-color:color-mix(in srgb, var(--gold) 40%, transparent);color:var(--gold)}
 .member-chip.excluded{background:rgba(207,74,74,.08);border-color:rgba(207,74,74,.2);color:#CF4A4A;text-decoration:line-through}
-.members-hint{font-size:.78rem;color:#3A2E28;font-style:italic;margin-top:.75rem}
-.empty-state{color:#5C5248;font-style:italic;text-align:center;padding:1rem}
+.members-hint{font-size:.78rem;color:var(--text-muted);font-style:italic;margin-top:.75rem}
+.empty-state{color:var(--text-muted);font-style:italic;text-align:center;padding:1rem}
 
   /* ── MOBILE RESPONSIVE ── */
-  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid rgba(201,168,76,.1);transition:background .15s}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid color-mix(in srgb, var(--gold) 10%, transparent);transition:background .15s}
   .mob-nav-btn:last-child{border-right:none}
   .mob-nav-btn span:first-child{font-size:1.15rem;line-height:1}
-  .mob-nav-btn.mob-active{background:rgba(201,168,76,.1)}
+  .mob-nav-btn.mob-active{background:color-mix(in srgb, var(--gold) 10%, transparent)}
   @media(max-width:768px){
     #mobile-bottom-nav{display:flex !important}
     body,#app,#main-app{padding-bottom:58px}
@@ -93,11 +94,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     .header-actions{flex-direction:column;align-items:flex-start}
   }
 </style>
+<link rel="stylesheet" href="/theme.css">
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-brand">
-    <span class="topbar-symbol">ΔΤΔ</span>
+    <span class="topbar-symbol">__BRAND_LETTERS__</span>
     <span class="topbar-title">Wheel of Brothers</span>
   </div>
   <div class="topbar-nav-links">
@@ -251,11 +253,11 @@ fetch('/budget/api/me').then(r=>r.json()).then(d=>{
 </script>
 
   <!-- MOBILE BOTTOM NAV -->
-  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:#150D1A;border-top:1px solid rgba(201,168,76,.25);z-index:500;align-items:stretch">
-    <a href="/points" class="mob-nav-btn" style="color:#9A8E7A"><span>⚔</span><span>Points</span></a>
-    <a href="/budget" class="mob-nav-btn" style="color:#9A8E7A"><span>◈</span><span>Budget</span></a>
-    <a href="/wheel" class="mob-nav-btn" style="color:#C9A84C"><span>🎡</span><span>Wheel</span></a>
-    <a href="/dailies" class="mob-nav-btn" style="color:#9A8E7A"><span>📋</span><span>Dailies</span></a>
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:500;align-items:stretch">
+    <a href="/points" class="mob-nav-btn" style="color:var(--text-dim)"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn" style="color:var(--text-dim)"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn" style="color:var(--gold)"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn" style="color:var(--text-dim)"><span>📋</span><span>Dailies</span></a>
   </nav>
 </body>
 </html>

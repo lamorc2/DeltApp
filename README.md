@@ -11,6 +11,21 @@ user: test
 password: test
 This is a staging website available for anyone to view/test. Please send any bug finds to lamorc2@rpi.edu
 
+## Run locally
+
+Do **not** set `DATABASE_URL`. With it unset, the app uses a local SQLite file (`brotherhood_system.db`) and seeds `admin` / `admin123`.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
+Then open http://localhost:5000 and sign in as `admin` / `admin123`.
+
+`.venv/` is created by that first command — you do not edit anything inside it. Packages are installed with `pip install -r requirements.txt`. An optional `.env` (see `.env.example`) can set `SECRET_KEY`; it is not required for local SQLite.
+
 ### AI USE DISCLOSURE ###
 This was created with the assistance of Anthropic's Claude AI (especially the UI). An original barebones application was created in C++, and using Claude, iterated to add a 
 cleaner front end, as well as add extra features. 

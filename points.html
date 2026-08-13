@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Δ Τ Δ Brotherhood Points</title>
+<title>__BRAND_LETTERS__ Brotherhood Points</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -69,8 +69,8 @@
     justify-content: center;
     min-height: 100vh;
     padding: 2rem;
-    background: radial-gradient(ellipse at 50% 0%, rgba(92,31,107,0.4) 0%, transparent 70%),
-                radial-gradient(ellipse at 80% 100%, rgba(61,12,69,0.3) 0%, transparent 60%);
+    background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--purple-mid) 40%, transparent) 0%, transparent 70%),
+                radial-gradient(ellipse at 80% 100%, color-mix(in srgb, var(--purple) 30%, transparent) 0%, transparent 60%);
   }
 
   .login-card {
@@ -80,7 +80,7 @@
     border: 1px solid var(--border-strong);
     padding: 3rem 2.5rem;
     position: relative;
-    box-shadow: 0 0 80px rgba(92,31,107,0.3), 0 0 0 1px rgba(201,168,76,0.08);
+    box-shadow: 0 0 80px color-mix(in srgb, var(--purple-mid) 30%, transparent), 0 0 0 1px color-mix(in srgb, var(--gold) 8%, transparent);
   }
 
   .login-card::before, .login-card::after {
@@ -103,7 +103,7 @@
     color: var(--gold);
     display: block;
     line-height: 1;
-    text-shadow: 0 0 40px rgba(201,168,76,0.4);
+    text-shadow: 0 0 40px color-mix(in srgb, var(--gold) 40%, transparent);
     letter-spacing: 0.1em;
   }
   .crest-name {
@@ -146,7 +146,7 @@
   }
   .form-input:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(201,168,76,0.12);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 12%, transparent);
   }
   .form-input::placeholder { color: var(--text-muted); }
   select.form-input option { background: var(--dark-3); }
@@ -176,7 +176,7 @@
   }
   .btn-primary:hover {
     background: linear-gradient(135deg, var(--purple-light), var(--purple-mid));
-    box-shadow: 0 4px 20px rgba(92,31,107,0.5);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--purple-mid) 50%, transparent);
   }
   .btn-sm {
     padding: 0.4rem 0.9rem;
@@ -233,7 +233,7 @@
     font-family: 'Cinzel Decorative', serif;
     font-size: 1.4rem;
     color: var(--gold);
-    text-shadow: 0 0 20px rgba(201,168,76,0.5);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--gold) 50%, transparent);
     flex-shrink: 0;
   }
   .topbar-title {
@@ -267,7 +267,7 @@
   .topbar-nav-links a.active {
     color: var(--gold);
     border-color: var(--gold-dim);
-    background: rgba(201,168,76,0.12);
+    background: color-mix(in srgb, var(--gold) 12%, transparent);
   }
   .topbar-user {
     display: flex;
@@ -283,7 +283,7 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    background: rgba(201,168,76,0.08);
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
     border: 1px solid var(--border);
     padding: 0.35rem 0.9rem;
     border-radius: 20px;
@@ -297,8 +297,8 @@
     border-radius: 20px;
     font-family: 'Cinzel', serif;
   }
-  .role-admin { background: rgba(201,168,76,0.2); color: var(--gold); border: 1px solid var(--gold-dim); }
-  .role-moderator { background: rgba(92,31,107,0.4); color: #C084D0; border: 1px solid var(--purple-light); }
+  .role-admin { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); border: 1px solid var(--gold-dim); }
+  .role-moderator { background: color-mix(in srgb, var(--purple-mid) 40%, transparent); color: #C084D0; border: 1px solid var(--purple-light); }
   .role-member { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
   .role-officer { background: rgba(91,141,217,.15); color: #5B8DD9; border: 1px solid rgba(91,141,217,.3); }
 
@@ -339,10 +339,10 @@
     border-left: 3px solid transparent;
     position: relative;
   }
-  .nav-item:hover { background: rgba(201,168,76,0.05); color: var(--text); }
+  .nav-item:hover { background: color-mix(in srgb, var(--gold) 5%, transparent); color: var(--text); }
   .nav-item.active {
     color: var(--gold);
-    background: rgba(201,168,76,0.08);
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
     border-left-color: var(--gold);
   }
   .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
@@ -439,7 +439,7 @@
   td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tbody tr { transition: background 0.15s; }
-  tbody tr:hover { background: rgba(201,168,76,0.04); }
+  tbody tr:hover { background: color-mix(in srgb, var(--gold) 4%, transparent); }
 
   /* BADGES */
   .badge {
@@ -452,10 +452,10 @@
     text-transform: uppercase;
     font-weight: 600;
   }
-  .badge-pending { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .badge-pending { background: color-mix(in srgb, var(--gold) 15%, transparent); color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent); }
   .badge-approved { background: rgba(76,175,122,0.15); color: var(--green); border: 1px solid rgba(76,175,122,0.3); }
   .badge-rejected { background: rgba(207,74,74,0.15); color: var(--red); border: 1px solid rgba(207,74,74,0.3); }
-  .badge-admin { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); }
+  .badge-admin { background: color-mix(in srgb, var(--gold) 15%, transparent); color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent); }
   .badge-moderator { background: rgba(192,132,208,0.15); color: #C084D0; border: 1px solid rgba(192,132,208,0.25); }
   .badge-member { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
   .badge-active { background: rgba(76,175,122,0.1); color: var(--green); border: 1px solid rgba(76,175,122,0.2); }
@@ -482,7 +482,7 @@
     overflow: hidden;
   }
   .podium-card.first {
-    background: linear-gradient(180deg, rgba(201,168,76,0.12) 0%, var(--surface) 60%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 12%, transparent) 0%, var(--surface) 60%);
     border-color: var(--gold-dim);
     transform: translateY(-8px);
   }
@@ -683,10 +683,10 @@
   }
 
   /* ── MOBILE RESPONSIVE ── */
-  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid rgba(201,168,76,.1);transition:background .15s}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid color-mix(in srgb, var(--gold) 10%, transparent);transition:background .15s}
   .mob-nav-btn:last-child{border-right:none}
   .mob-nav-btn span:first-child{font-size:1.15rem;line-height:1}
-  .mob-nav-btn.mob-active{background:rgba(201,168,76,.1)}
+  .mob-nav-btn.mob-active{background:color-mix(in srgb, var(--gold) 10%, transparent)}
   @media(max-width:768px){
     #mobile-bottom-nav{display:flex !important}
     body,#app,#main-app{padding-bottom:58px}
@@ -716,6 +716,7 @@
     .header-actions{flex-direction:column;align-items:flex-start}
   }
 </style>
+<link rel="stylesheet" href="/theme.css">
 </head>
 <body>
 <div id="app">
@@ -724,8 +725,8 @@
 <div id="login-screen">
   <div class="login-card">
     <div class="crest">
-      <span class="crest-symbol">ΔΤΔ</span>
-      <div class="crest-name">Delta Tau Delta</div>
+      <span class="crest-symbol">__BRAND_LETTERS__</span>
+      <div class="crest-name">__BRAND_NAME__</div>
       <div class="crest-sub">Brotherhood Points System</div>
     </div>
     <div class="form-group">
@@ -745,7 +746,7 @@
 <div id="main-app">
   <div class="topbar">
     <div class="topbar-brand">
-      <span class="topbar-symbol">ΔΤΔ</span>
+      <span class="topbar-symbol">__BRAND_LETTERS__</span>
       <span class="topbar-title">Brotherhood Points</span>
     </div>
     <div class="topbar-nav-links">
@@ -792,6 +793,9 @@
       <div class="nav-item" onclick="showPage('users', this)" id="nav-users" style="display:none">
         <span class="icon">👥</span> User Management
       </div>
+      <a class="nav-item" href="/setup" id="nav-style" style="display:none;text-decoration:none">
+        <span class="icon">◈</span> Chapter Style
+      </a>
     </nav>
 
     <main class="content">
@@ -1192,18 +1196,18 @@ async function loadApp() {
 
   if (role === 'member') {
     show('nav-submit'); show('nav-my-tx');
-    hide('nav-pending'); hide('nav-all-tx'); hide('nav-users');
+    hide('nav-pending'); hide('nav-all-tx'); hide('nav-users'); hide('nav-style');
     hide('mod-section'); hide('admin-section'); hide('admin-divider');
   } else if (role === 'moderator') {
     show('nav-submit'); show('nav-my-tx');
     show('nav-pending'); show('nav-all-tx');
     document.getElementById('mod-section').style.display = 'block';
-    hide('nav-users'); hide('admin-section'); hide('admin-divider');
+    hide('nav-users'); hide('nav-style'); hide('admin-section'); hide('admin-divider');
   } else if (role === 'admin') {
     show('nav-submit'); show('nav-my-tx');
     show('nav-pending'); show('nav-all-tx');
     document.getElementById('mod-section').style.display = 'block';
-    show('nav-actions'); show('nav-users');
+    show('nav-actions'); show('nav-users'); show('nav-style');
     document.getElementById('admin-section').style.display = 'block';
     document.getElementById('admin-divider').style.display = 'block';
   }
@@ -1692,11 +1696,11 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 </script>
 
   <!-- MOBILE BOTTOM NAV -->
-  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:#150D1A;border-top:1px solid rgba(201,168,76,.25);z-index:500;align-items:stretch">
-    <a href="/points" class="mob-nav-btn" style="color:#C9A84C"><span>⚔</span><span>Points</span></a>
-    <a href="/budget" class="mob-nav-btn" style="color:#9A8E7A"><span>◈</span><span>Budget</span></a>
-    <a href="/wheel" class="mob-nav-btn" style="color:#9A8E7A"><span>🎡</span><span>Wheel</span></a>
-    <a href="/dailies" class="mob-nav-btn" style="color:#9A8E7A"><span>📋</span><span>Dailies</span></a>
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:500;align-items:stretch">
+    <a href="/points" class="mob-nav-btn" style="color:var(--gold)"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn" style="color:var(--text-dim)"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn" style="color:var(--text-dim)"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn" style="color:var(--text-dim)"><span>📋</span><span>Dailies</span></a>
   </nav>
 </body>
 </html>
