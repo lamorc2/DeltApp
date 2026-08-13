@@ -21,6 +21,7 @@ Push Notes:
 """
 from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
+from werkzeug.security import check_password_hash, generate_password_hash
 import hashlib
 import os
 import datetime
@@ -37,7 +38,11 @@ else:
     PH = '?'   # SQLite placeholder
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
+# Stable key locally so sessions survive reload. Railway should set SECRET_KEY.
+app.secret_key = os.environ.get(
+    'SECRET_KEY',
+    'dev-only-not-for-production' if not DATABASE_URL else os.urandom(24),
+)
 
 # ============================================================================
 # DATABASE
@@ -298,7 +303,19 @@ def init_db():
         conn.commit()
     conn.close()
 
-def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
+def hash_pw(pw):
+    return generate_password_hash(str(pw or ''))
+
+def check_pw(pw, stored):
+    if not stored:
+        return False
+    stored = str(stored)
+    if stored.startswith(('pbkdf2:', 'scrypt:', 'argon2:')):
+        return check_password_hash(stored, pw or '')
+    return hashlib.sha256((pw or '').encode()).hexdigest() == stored
+
+def is_legacy_hash(stored):
+    return bool(stored) and not str(stored).startswith(('pbkdf2:', 'scrypt:', 'argon2:'))
 
 def sanitize_text(value, default=''):
     if value is None:
@@ -378,16 +395,21 @@ def officer_required(f):
 @app.route('/budget/api/login', methods=['POST'])
 def api_login():
     data = request.json or {}
+    pw = data.get('password', '')
     conn = get_db()
     user = fetchone(conn, "SELECT * FROM users WHERE username=? AND is_active=true", (data.get('username'),))
+    if not (user and check_pw(pw, user['password_hash'])):
+        conn.close()
+        return jsonify({'error': 'Invalid credentials'}), 401
+    if is_legacy_hash(user['password_hash']):
+        execute(conn, "UPDATE users SET password_hash=? WHERE user_id=?", (hash_pw(pw), user['user_id']))
+        conn.commit()
     conn.close()
-    if user and user['password_hash'] == hash_pw(data.get('password', '')):
-        session['user_id'] = user['user_id']
-        session['username'] = user['username']
-        session['role'] = user['role']
-        log_audit(user['user_id'], 'LOGIN', f"User {user['username']} logged in")
-        return jsonify({'success': True, 'role': user['role'], 'username': user['username']})
-    return jsonify({'error': 'Invalid credentials'}), 401
+    session['user_id'] = user['user_id']
+    session['username'] = user['username']
+    session['role'] = user['role']
+    log_audit(user['user_id'], 'LOGIN', f"User {user['username']} logged in")
+    return jsonify({'success': True, 'role': user['role'], 'username': user['username']})
 
 @app.route('/api/logout', methods=['POST'])
 @app.route('/points/api/logout', methods=['POST'])
@@ -1359,4 +1381,5 @@ if __name__ == '__main__':
     print(f"  → Default login: admin / admin123")
     print(f"  → DB: {'PostgreSQL' if DATABASE_URL else 'SQLite (local)'}")
     print("="*55 + "\n")
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    # python app.py is local-only; Railway uses gunicorn (Procfile)
+    app.run(debug=not DATABASE_URL, host='127.0.0.1', port=int(os.environ.get('PORT', 5000)))
