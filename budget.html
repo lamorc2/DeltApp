@@ -227,6 +227,7 @@ tbody tr:hover{background:color-mix(in srgb, var(--gold) 4%, transparent)}
   }
 </style>
 <link rel="stylesheet" href="/theme.css">
+<script src="/bug-report.js"></script>
 </head>
 <body>
 <div id="app">
@@ -604,6 +605,7 @@ async function loadApp() {
   $('main-app').style.display = 'flex';
   $('topbar-username').textContent = d.username.toUpperCase();
   const rb = $('topbar-role'); rb.textContent = d.role; rb.className = `role-tag role-${d.role}`;
+  if (window.initBugHelp) initBugHelp(d);
 
   if (['officer','moderator','admin'].includes(d.role)) {
     $('nav-pending').style.display = 'flex';

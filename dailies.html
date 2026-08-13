@@ -212,6 +212,7 @@ textarea.form-input{resize:vertical;min-height:65px}
   }
 </style>
 <link rel="stylesheet" href="/theme.css">
+<script src="/bug-report.js"></script>
 </head>
 <body>
 
@@ -451,6 +452,7 @@ async function init() {
   const rb = document.getElementById('topbar-role');
   rb.textContent = d.role;
   rb.className = `role-tag role-${d.role}`;
+  if (window.initBugHelp) initBugHelp(d);
 
   if (d.role === 'admin' || d.role === 'moderator') {
     document.getElementById('admin-nav').style.display = 'block';

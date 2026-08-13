@@ -95,6 +95,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   }
 </style>
 <link rel="stylesheet" href="/theme.css">
+<script src="/bug-report.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -152,6 +153,7 @@ async function loadMembers() {
     const rb = document.getElementById('topbar-role');
     rb.textContent = me.role;
     rb.className = `role-tag role-${me.role}`;
+    if (window.initBugHelp) initBugHelp(me);
     const r = await fetch('/wheel/api/members');
     if (r.status === 401) { window.location.href = '/points'; return; }
     members = await r.json();
