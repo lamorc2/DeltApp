@@ -602,7 +602,7 @@ function renderDayDetail(date, assignments) {
 
   if (!dayAssignments.length) {
     body.innerHTML = '<div class="detail-empty">No tasks scheduled. ' +
-      (rotationData.length === 0 ? 'Set up the rotation first.' : 'Use Sync Day to generate from rotation.') + '</div>';
+      (rotationData.length === 0 ? 'Set up the rotation first.' : 'Nothing on the rotation for this day.') + '</div>';
     return;
   }
 
