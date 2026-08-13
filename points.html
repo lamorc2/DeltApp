@@ -224,12 +224,17 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
   }
   .topbar-symbol {
     font-family: 'Cinzel Decorative', serif;
     font-size: 1.4rem;
     color: var(--gold);
     text-shadow: 0 0 20px rgba(201,168,76,0.5);
+    flex-shrink: 0;
   }
   .topbar-title {
     font-family: 'Cinzel', serif;
@@ -237,12 +242,42 @@
     letter-spacing: 0.25em;
     color: var(--gold-dim);
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar-nav-links {
+    display: flex;
+    gap: 0.5rem;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .topbar-nav-links a {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .topbar-nav-links a.active {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    background: rgba(201,168,76,0.12);
   }
   .topbar-user {
     display: flex;
     align-items: center;
     gap: 1rem;
     font-size: 0.875rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
   }
   .user-badge {
     display: flex;
@@ -713,11 +748,11 @@
       <span class="topbar-symbol">ΔΤΔ</span>
       <span class="topbar-title">Brotherhood Points</span>
     </div>
-    <div class="topbar-nav-links" style="display:flex;gap:.5rem;margin-left:1.5rem">
-      <a href="/points" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--gold);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--gold-dim);border-radius:4px;background:rgba(201,168,76,.12)">⚔ Points</a>
-      <a href="/budget" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">◈ Budget</a>
-      <a href="/wheel" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">🎡 Wheel</a>
-      <a href="/dailies" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">📋 Dailies</a>
+    <div class="topbar-nav-links">
+      <a href="/points" class="active">⚔ Points</a>
+      <a href="/budget">◈ Budget</a>
+      <a href="/wheel">🎡 Wheel</a>
+      <a href="/dailies">📋 Dailies</a>
     </div>
     <div class="topbar-user">
       <div class="user-badge">
@@ -1077,12 +1112,15 @@ let allTransactions = [];
 let allActions = [];
 
 // ---- UTILS ----
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function toast(msg, type='info') {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
   t.className = `toast ${type}`;
   const icons = {success:'✓', error:'✕', info:'ⓘ'};
-  t.innerHTML = `<span>${icons[type]||'ⓘ'}</span><span>${msg}</span>`;
+  t.innerHTML = `<span>${icons[type]||'ⓘ'}</span><span>${esc(msg)}</span>`;
   c.appendChild(t);
   setTimeout(() => t.remove(), 3500);
 }
@@ -1096,10 +1134,10 @@ function fmtDate(d) {
 }
 
 function roleBadge(role) {
-  return `<span class="badge badge-${role}">${role}</span>`;
+  return `<span class="badge badge-${role}">${esc(role)}</span>`;
 }
 function statusBadge(s) {
-  return `<span class="badge badge-${s}">${s}</span>`;
+  return `<span class="badge badge-${s}">${esc(s)}</span>`;
 }
 
 // ---- AUTH ----
@@ -1235,7 +1273,7 @@ async function loadLeaderboard() {
     podium.innerHTML = order.map((u, i) => `
       <div class="podium-card ${orderClasses[i]}">
         <div class="podium-rank">${orderMedals[i]}</div>
-        <div class="podium-name">${u.username}</div>
+        <div class="podium-name">${esc(u.username)}</div>
         <div class="podium-pts">${u.brotherhood_points}</div>
         <div class="podium-pts-label">Points</div>
       </div>
@@ -1251,7 +1289,7 @@ async function loadLeaderboard() {
   tbody.innerHTML = active.map((u, i) => `
     <tr>
       <td><span class="rank-${i+1}">${i < 3 ? ['🥇','🥈','🥉'][i] : '#' + (i+1)}</span></td>
-      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${u.username}</td>
+      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${esc(u.username)}</td>
       <td class="text-dim" style="font-size:0.85rem;">${u.email}</td>
       <td>${roleBadge(u.role)}</td>
       <td><span class="points-num">${u.brotherhood_points}</span></td>
@@ -1268,7 +1306,7 @@ async function loadSubmitForm() {
   const users = await r.json();
   const sel = document.getElementById('sub-member');
   sel.innerHTML = users.filter(u => u.is_active).map(u =>
-    `<option value="${u.user_id}" ${u.user_id === currentUser.user_id ? 'selected' : ''}>${u.username}</option>`
+    `<option value="${u.user_id}" ${u.user_id === currentUser.user_id ? 'selected' : ''}>${esc(u.username)}</option>`
   ).join('');
 
   // Make sure custom entry toggle is always visible for all roles
@@ -1286,7 +1324,7 @@ async function loadSubmitForm() {
     asel.innerHTML = '<option value="">— Select an action —</option>' +
       allActions.map(a => {
         const sign = a.points > 0 ? '+' : '';
-        return `<option value="${a.action_id}" data-pts="${a.points}">${a.label} (${sign}${a.points})</option>`;
+        return `<option value="${a.action_id}" data-pts="${a.points}">${esc(a.label)} (${sign}${a.points})</option>`;
       }).join('');
     asel.disabled = false;
   }
@@ -1308,7 +1346,7 @@ function updateActionPreview() {
   const pts = parseInt(opt.dataset.pts);
   const sign = pts > 0 ? '+' : '';
   const cls = pts > 0 ? 'pts-positive' : pts < 0 ? 'pts-negative' : 'pts-zero';
-  preview.innerHTML = `<span class="action-preview-label">${opt.text.split('(')[0].trim()}</span><span class="action-pts-badge ${cls}">${sign}${pts} pts</span>`;
+  preview.innerHTML = `<span class="action-preview-label">${esc(opt.text.split('(')[0].trim())}</span><span class="action-pts-badge ${cls}">${sign}${pts} pts</span>`;
 }
 
 function toggleCustom() {
@@ -1375,7 +1413,7 @@ async function loadActions() {
     const activeRow = a.is_active ? '' : ' disabled-row';
     return `
     <div class="action-row${activeRow}">
-      <div class="action-row-label">${a.label}</div>
+      <div class="action-row-label">${esc(a.label)}</div>
       <div class="action-row-pts"><span class="action-pts-badge ${cls}">${sign}${pts}</span></div>
       <span class="badge ${a.is_active ? 'badge-active' : 'badge-inactive'}">${a.is_active ? 'Active' : 'Disabled'}</span>
       <div class="action-btns">
@@ -1445,10 +1483,10 @@ async function loadMyTransactions() {
     <tr>
       <td class="text-dim">#${t.transaction_id}</td>
       <td><span class="points-num">+${t.points}</span></td>
-      <td class="truncate" title="${t.description}">${t.description}</td>
+      <td class="truncate" title="${esc(t.description)}">${esc(t.description)}</td>
       <td>${statusBadge(t.status)}</td>
       <td class="text-dim" style="font-size:0.8rem;">${fmtDate(t.created_at)}</td>
-      <td class="text-dim" style="font-size:0.8rem;">${t.reviewed_by || '—'}</td>
+      <td class="text-dim" style="font-size:0.8rem;">${esc(t.reviewed_by || '—')}</td>
     </tr>
   `).join('');
 }
@@ -1469,9 +1507,9 @@ async function loadPending() {
   tbody.innerHTML = txs.map(t => `
     <tr>
       <td class="text-dim">#${t.transaction_id}</td>
-      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${t.member_name}</td>
+      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${esc(t.member_name)}</td>
       <td><span class="points-num">+${t.points}</span></td>
-      <td class="truncate" title="${t.description}">${t.description}</td>
+      <td class="truncate" title="${esc(t.description)}">${esc(t.description)}</td>
       <td class="text-dim" style="font-size:0.8rem;">${fmtDate(t.created_at)}</td>
       <td>
         <div class="action-btns">
@@ -1520,12 +1558,12 @@ function renderAllTransactions(txs) {
   tbody.innerHTML = txs.map(t => `
     <tr>
       <td class="text-dim">#${t.transaction_id}</td>
-      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${t.member_name}</td>
+      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${esc(t.member_name)}</td>
       <td><span class="points-num">+${t.points}</span></td>
-      <td class="truncate" title="${t.description}">${t.description}</td>
+      <td class="truncate" title="${esc(t.description)}">${esc(t.description)}</td>
       <td>${statusBadge(t.status)}</td>
       <td class="text-dim" style="font-size:0.8rem;">${fmtDate(t.created_at)}</td>
-      <td class="text-dim" style="font-size:0.8rem;">${t.reviewed_by || '—'}</td>
+      <td class="text-dim" style="font-size:0.8rem;">${esc(t.reviewed_by || '—')}</td>
     </tr>
   `).join('');
 }
@@ -1551,8 +1589,8 @@ function renderUsers(users) {
   tbody.innerHTML = users.map(u => `
     <tr>
       <td class="text-dim">${u.user_id}</td>
-      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${u.username}</td>
-      <td class="text-dim" style="font-size:0.85rem;">${u.email}</td>
+      <td style="font-family:'Cinzel',serif;font-size:0.85rem;">${esc(u.username)}</td>
+      <td class="text-dim" style="font-size:0.85rem;">${esc(u.email)}</td>
       <td>${roleBadge(u.role)}</td>
       <td><span class="points-num">${u.brotherhood_points}</span></td>
       <td>${u.is_active ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-inactive">Inactive</span>'}</td>
