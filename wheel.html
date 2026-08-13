@@ -6,17 +6,35 @@
 <title>Δ Τ Δ — Wheel of Brothers</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
+:root {
+  --purple: #3D0C45; --purple-mid: #5C1F6B; --purple-light: #7B3094;
+  --gold: #C9A84C; --gold-dim: #8A7235;
+  --dark: #0D0910; --dark-2: #150D1A;
+  --border: rgba(201,168,76,0.18); --border-strong: rgba(201,168,76,0.38);
+  --text: #F0E8D0; --text-dim: #9A8E7A; --text-muted: #5C5248;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#0D0910;color:#F0E8D0;font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(92,31,107,.35) 0%,transparent 65%);pointer-events:none;z-index:0}
-.topbar{position:relative;z-index:10;background:linear-gradient(180deg,#3D0C45 0%,#150D1A 100%);border-bottom:1px solid rgba(201,168,76,.38);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(0,0,0,.4)}
-.topbar-brand{display:flex;align-items:center;gap:1rem}
-.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:#C9A84C;text-shadow:0 0 20px rgba(201,168,76,.5)}
-.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:#8A7235;text-transform:uppercase}
-.topbar-nav{display:flex;gap:.5rem}
-.nav-link{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:#9A8E7A;text-decoration:none;padding:.35rem .8rem;border:1px solid rgba(201,168,76,.18);border-radius:4px;transition:all .2s}
-.nav-link:hover{color:#C9A84C;border-color:rgba(201,168,76,.4)}
-.nav-link.active{color:#C9A84C;border-color:#8A7235;background:rgba(201,168,76,.12)}
+.topbar{background:linear-gradient(180deg,var(--purple) 0%,var(--dark-2) 100%);border-bottom:1px solid var(--border-strong);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.4)}
+.topbar-brand{display:flex;align-items:center;gap:1rem;min-width:0;overflow:hidden;position:relative;z-index:1}
+.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5);flex-shrink:0}
+.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-nav-links{display:flex;gap:.5rem;position:absolute;left:50%;transform:translateX(-50%)}
+.topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px;white-space:nowrap}
+.topbar-nav-links a.active{color:var(--gold);border-color:var(--gold-dim);background:rgba(201,168,76,.12)}
+.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem;flex-shrink:0;position:relative;z-index:1;margin-left:auto}
+.user-badge{display:flex;align-items:center;gap:.6rem;background:rgba(201,168,76,.08);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
+.user-name{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em}
+.role-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;font-family:'Cinzel',serif}
+.role-admin{background:rgba(201,168,76,.2);color:var(--gold);border:1px solid var(--gold-dim)}
+.role-moderator{background:rgba(192,132,208,.15);color:#C084D0;border:1px solid var(--purple-light)}
+.role-member{background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid var(--border)}
+.role-officer{background:rgba(91,141,217,.15);color:#5B8DD9;border:1px solid rgba(91,141,217,.3)}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;border-radius:4px;transition:all .2s;font-weight:600}
+.btn-sm{padding:.4rem .9rem;font-size:.6rem}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
 .main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;min-height:calc(100vh - 60px);gap:2.5rem}
 .page-title{font-family:'Cinzel',serif;font-size:1.4rem;color:#C9A84C;letter-spacing:.1em;text-align:center}
 .page-sub{font-style:italic;color:#9A8E7A;font-size:.95rem;text-align:center;margin-top:.4rem}
@@ -82,11 +100,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <span class="topbar-symbol">ΔΤΔ</span>
     <span class="topbar-title">Wheel of Brothers</span>
   </div>
-  <div class="topbar-nav">
-    <a class="nav-link" href="/">Home</a>
-    <a class="nav-link" href="/points">⚔ Points</a>
-    <a class="nav-link" href="/budget">◈ Budget</a>
-    <a class="nav-link active" href="/wheel">🎡 Wheel</a>
+  <div class="topbar-nav-links">
+    <a href="/points">⚔ Points</a>
+    <a href="/budget">◈ Budget</a>
+    <a href="/wheel" class="active">🎡 Wheel</a>
+    <a href="/dailies">📋 Dailies</a>
+  </div>
+  <div class="topbar-user">
+    <div class="user-badge">
+      <span class="user-name" id="topbar-username"></span>
+      <span class="role-tag" id="topbar-role"></span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
   </div>
 </div>
 <div class="main">
@@ -113,10 +138,18 @@ let members = [];
 let excluded = new Set();
 let spinning = false;
 
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 async function loadMembers() {
   try {
     const me = await fetch('/api/me').then(r => r.json());
     if (!me.authenticated) { window.location.href = '/points'; return; }
+    document.getElementById('topbar-username').textContent = me.username.toUpperCase();
+    const rb = document.getElementById('topbar-role');
+    rb.textContent = me.role;
+    rb.className = `role-tag role-${me.role}`;
     const r = await fetch('/wheel/api/members');
     if (r.status === 401) { window.location.href = '/points'; return; }
     members = await r.json();
@@ -140,7 +173,7 @@ function active() {
 
 function renderChips() {
   document.getElementById('members-list').innerHTML = members.map(m =>
-    '<div class="member-chip ' + (excluded.has(m.user_id) ? 'excluded' : '') + '" onclick="toggleExclude(' + m.user_id + ')">' + m.username + '</div>'
+    '<div class="member-chip ' + (excluded.has(m.user_id) ? 'excluded' : '') + '" onclick="toggleExclude(' + m.user_id + ')">' + esc(m.username) + '</div>'
   ).join('');
 }
 
@@ -205,6 +238,10 @@ function spin() {
 }
 
 loadMembers();
+async function doLogout() {
+  await fetch('/api/logout', {method:'POST'});
+  window.location.href = '/points';
+}
 // Hide budget link if no officer session
 fetch('/budget/api/me').then(r=>r.json()).then(d=>{
   if (!d.authenticated || !['officer','moderator','admin'].includes(d.role)) {
