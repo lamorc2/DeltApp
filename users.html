@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>User Management — __BRAND_NAME__</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -18,9 +18,9 @@
 body{background:var(--dark);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--purple-mid) 28%,transparent) 0%,transparent 65%);pointer-events:none;z-index:0}
 .topbar{background:linear-gradient(180deg,var(--purple) 0%,var(--dark-2) 100%);border-bottom:1px solid var(--border-strong);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.topbar-brand{display:flex;align-items:center;gap:1rem;position:relative;z-index:1}
-.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold)}
-.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase}
+.topbar-brand{display:flex;align-items:center;gap:1rem;min-width:0;overflow:hidden;position:relative;z-index:1}
+.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);flex-shrink:0}
+.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar-nav-links{display:flex;gap:.5rem;position:absolute;left:50%;transform:translateX(-50%)}
 .topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px}
 .topbar-nav-links a.active{color:var(--gold);border-color:var(--gold-dim);background:color-mix(in srgb,var(--gold) 12%,transparent)}
@@ -35,6 +35,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
 .btn-danger{background:rgba(207,74,74,.15);color:var(--red);border:1px solid rgba(207,74,74,.3)}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:var(--dark);border:none}
+a.btn{text-decoration:none}
+.header-actions{display:flex;gap:.5rem;flex-wrap:wrap}
 .content{position:relative;z-index:1;padding:2rem;max-width:1200px;margin:0 auto}
 .page-header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .page-title{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold)}
@@ -75,12 +77,22 @@ td{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
 .toast.success{border-left:3px solid var(--green)}
 .toast.error{border-left:3px solid var(--red)}
 .empty-state{text-align:center;padding:3rem;color:var(--text-muted);font-style:italic}
-@media(max-width:768px){.topbar-nav-links{display:none}.content{padding:1rem}}
+.mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid color-mix(in srgb, var(--gold) 10%, transparent);transition:background .15s}
+.mob-nav-btn:last-child{border-right:none}
+.mob-nav-btn span:first-child{font-size:1.15rem;line-height:1}
+@media(max-width:768px){
+  #mobile-bottom-nav{display:flex !important}
+  .topbar-nav-links{display:none}
+  .topbar{padding:0 .9rem;height:auto;min-height:54px;flex-wrap:wrap;gap:.3rem;padding-top:.4rem;padding-bottom:.4rem}
+  .topbar-user{gap:.4rem;flex-shrink:0}
+  .content{padding:1rem}
+  .page-header{flex-direction:column;align-items:flex-start;gap:.6rem}
+}
 </style>
 <link rel="stylesheet" href="/theme.css">
 <script src="/bug-report.js"></script>
 </head>
-<body>
+<body class="admin-page">
 <div class="topbar">
   <div class="topbar-brand">
     <span class="topbar-symbol">__BRAND_LETTERS__</span>
@@ -107,7 +119,10 @@ td{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
       <div class="page-title">User Management</div>
       <div class="page-subtitle">Manage brotherhood member accounts</div>
     </div>
-    <button class="btn btn-gold btn-sm" onclick="openAddUser()">+ Add Member</button>
+    <div class="header-actions">
+      <a class="btn btn-ghost btn-sm" href="/">← Home</a>
+      <button class="btn btn-gold btn-sm" onclick="openAddUser()">+ Add Member</button>
+    </div>
   </div>
   <div class="card">
     <div class="search-bar">
@@ -321,5 +336,11 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
   loadUsers();
 })();
 </script>
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:90;align-items:stretch">
+    <a href="/points" class="mob-nav-btn" style="color:var(--text-dim)"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn" style="color:var(--text-dim)"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn" style="color:var(--text-dim)"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn" style="color:var(--text-dim)"><span>📋</span><span>Dailies</span></a>
+  </nav>
 </body>
 </html>

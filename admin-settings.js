@@ -20,6 +20,12 @@
       font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase
     }
     #admin-cog-menu a:hover{background:color-mix(in srgb, var(--gold) 10%, transparent);color:var(--gold)}
+    @media(max-width:768px){
+      #admin-cog-menu{
+        left:50%;right:auto;transform:translateX(-50%);
+        min-width:0;width:max-content;max-width:calc(100vw - 1.5rem)
+      }
+    }
   `;
 
   window.initAdminCog = function (me) {

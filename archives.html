@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Archived Terms — __BRAND_NAME__</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -29,6 +29,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;border-radius:4px;font-weight:600}
 .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+a.btn{text-decoration:none}
+.header-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end}
 .content{position:relative;z-index:1;padding:2rem;max-width:1100px;margin:0 auto}
 .page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
 .page-title{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold)}
@@ -50,12 +52,17 @@ td{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
 .hidden{display:none}
 .rotation-table{min-width:700px}
 .empty{text-align:center;padding:2.5rem;color:var(--text-muted);font-style:italic}
-@media(max-width:768px){.topbar-nav-links{display:none}.content{padding:1rem}}
+@media(max-width:768px){
+  #mobile-bottom-nav{display:flex !important}
+  .topbar-nav-links{display:none}
+  .content{padding:1rem}
+  .page-header{flex-direction:column;align-items:flex-start}
+}
 </style>
 <link rel="stylesheet" href="/theme.css">
 <script src="/bug-report.js"></script>
 </head>
-<body>
+<body class="admin-page">
 <div class="topbar">
   <div class="topbar-brand">
     <span class="topbar-symbol">__BRAND_LETTERS__</span>
@@ -82,9 +89,12 @@ td{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
       <div class="page-title">Archived Terms</div>
       <div class="page-subtitle">Read-only lookback. Live apps are unchanged.</div>
     </div>
-    <div>
-      <label class="form-label" for="term-pick">Term</label>
-      <select class="form-input" id="term-pick" onchange="loadSelected()"></select>
+    <div class="header-actions">
+      <a class="btn btn-ghost" href="/">← Home</a>
+      <div>
+        <label class="form-label" for="term-pick">Term</label>
+        <select class="form-input" id="term-pick" onchange="loadSelected()"></select>
+      </div>
     </div>
   </div>
   <div class="tabs">
@@ -220,5 +230,11 @@ async function loadSelected() {
   else render();
 })();
 </script>
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:90;align-items:stretch">
+    <a href="/points" class="mob-nav-btn"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn"><span>📋</span><span>Dailies</span></a>
+  </nav>
 </body>
 </html>
