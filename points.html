@@ -224,12 +224,17 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
   }
   .topbar-symbol {
     font-family: 'Cinzel Decorative', serif;
     font-size: 1.4rem;
     color: var(--gold);
     text-shadow: 0 0 20px rgba(201,168,76,0.5);
+    flex-shrink: 0;
   }
   .topbar-title {
     font-family: 'Cinzel', serif;
@@ -237,12 +242,16 @@
     letter-spacing: 0.25em;
     color: var(--gold-dim);
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .topbar-nav-links {
     display: flex;
     gap: 0.5rem;
-    margin-left: 1.5rem;
-    flex: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
   }
   .topbar-nav-links a {
     font-family: 'Cinzel', serif;
@@ -253,6 +262,7 @@
     padding: 0.35rem 0.8rem;
     border: 1px solid var(--border);
     border-radius: 4px;
+    white-space: nowrap;
   }
   .topbar-nav-links a.active {
     color: var(--gold);
@@ -264,8 +274,10 @@
     align-items: center;
     gap: 1rem;
     font-size: 0.875rem;
-    margin-left: auto;
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
   }
   .user-badge {
     display: flex;

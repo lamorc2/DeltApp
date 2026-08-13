@@ -19,13 +19,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#150D1A}::-webkit-scrollbar-thumb{background:#5C1F6B;border-radius:3px}
 
 .topbar{background:linear-gradient(180deg,var(--purple) 0%,var(--dark-2) 100%);border-bottom:1px solid var(--border-strong);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.4)}
-.topbar-brand{display:flex;align-items:center;gap:1rem;flex-shrink:0}
-.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5)}
-.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase}
-.topbar-nav-links{display:flex;gap:.5rem;margin-left:1.5rem;flex:1}
-.topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px}
+.topbar-brand{display:flex;align-items:center;gap:1rem;min-width:0;overflow:hidden;position:relative;z-index:1}
+.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5);flex-shrink:0}
+.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-nav-links{display:flex;gap:.5rem;position:absolute;left:50%;transform:translateX(-50%)}
+.topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px;white-space:nowrap}
 .topbar-nav-links a.active{color:var(--gold);border-color:var(--gold-dim);background:rgba(201,168,76,.12)}
-.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem;margin-left:auto;flex-shrink:0}
+.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem;flex-shrink:0;position:relative;z-index:1;margin-left:auto}
 .user-badge{display:flex;align-items:center;gap:.6rem;background:rgba(201,168,76,.08);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
 .user-name{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em}
 .role-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;font-family:'Cinzel',serif}
