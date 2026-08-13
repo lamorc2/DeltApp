@@ -23,12 +23,18 @@ from functools import wraps
 from flask import Flask, request, jsonify, session, redirect, Response
 from werkzeug.security import check_password_hash, generate_password_hash
 from html import escape as html_escape
+from dotenv import load_dotenv
 import hashlib
 import json
 import os
 import re
 import datetime
 import bleach
+import urllib.error
+import urllib.request
+
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+
 # Postgres when DATABASE_URL is set (Railway), SQLite locally as fallback
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -367,6 +373,8 @@ DEFAULT_THEME = {
     'text_color': '#F0E8D0',
 }
 HEX_COLOR = re.compile(r'^#[0-9A-Fa-f]{6}$')
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+BUG_REPO_RE = re.compile(r'^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')
 
 def _settings_from_row(row):
     if row is None:
@@ -474,6 +482,27 @@ def setup_gate(f):
         return f(*args, **kwargs)
     return decorated
 
+def _bug_reports_enabled():
+    token = (os.environ.get('GITHUB_TOKEN') or '').strip()
+    repo = (os.environ.get('GITHUB_BUG_REPO') or '').strip()
+    return bool(token) and bool(BUG_REPO_RE.match(repo))
+
+def _github_create_issue(title, body):
+    repo = (os.environ.get('GITHUB_BUG_REPO') or '').strip()
+    token = (os.environ.get('GITHUB_TOKEN') or '').strip()
+    payload = json.dumps({'title': title, 'body': body}).encode()
+    req = urllib.request.Request(
+        f'https://api.github.com/repos/{repo}/issues',
+        data=payload,
+        method='POST',
+    )
+    req.add_header('Authorization', f'Bearer {token}')
+    req.add_header('Accept', 'application/vnd.github+json')
+    req.add_header('Content-Type', 'application/json')
+    req.add_header('User-Agent', 'DeltApp')
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read().decode())
+
 def log_audit(user_id, action, details=""):
     try:
         conn = get_db()
@@ -576,13 +605,63 @@ def api_logout():
 @app.route('/budget/api/me')
 def api_me():
     if 'user_id' not in session:
-        return jsonify({'authenticated': False})
+        return jsonify({'authenticated': False, 'bug_reports': False})
     conn = get_db()
     user = fetchone(conn, "SELECT user_id, username, email, role, brotherhood_points FROM users WHERE user_id=?", (session['user_id'],))
     conn.close()
     if user:
-        return jsonify({'authenticated': True, **dict(user)})
-    return jsonify({'authenticated': False})
+        return jsonify({
+            'authenticated': True,
+            **dict(user),
+            'bug_reports': _bug_reports_enabled(),
+        })
+    return jsonify({'authenticated': False, 'bug_reports': False})
+
+@app.route('/api/bugs', methods=['POST'])
+@login_required
+def api_bugs_create():
+    if not _bug_reports_enabled():
+        return jsonify({'error': 'Bug reports are not configured'}), 404
+    data = request.json or {}
+    name = sanitize_text(data.get('name'), '')[:80]
+    email = sanitize_text(data.get('email'), '')[:120]
+    issue = sanitize_text(data.get('issue'), '')[:4000]
+    if not name or not email or not issue:
+        return jsonify({'error': 'Name, email, and issue are required'}), 400
+    if not EMAIL_RE.match(email):
+        return jsonify({'error': 'Invalid email'}), 400
+    account = sanitize_text(session.get('username'), '')
+    role = sanitize_text(session.get('role'), '')
+    page = sanitize_text(data.get('page') or request.headers.get('Referer'), '')[:200]
+    title = issue.split('\n', 1)[0][:72] or f'Bug from {name}'
+    body = (
+        f'**Name:** {name}\n'
+        f'**Email:** {email}\n'
+        f'**Account:** {account} ({role})\n'
+        f'**Page:** {page}\n\n'
+        f'{issue}'
+    )
+    try:
+        _github_create_issue(title, body)
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors='replace')[:400]
+        print(f'GitHub issue create failed: {e.code} {detail}')
+        if e.code == 404:
+            return jsonify({'error': 'GitHub repo not found. Create the private repo and give the token access to it.'}), 502
+        if e.code in (401, 403):
+            return jsonify({'error': 'GitHub token cannot create issues on that repo.'}), 502
+        return jsonify({'error': 'Could not file the report'}), 502
+    except urllib.error.URLError as e:
+        print(f'GitHub issue create failed: {e}')
+        return jsonify({'error': 'Could not reach GitHub'}), 502
+    log_audit(session.get('user_id'), 'bug_report', title)
+    return jsonify({'success': True})
+
+@app.route('/bug-report.js')
+def bug_report_js():
+    path = os.path.join(BASE_DIR, 'bug-report.js')
+    with open(path) as f:
+        return Response(f.read(), mimetype='application/javascript', headers={'Cache-Control': 'no-cache'})
 
 @app.route('/points/api/users', methods=['GET'])
 @app.route('/budget/api/users', methods=['GET'])

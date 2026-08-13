@@ -717,6 +717,7 @@
   }
 </style>
 <link rel="stylesheet" href="/theme.css">
+<script src="/bug-report.js"></script>
 </head>
 <body>
 <div id="app">
@@ -1188,6 +1189,7 @@ async function loadApp() {
   const rb = document.getElementById('topbar-role');
   rb.textContent = d.role;
   rb.className = `role-tag role-${d.role}`;
+  if (window.initBugHelp) initBugHelp(d);
 
   const role = d.role;
   // Show/hide nav items
