@@ -65,7 +65,10 @@ textarea.form-input{resize:vertical;min-height:80px}
 .topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5)}
 .topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase}
 .topbar-sub{font-family:'Crimson Pro',serif;font-style:italic;font-size:.8rem;color:var(--text-muted);margin-left:.5rem}
-.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem}
+.topbar-nav-links{display:flex;gap:.5rem;margin-left:1.5rem;flex:1}
+.topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px}
+.topbar-nav-links a.active{color:var(--gold);border-color:var(--gold-dim);background:rgba(201,168,76,.12)}
+.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem;margin-left:auto;flex-shrink:0}
 .user-badge{display:flex;align-items:center;gap:.6rem;background:rgba(201,168,76,.08);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
 .user-name{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em}
 .role-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;font-family:'Cinzel',serif}
@@ -253,13 +256,12 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
     <div class="topbar-brand">
       <span class="topbar-symbol">ΔΤΔ</span>
       <span class="topbar-title">Treasury</span>
-      <span class="topbar-sub">Budget &amp; Bookkeeping</span>
     </div>
-    <div class="topbar-nav-links" style="display:flex;gap:.5rem;margin-left:1.5rem">
-      <a href="/points" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">⚔ Points</a>
-      <a href="/budget" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--gold);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--gold-dim);border-radius:4px;background:rgba(201,168,76,.12)">◈ Budget</a>
-      <a href="/wheel" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">🎡 Wheel</a>
-      <a href="/dailies" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">📋 Dailies</a>
+    <div class="topbar-nav-links">
+      <a href="/points">⚔ Points</a>
+      <a href="/budget" class="active">◈ Budget</a>
+      <a href="/wheel">🎡 Wheel</a>
+      <a href="/dailies">📋 Dailies</a>
     </div>
     <div class="topbar-user">
       <div class="user-badge">
@@ -519,10 +521,13 @@ let currentDeptItems = [];
 
 // ── UTILS ──
 const $ = id => document.getElementById(id);
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function toast(msg, type='info') {
   const c = $('toast-container'), t = document.createElement('div');
   t.className = `toast ${type}`;
-  t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ⓘ'}[type]||'ⓘ'}</span><span>${msg}</span>`;
+  t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ⓘ'}[type]||'ⓘ'}</span><span>${esc(msg)}</span>`;
   c.appendChild(t); setTimeout(() => t.remove(), 3500);
 }
 function openModal(id) { $(id).classList.add('show'); }
@@ -530,7 +535,7 @@ function closeModal(id) { $(id).classList.remove('show'); }
 function fmt$(n) { return '$' + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
 function showErr(id, msg) { const e=$(id); e.textContent=msg; e.style.display='block'; }
-function statusBadge(s) { return `<span class="badge badge-${s}">${s}</span>`; }
+function statusBadge(s) { return `<span class="badge badge-${s}">${esc(s)}</span>`; }
 function budgetBar(spent, pending, allocated) {
   const pct = allocated > 0 ? Math.min((spent/allocated)*100,100) : 0;
   const pendPct = allocated > 0 ? Math.min((pending/allocated)*100, 100-pct) : 0;
@@ -664,7 +669,7 @@ function renderDeptNav() {
   }
   list.innerHTML = active.map(d => `
     <div class="nav-dept" id="nav-dept-${d.dept_id}" onclick="showDept(${d.dept_id}, this)">
-      <span class="nav-dept-dot"></span>${d.name}
+      <span class="nav-dept-dot"></span>${esc(d.name)}
     </div>`).join('');
 }
 
@@ -692,7 +697,7 @@ async function loadOverview() {
   tbody.innerHTML = active.map(d => {
     const pct = d.total_allocated > 0 ? 0 : 0; // will load async below
     return `<tr id="dept-row-${d.dept_id}" onclick="showDept(${d.dept_id}, $('nav-dept-${d.dept_id}'))" style="cursor:pointer">
-      <td style="font-family:'Cinzel',serif;font-size:.85rem">${d.name}</td>
+      <td style="font-family:'Cinzel',serif;font-size:.85rem">${esc(d.name)}</td>
       <td><span class="money">${fmt$(d.total_allocated)}</span></td>
       <td id="dept-spent-${d.dept_id}"><span class="text-dim">—</span></td>
       <td id="dept-rem-${d.dept_id}"><span class="text-dim">—</span></td>
@@ -724,7 +729,7 @@ async function loadSubmitForm() {
   const sel = $('req-dept');
   const active = allDepts.filter(d => d.is_active);
   sel.innerHTML = '<option value="">— Select a department —</option>' +
-    active.map(d => `<option value="${d.dept_id}">${d.name}</option>`).join('');
+    active.map(d => `<option value="${d.dept_id}">${esc(d.name)}</option>`).join('');
   $('req-item').innerHTML = '<option value="">— Select a budget item —</option>';
   $('req-item').disabled = true;
   $('item-budget-preview').style.display = 'none';
@@ -741,7 +746,7 @@ async function onDeptChange() {
   itemSel.innerHTML = '<option value="">— Select a budget item —</option>' +
     items.map(i => {
       const rem = parseFloat(i.allocated)-parseFloat(i.spent||0);
-      return `<option value="${i.item_id}" data-alloc="${i.allocated}" data-spent="${i.spent||0}" data-pending="${i.pending_amount||0}">${i.name} (${fmt$(rem)} remaining)</option>`;
+      return `<option value="${i.item_id}" data-alloc="${i.allocated}" data-spent="${i.spent||0}" data-pending="${i.pending_amount||0}">${esc(i.name)} (${fmt$(rem)} remaining)</option>`;
     }).join('');
   itemSel.disabled = false;
 }
@@ -787,10 +792,10 @@ async function loadMyRequests() {
   tbody.innerHTML = rows.map(r => `
     <tr>
       <td class="text-dim">#${r.request_id}</td>
-      <td style="font-size:.85rem">${r.dept_name}</td>
-      <td class="truncate text-dim" style="font-size:.85rem">${r.item_name}</td>
+      <td style="font-size:.85rem">${esc(r.dept_name)}</td>
+      <td class="truncate text-dim" style="font-size:.85rem">${esc(r.item_name)}</td>
       <td><span class="money">${fmt$(r.amount)}</span></td>
-      <td class="truncate" style="font-size:.85rem">${r.description}</td>
+      <td class="truncate" style="font-size:.85rem">${esc(r.description)}</td>
       <td>${statusBadge(r.status)}</td>
       <td class="text-dim" style="font-size:.8rem">${fmtDate(r.created_at)}</td>
     </tr>`).join('');
@@ -814,12 +819,12 @@ async function loadPending() {
     const rem = alloc - spent;
     return `<tr>
       <td class="text-dim">#${r.request_id}</td>
-      <td style="font-family:'Cinzel',serif;font-size:.8rem">${r.submitter_name}</td>
-      <td style="font-size:.85rem">${r.dept_name}</td>
-      <td style="font-size:.85rem">${r.item_name}<div class="row-info">${fmt$(rem)} remaining of ${fmt$(alloc)}</div></td>
+      <td style="font-family:'Cinzel',serif;font-size:.8rem">${esc(r.submitter_name)}</td>
+      <td style="font-size:.85rem">${esc(r.dept_name)}</td>
+      <td style="font-size:.85rem">${esc(r.item_name)}<div class="row-info">${fmt$(rem)} remaining of ${fmt$(alloc)}</div></td>
       <td><span class="money">${fmt$(r.amount)}</span></td>
-      <td class="truncate" style="font-size:.85rem" title="${r.description}">${r.description}</td>
-      <td class="text-dim" style="font-size:.85rem">${r.vendor||'—'}</td>
+      <td class="truncate" style="font-size:.85rem" title="${esc(r.description)}">${esc(r.description)}</td>
+      <td class="text-dim" style="font-size:.85rem">${esc(r.vendor||'—')}</td>
       <td class="text-dim" style="font-size:.8rem">${fmtDate(r.created_at)}</td>
       <td><div class="action-btns">
         ${currentUser.role==='admin' ? `<button class="btn btn-success btn-sm" onclick="approveRequest(${r.request_id})">✓ Approve</button>` : ''}
@@ -888,7 +893,7 @@ async function loadDeptView(deptId) {
         const alloc = parseFloat(i.allocated||0);
         const rem = alloc - spent;
         return `<div class="item-card">
-          <div class="item-card-name">${i.name}</div>
+          <div class="item-card-name">${esc(i.name)}</div>
           ${budgetBar(spent, pending, alloc)}
           <div class="item-figures">
             <div><div class="item-fig-label">Budget</div><div class="item-fig-val text-gold">${fmt$(alloc)}</div></div>
@@ -908,11 +913,11 @@ async function loadDeptView(deptId) {
   tbody.innerHTML = txs.map(t => `
     <tr>
       <td class="text-dim">#${t.request_id}</td>
-      <td style="font-size:.85rem">${t.item_name}</td>
-      <td style="font-family:'Cinzel',serif;font-size:.8rem">${t.submitter_name}</td>
+      <td style="font-size:.85rem">${esc(t.item_name)}</td>
+      <td style="font-family:'Cinzel',serif;font-size:.8rem">${esc(t.submitter_name)}</td>
       <td><span class="money ${t.status==='approved'?'red':''}">${t.status==='approved'?'−':''}${fmt$(t.amount)}</span></td>
-      <td class="truncate" style="font-size:.85rem" title="${t.description}">${t.description}</td>
-      <td class="text-dim" style="font-size:.85rem">${t.vendor||'—'}</td>
+      <td class="truncate" style="font-size:.85rem" title="${esc(t.description)}">${esc(t.description)}</td>
+      <td class="text-dim" style="font-size:.85rem">${esc(t.vendor||'—')}</td>
       <td>${statusBadge(t.status)}</td>
       <td class="text-dim" style="font-size:.8rem">${fmtDate(t.created_at)}</td>
       <td>${currentUser.role==='admin' && t.status==='approved' ? `<button class="btn btn-danger btn-sm" onclick="deleteRequest(${t.request_id})">&#x2715; Delete</button>` : ''}</td>
@@ -940,8 +945,8 @@ async function loadManageDepts() {
     <div class="card" id="manage-dept-${dept.dept_id}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
         <div>
-          <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold)">${dept.name}</div>
-          ${dept.description?`<div class="text-dim" style="font-style:italic;font-size:.9rem;margin-top:.2rem">${dept.description}</div>`:''}
+          <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold)">${esc(dept.name)}</div>
+          ${dept.description?`<div class="text-dim" style="font-style:italic;font-size:.9rem;margin-top:.2rem">${esc(dept.description)}</div>`:''}
         </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="openEditDept(${dept.dept_id})">Edit</button>
@@ -970,7 +975,7 @@ async function loadManageDepts() {
         items.map(i => {
           const rem = parseFloat(i.allocated) - parseFloat(i.spent||0);
           return `<tr>
-            <td style="font-family:'Cinzel',serif">${i.name}</td>
+            <td style="font-family:'Cinzel',serif">${esc(i.name)}</td>
             <td><span class="money">${fmt$(i.allocated)}</span></td>
             <td><span class="money">${fmt$(i.spent||0)}</span></td>
             <td><span class="money ${rem<0?'red':'green'}">${fmt$(Math.abs(rem))}</span></td>
