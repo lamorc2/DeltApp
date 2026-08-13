@@ -1674,6 +1674,40 @@ def dailies_delete_rotation(rid):
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
+def _ensure_assignments_for_date(conn, day):
+    """Create missing assignment rows from the active rotation for a date. Returns count created."""
+    if isinstance(day, str):
+        day = datetime.date.fromisoformat(day)
+    date_str = day.isoformat()
+    dow = day.isoweekday()
+    monday = day - datetime.timedelta(days=day.weekday())
+    rotation = fetchall(conn, (
+        "SELECT r.* FROM rotation_template r "
+        "JOIN daily_tasks t ON r.task_id = t.task_id "
+        "WHERE r.day_of_week=? AND t.is_active=true"
+    ), (dow,))
+    created = 0
+    for slot in rotation:
+        existing = fetchone(conn,
+            "SELECT assignment_id FROM daily_assignments WHERE task_id=? AND due_date=?",
+            (slot['task_id'], date_str))
+        if not existing:
+            execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
+                    (slot['task_id'], slot['member_id'], monday.isoformat(), date_str))
+            created += 1
+    return created
+
+
+def _ensure_current_week(conn):
+    """Materialize this week's rotation slots so Sync Day is not required on page open."""
+    today = datetime.date.today()
+    monday = today - datetime.timedelta(days=today.weekday())
+    created = 0
+    for i in range(7):
+        created += _ensure_assignments_for_date(conn, monday + datetime.timedelta(days=i))
+    return created
+
+
 @app.route('/dailies/api/assignments', methods=['GET'])
 @login_required
 def dailies_get_assignments():
@@ -1694,6 +1728,10 @@ def dailies_get_assignments():
         today = datetime.date.today()
         monday = today - datetime.timedelta(days=today.weekday())
         dates = [monday + datetime.timedelta(days=i) for i in range(7)]
+
+    # Anyone opening Dailies should get this week's tasks stored without clicking Sync Day.
+    _ensure_current_week(conn)
+    conn.commit()
 
     rotation = fetchall(conn, (
         "SELECT r.task_id, r.day_of_week, r.member_id, r.rotation_id, "
@@ -1785,26 +1823,14 @@ def dailies_complete_by_slot():
 
 @app.route('/dailies/api/assignments/ensure', methods=['POST'])
 @login_required
-@admin_required
+@moderator_required
 def dailies_ensure_assignments():
     data = request.json or {}
     date_str = data.get('date')
     if not date_str:
         return jsonify({'error': 'date required'}), 400
-    day = datetime.date.fromisoformat(date_str)
-    dow = day.isoweekday()
-    monday = day - datetime.timedelta(days=day.weekday())
     conn = get_db()
-    rotation = fetchall(conn, "SELECT * FROM rotation_template WHERE day_of_week=?", (dow,))
-    created = 0
-    for slot in rotation:
-        existing = fetchone(conn,
-            "SELECT assignment_id FROM daily_assignments WHERE task_id=? AND due_date=?",
-            (slot['task_id'], date_str))
-        if not existing:
-            execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
-                    (slot['task_id'], slot['member_id'], monday.isoformat(), date_str))
-            created += 1
+    created = _ensure_assignments_for_date(conn, date_str)
     conn.commit(); conn.close()
     return jsonify({'success': True, 'created': created})
 
