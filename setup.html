@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter Style — __BRAND_NAME__</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #3D0C45; --purple-mid: #5C1F6B; --purple-light: #7B3094;
+  --gold: #C9A84C; --gold-bright: #E8C96A; --gold-dim: #8A7235;
+  --dark: #0D0910; --dark-2: #150D1A; --dark-3: #1E1227;
+  --surface: #1A0F21;
+  --border: rgba(201,168,76,0.18); --border-strong: rgba(201,168,76,0.38);
+  --text: #F0E8D0; --text-dim: #9A8E7A; --text-muted: #5C5248;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--dark);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,color-mix(in srgb,var(--purple-mid) 35%,transparent) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,color-mix(in srgb,var(--purple) 25%,transparent) 0%,transparent 55%);pointer-events:none}
+.wrap{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;max-width:920px;width:100%;align-items:center}
+.preview{text-align:center}
+.crest-symbol{font-family:'Cinzel Decorative',serif;font-size:4.2rem;color:var(--gold);display:block;line-height:1;text-shadow:0 0 40px color-mix(in srgb,var(--gold) 40%,transparent);letter-spacing:.1em}
+.crest-name{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-top:.6rem}
+.crest-sub{font-family:'Crimson Pro',serif;font-style:italic;font-size:1.05rem;color:var(--text-dim);margin-top:.35rem}
+.card{background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:1.75rem 1.75rem 1.5rem;position:relative}
+.card::before,.card::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--gold);border-style:solid}
+.card::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.card::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.card-title{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:.35rem}
+.card-sub{font-style:italic;color:var(--text-dim);font-size:.9rem;margin-bottom:1.25rem}
+.form-group{margin-bottom:.9rem}
+.form-label{display:block;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.35rem}
+.form-input{width:100%;background:var(--dark-3);border:1px solid var(--border);color:var(--text);padding:.65rem .85rem;font-family:'Crimson Pro',serif;font-size:1rem;outline:none;border-radius:4px}
+.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 12%,transparent)}
+.colors{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.color-row{display:flex;align-items:center;gap:.6rem}
+.color-row input[type=color]{width:42px;height:36px;border:1px solid var(--border);background:transparent;padding:0;cursor:pointer;border-radius:4px}
+.color-row .hex{flex:1;font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.06em;color:var(--text-dim)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.85rem 1.4rem;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;border-radius:4px;font-weight:600;width:100%;margin-top:.5rem;background:linear-gradient(135deg,var(--purple-mid),var(--purple));color:var(--gold);border:1px solid var(--border-strong)}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.err{color:#CF4A4A;font-size:.85rem;margin-top:.6rem;display:none;font-style:italic}
+.back{display:none;text-align:center;margin-top:.9rem}
+.back a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.12em;color:var(--text-dim);text-decoration:none}
+.back a:hover{color:var(--gold)}
+@media(max-width:720px){.wrap{grid-template-columns:1fr}.crest-symbol{font-size:3.2rem}.preview{order:-1}}
+</style>
+<link rel="stylesheet" href="/theme.css">
+<style id="live-theme"></style>
+</head>
+<body>
+<div class="wrap">
+  <div class="preview">
+    <span class="crest-symbol" id="preview-letters">__BRAND_LETTERS__</span>
+    <div class="crest-name" id="preview-name">__BRAND_NAME__</div>
+    <div class="crest-sub" id="preview-tagline">__BRAND_TAGLINE__</div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="form-title">Chapter Style</div>
+    <div class="card-sub" id="form-sub">Letters, name, and colors for this instance.</div>
+    <div class="form-group">
+      <label class="form-label">Letters</label>
+      <input class="form-input" id="letters" maxlength="32" value="__BRAND_LETTERS__">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Organization name</label>
+      <input class="form-input" id="org_name" maxlength="80" value="__BRAND_NAME__">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tagline</label>
+      <input class="form-input" id="tagline" maxlength="120" value="__BRAND_TAGLINE__">
+    </div>
+    <div class="colors">
+      <div class="form-group">
+        <label class="form-label">Primary</label>
+        <div class="color-row"><input type="color" id="primary_color" value="#3D0C45"><span class="hex" id="primary_hex">#3D0C45</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Accent</label>
+        <div class="color-row"><input type="color" id="accent_color" value="#C9A84C"><span class="hex" id="accent_hex">#C9A84C</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Background</label>
+        <div class="color-row"><input type="color" id="bg_color" value="#0D0910"><span class="hex" id="bg_hex">#0D0910</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Text</label>
+        <div class="color-row"><input type="color" id="text_color" value="#F0E8D0"><span class="hex" id="text_hex">#F0E8D0</span></div>
+      </div>
+    </div>
+    <button class="btn" id="save-btn" onclick="saveTheme()">Save chapter style</button>
+    <div class="err" id="err"></div>
+    <div class="back" id="back"><a href="/">← Back to portal</a></div>
+  </div>
+</div>
+<script>
+const FIELDS = ['primary_color','accent_color','bg_color','text_color'];
+
+function liveCss(p, a, bg, t) {
+  return `:root{
+    --purple:${p};
+    --purple-mid:color-mix(in srgb,var(--purple) 75%,white);
+    --purple-light:color-mix(in srgb,var(--purple) 55%,white);
+    --gold:${a};
+    --gold-bright:color-mix(in srgb,var(--gold) 82%,white);
+    --gold-dim:color-mix(in srgb,var(--gold) 70%,black);
+    --dark:${bg};
+    --dark-2:color-mix(in srgb,var(--dark) 88%,var(--purple));
+    --dark-3:color-mix(in srgb,var(--dark) 78%,var(--purple));
+    --surface:color-mix(in srgb,var(--dark) 85%,var(--purple));
+    --border:color-mix(in srgb,var(--gold) 18%,transparent);
+    --border-strong:color-mix(in srgb,var(--gold) 38%,transparent);
+    --text:${t};
+    --text-dim:color-mix(in srgb,var(--text) 62%,var(--dark));
+    --text-muted:color-mix(in srgb,var(--text) 38%,var(--dark));
+  }`;
+}
+
+function applyPreview() {
+  const p = document.getElementById('primary_color').value;
+  const a = document.getElementById('accent_color').value;
+  const bg = document.getElementById('bg_color').value;
+  const t = document.getElementById('text_color').value;
+  document.getElementById('live-theme').textContent = liveCss(p, a, bg, t);
+  document.getElementById('preview-letters').textContent = document.getElementById('letters').value;
+  document.getElementById('preview-name').textContent = document.getElementById('org_name').value;
+  document.getElementById('preview-tagline').textContent = document.getElementById('tagline').value;
+  document.getElementById('primary_hex').textContent = p;
+  document.getElementById('accent_hex').textContent = a;
+  document.getElementById('bg_hex').textContent = bg;
+  document.getElementById('text_hex').textContent = t;
+}
+
+function setColor(id, value) {
+  const el = document.getElementById(id);
+  if (el && /^#[0-9A-Fa-f]{6}$/.test(value)) el.value = value;
+}
+
+async function loadTheme() {
+  const r = await fetch('/api/theme');
+  const d = await r.json();
+  document.getElementById('letters').value = d.letters || '';
+  document.getElementById('org_name').value = d.org_name || '';
+  document.getElementById('tagline').value = d.tagline || '';
+  setColor('primary_color', d.primary_color);
+  setColor('accent_color', d.accent_color);
+  setColor('bg_color', d.bg_color);
+  setColor('text_color', d.text_color);
+  if (d.configured) {
+    document.getElementById('form-title').textContent = 'Edit chapter style';
+    document.getElementById('form-sub').textContent = 'Changes apply to every page after you save.';
+    document.getElementById('back').style.display = 'block';
+  } else {
+    document.getElementById('form-title').textContent = 'Set up this chapter';
+    document.getElementById('form-sub').textContent = 'Pick letters and colors, then sign in at Points with admin / admin123.';
+  }
+  applyPreview();
+}
+
+async function saveTheme() {
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  const body = {
+    letters: document.getElementById('letters').value,
+    org_name: document.getElementById('org_name').value,
+    tagline: document.getElementById('tagline').value,
+    primary_color: document.getElementById('primary_color').value,
+    accent_color: document.getElementById('accent_color').value,
+    bg_color: document.getElementById('bg_color').value,
+    text_color: document.getElementById('text_color').value,
+  };
+  try {
+    const r = await fetch('/api/theme', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      err.textContent = d.error || 'Could not save';
+      err.style.display = 'block';
+      btn.disabled = false;
+      return;
+    }
+    window.location.href = '/points';
+  } catch (e) {
+    err.textContent = 'Could not save';
+    err.style.display = 'block';
+    btn.disabled = false;
+  }
+}
+
+['letters','org_name','tagline'].forEach(id => {
+  document.getElementById(id).addEventListener('input', applyPreview);
+});
+FIELDS.forEach(id => {
+  document.getElementById(id).addEventListener('input', applyPreview);
+});
+loadTheme();
+</script>
+</body>
+</html>

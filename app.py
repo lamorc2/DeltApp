@@ -20,10 +20,13 @@ Push Notes:
 
 """
 from functools import wraps
-from flask import Flask, request, jsonify, session, redirect
+from flask import Flask, request, jsonify, session, redirect, Response
 from werkzeug.security import check_password_hash, generate_password_hash
+from html import escape as html_escape
 import hashlib
+import json
 import os
+import re
 import datetime
 import bleach
 # Postgres when DATABASE_URL is set (Railway), SQLite locally as fallback
@@ -43,6 +46,8 @@ app.secret_key = os.environ.get(
     'SECRET_KEY',
     'dev-only-not-for-production' if not DATABASE_URL else os.urandom(24),
 )
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SQLITE_PATH = os.path.join(BASE_DIR, 'brotherhood_system.db')
 
 # ============================================================================
 # DATABASE
@@ -54,7 +59,7 @@ def get_db():
         conn.autocommit = False
         return conn
     else:
-        conn = sqlite3.connect('brotherhood_system.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -291,15 +296,37 @@ def init_db():
             FOREIGN KEY (reviewed_by) REFERENCES users(user_id)
         )''')
 
+    execute(conn, '''CREATE TABLE IF NOT EXISTS org_settings (
+        id INTEGER PRIMARY KEY,
+        letters TEXT NOT NULL,
+        org_name TEXT NOT NULL,
+        tagline TEXT NOT NULL,
+        primary_color TEXT NOT NULL,
+        accent_color TEXT NOT NULL,
+        bg_color TEXT NOT NULL,
+        text_color TEXT NOT NULL,
+        configured INTEGER NOT NULL DEFAULT 0
+    )''')
 
     conn.commit()
     # Seed default admin if no users exist
     row = fetchone(conn, "SELECT COUNT(*) as cnt FROM users")
     cnt = row['cnt'] if row else 0
+    was_fresh = cnt == 0
     if cnt == 0:
         pw = hash_pw("admin123")
         execute(conn, "INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
                 ("admin", pw, "admin@brotherhood.com", "admin"))
+        conn.commit()
+    if not fetchone(conn, "SELECT id FROM org_settings WHERE id=1"):
+        d = DEFAULT_THEME
+        # Existing deploys keep the Delts look and skip the wizard.
+        configured = 0 if was_fresh else 1
+        execute(conn, '''INSERT INTO org_settings
+            (id, letters, org_name, tagline, primary_color, accent_color, bg_color, text_color, configured)
+            VALUES (?,?,?,?,?,?,?,?,?)''',
+            (1, d['letters'], d['org_name'], d['tagline'],
+             d['primary_color'], d['accent_color'], d['bg_color'], d['text_color'], configured))
         conn.commit()
     conn.close()
 
@@ -321,6 +348,117 @@ def sanitize_text(value, default=''):
     if value is None:
         return default
     return bleach.clean(str(value), tags=[], attributes={}, strip=True).strip()
+
+DEFAULT_THEME = {
+    'letters': 'ΔΤΔ',
+    'org_name': 'Delta Tau Delta',
+    'tagline': 'Brotherhood Management Portal',
+    'primary_color': '#3D0C45',
+    'accent_color': '#C9A84C',
+    'bg_color': '#0D0910',
+    'text_color': '#F0E8D0',
+}
+HEX_COLOR = re.compile(r'^#[0-9A-Fa-f]{6}$')
+
+def _settings_from_row(row):
+    if row is None:
+        d = dict(DEFAULT_THEME)
+        d['configured'] = 0
+        return d
+    return {
+        'letters': row['letters'],
+        'org_name': row['org_name'],
+        'tagline': row['tagline'],
+        'primary_color': row['primary_color'],
+        'accent_color': row['accent_color'],
+        'bg_color': row['bg_color'],
+        'text_color': row['text_color'],
+        'configured': int(row['configured'] or 0),
+    }
+
+def get_org_settings():
+    conn = get_db()
+    row = fetchone(conn, "SELECT * FROM org_settings WHERE id=1")
+    conn.close()
+    return _settings_from_row(row)
+
+def _is_configured():
+    return bool(get_org_settings()['configured'])
+
+def _norm_hex(value):
+    return (value or '').strip().upper()
+
+def _is_default_palette(s):
+    return (
+        _norm_hex(s['primary_color']) == '#3D0C45'
+        and _norm_hex(s['accent_color']) == '#C9A84C'
+        and _norm_hex(s['bg_color']) == '#0D0910'
+        and _norm_hex(s['text_color']) == '#F0E8D0'
+    )
+
+def _theme_css(s):
+    letters = json.dumps(s['letters'] or '', ensure_ascii=False)
+    if _is_default_palette(s):
+        derived = (
+            '  --purple-mid:#5C1F6B;\n'
+            '  --purple-light:#7B3094;\n'
+            '  --gold-bright:#E8C96A;\n'
+            '  --gold-dim:#8A7235;\n'
+            '  --dark-2:#150D1A;\n'
+            '  --dark-3:#1E1227;\n'
+            '  --dark-4:#261630;\n'
+            '  --surface:#1A0F21;\n'
+            '  --surface-2:#231428;\n'
+            '  --border:rgba(201,168,76,0.18);\n'
+            '  --border-strong:rgba(201,168,76,0.38);\n'
+            '  --text-dim:#9A8E7A;\n'
+            '  --text-muted:#5C5248;\n'
+        )
+    else:
+        derived = (
+            '  --purple-mid:color-mix(in srgb,var(--purple) 75%,white);\n'
+            '  --purple-light:color-mix(in srgb,var(--purple) 55%,white);\n'
+            '  --gold-bright:color-mix(in srgb,var(--gold) 82%,white);\n'
+            '  --gold-dim:color-mix(in srgb,var(--gold) 70%,black);\n'
+            '  --dark-2:color-mix(in srgb,var(--dark) 88%,var(--purple));\n'
+            '  --dark-3:color-mix(in srgb,var(--dark) 78%,var(--purple));\n'
+            '  --dark-4:color-mix(in srgb,var(--dark) 70%,var(--purple));\n'
+            '  --surface:color-mix(in srgb,var(--dark) 85%,var(--purple));\n'
+            '  --surface-2:color-mix(in srgb,var(--dark) 80%,var(--purple));\n'
+            '  --border:color-mix(in srgb,var(--gold) 18%,transparent);\n'
+            '  --border-strong:color-mix(in srgb,var(--gold) 38%,transparent);\n'
+            '  --text-dim:color-mix(in srgb,var(--text) 62%,var(--dark));\n'
+            '  --text-muted:color-mix(in srgb,var(--text) 38%,var(--dark));\n'
+        )
+    return (
+        ':root{\n'
+        f'  --purple:{s["primary_color"]};\n'
+        f'  --gold:{s["accent_color"]};\n'
+        f'  --dark:{s["bg_color"]};\n'
+        f'  --text:{s["text_color"]};\n'
+        f'{derived}'
+        f'  --brand-letters:{letters};\n'
+        '}\n'
+    )
+
+def _clean_brand_text(value, max_len):
+    text = sanitize_text(value)
+    text = ''.join(c for c in text if c not in '`"\\$')
+    return text[:max_len].strip()
+
+def _parse_hex_color(value, field):
+    color = sanitize_text(value).strip()
+    if not HEX_COLOR.match(color):
+        return None, field
+    return color, None
+
+def setup_gate(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not _is_configured():
+            return redirect('/setup')
+        return f(*args, **kwargs)
+    return decorated
 
 def log_audit(user_id, action, details=""):
     try:
@@ -1024,6 +1162,74 @@ def api_summary():
 
 
 # ============================================================================
+# CHAPTER STYLE
+# ============================================================================
+
+@app.route('/theme.css')
+def theme_css():
+    css = _theme_css(get_org_settings())
+    return Response(css, mimetype='text/css', headers={'Cache-Control': 'no-cache'})
+
+@app.route('/api/theme', methods=['GET'])
+def api_theme_get():
+    s = get_org_settings()
+    return jsonify({
+        'letters': s['letters'],
+        'org_name': s['org_name'],
+        'tagline': s['tagline'],
+        'primary_color': s['primary_color'],
+        'accent_color': s['accent_color'],
+        'bg_color': s['bg_color'],
+        'text_color': s['text_color'],
+        'configured': bool(s['configured']),
+    })
+
+@app.route('/api/theme', methods=['POST'])
+def api_theme_save():
+    existing = get_org_settings()
+    if existing['configured'] and session.get('role') != 'admin':
+        return jsonify({'error': 'Forbidden'}), 403
+    data = request.json or {}
+    letters = _clean_brand_text(data.get('letters', ''), 32)
+    org_name = _clean_brand_text(data.get('org_name', ''), 80)
+    tagline = _clean_brand_text(data.get('tagline', ''), 120)
+    if not letters or not org_name or not tagline:
+        return jsonify({'error': 'Letters, org name, and tagline are required'}), 400
+    colors = {}
+    for key in ('primary_color', 'accent_color', 'bg_color', 'text_color'):
+        color, bad = _parse_hex_color(data.get(key, ''), key)
+        if bad:
+            return jsonify({'error': f'Invalid {bad}'}), 400
+        colors[key] = color
+    conn = get_db()
+    if fetchone(conn, "SELECT id FROM org_settings WHERE id=1"):
+        execute(conn, '''UPDATE org_settings SET
+            letters=?, org_name=?, tagline=?,
+            primary_color=?, accent_color=?, bg_color=?, text_color=?,
+            configured=1 WHERE id=1''',
+            (letters, org_name, tagline,
+             colors['primary_color'], colors['accent_color'],
+             colors['bg_color'], colors['text_color']))
+    else:
+        execute(conn, '''INSERT INTO org_settings
+            (id, letters, org_name, tagline, primary_color, accent_color, bg_color, text_color, configured)
+            VALUES (?,?,?,?,?,?,?,?,1)''',
+            (1, letters, org_name, tagline,
+             colors['primary_color'], colors['accent_color'],
+             colors['bg_color'], colors['text_color']))
+    conn.commit()
+    conn.close()
+    log_audit(session.get('user_id'), 'update_theme', org_name)
+    return jsonify({'success': True})
+
+@app.route('/setup')
+def setup_page():
+    if _is_configured() and session.get('role') != 'admin':
+        return redirect('/')
+    return _read_html('setup.html')
+
+
+# ============================================================================
 # PAGE ROUTES
 # ============================================================================
 
@@ -1031,9 +1237,17 @@ def api_summary():
 def _read_html(name):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
     with open(path) as f:
-        return f.read()
+        html_text = f.read()
+    s = get_org_settings()
+    return (
+        html_text
+        .replace('__BRAND_LETTERS__', html_escape(s['letters']))
+        .replace('__BRAND_NAME__', html_escape(s['org_name']))
+        .replace('__BRAND_TAGLINE__', html_escape(s['tagline']))
+    )
 
 @app.route('/')
+@setup_gate
 def index():
     return _read_html('landing.html')
 
@@ -1378,6 +1592,7 @@ if __name__ == '__main__':
     print(f"  → Budget:       http://localhost:5000/budget")
     print(f"  → Wheel:        http://localhost:5000/wheel")
     print(f"  → Dailies:      http://localhost:5000/dailies")
+    print(f"  → Setup:        http://localhost:5000/setup")
     print(f"  → Default login: admin / admin123")
     print(f"  → DB: {'PostgreSQL' if DATABASE_URL else 'SQLite (local)'}")
     print("="*55 + "\n")
