@@ -151,6 +151,7 @@ async function loadMembers() {
     rb.textContent = me.role;
     rb.className = `role-tag role-${me.role}`;
     const r = await fetch('/wheel/api/members');
+    if (r.status === 401) { window.location.href = '/points'; return; }
     members = await r.json();
     document.getElementById('loading').style.display = 'none';
     if (members.length < 2) {

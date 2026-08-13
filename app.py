@@ -21,6 +21,7 @@ Push Notes:
 """
 from functools import wraps
 from flask import Flask, request, jsonify, session, redirect
+from werkzeug.security import check_password_hash, generate_password_hash
 import hashlib
 import os
 import datetime
@@ -37,7 +38,11 @@ else:
     PH = '?'   # SQLite placeholder
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
+# Stable key locally so sessions survive reload. Railway should set SECRET_KEY.
+app.secret_key = os.environ.get(
+    'SECRET_KEY',
+    'dev-only-not-for-production' if not DATABASE_URL else os.urandom(24),
+)
 
 # ============================================================================
 # DATABASE
@@ -298,7 +303,24 @@ def init_db():
         conn.commit()
     conn.close()
 
-def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
+def hash_pw(pw):
+    return generate_password_hash(str(pw or ''))
+
+def check_pw(pw, stored):
+    if not stored:
+        return False
+    stored = str(stored)
+    if stored.startswith(('pbkdf2:', 'scrypt:', 'argon2:')):
+        return check_password_hash(stored, pw or '')
+    return hashlib.sha256((pw or '').encode()).hexdigest() == stored
+
+def is_legacy_hash(stored):
+    return bool(stored) and not str(stored).startswith(('pbkdf2:', 'scrypt:', 'argon2:'))
+
+def sanitize_text(value, default=''):
+    if value is None:
+        return default
+    return bleach.clean(str(value), tags=[], attributes={}, strip=True).strip()
 
 def log_audit(user_id, action, details=""):
     try:
@@ -323,9 +345,6 @@ def ser(rows):
                 r[k] = v.isoformat()
     return rows
 
-
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # ============================================================================
 # SHARED AUTH DECORATORS
@@ -376,16 +395,21 @@ def officer_required(f):
 @app.route('/budget/api/login', methods=['POST'])
 def api_login():
     data = request.json or {}
+    pw = data.get('password', '')
     conn = get_db()
     user = fetchone(conn, "SELECT * FROM users WHERE username=? AND is_active=true", (data.get('username'),))
+    if not (user and check_pw(pw, user['password_hash'])):
+        conn.close()
+        return jsonify({'error': 'Invalid credentials'}), 401
+    if is_legacy_hash(user['password_hash']):
+        execute(conn, "UPDATE users SET password_hash=? WHERE user_id=?", (hash_pw(pw), user['user_id']))
+        conn.commit()
     conn.close()
-    if user and user['password_hash'] == hash_pw(data.get('password', '')):
-        session['user_id'] = user['user_id']
-        session['username'] = user['username']
-        session['role'] = user['role']
-        log_audit(user['user_id'], 'LOGIN', f"User {user['username']} logged in")
-        return jsonify({'success': True, 'role': user['role'], 'username': user['username']})
-    return jsonify({'error': 'Invalid credentials'}), 401
+    session['user_id'] = user['user_id']
+    session['username'] = user['username']
+    session['role'] = user['role']
+    log_audit(user['user_id'], 'LOGIN', f"User {user['username']} logged in")
+    return jsonify({'success': True, 'role': user['role'], 'username': user['username']})
 
 @app.route('/api/logout', methods=['POST'])
 @app.route('/points/api/logout', methods=['POST'])
@@ -411,10 +435,26 @@ def api_me():
 @app.route('/points/api/users', methods=['GET'])
 @app.route('/budget/api/users', methods=['GET'])
 @login_required
+@admin_required
 def api_get_users():
     conn = get_db()
     users = fetchall(conn, "SELECT user_id, username, email, role, brotherhood_points, is_active, created_at FROM users ORDER BY brotherhood_points DESC")
+    conn.close()
+    return jsonify(ser(users))
 
+@app.route('/points/api/members', methods=['GET'])
+@login_required
+def api_get_members():
+    conn = get_db()
+    users = fetchall(conn, "SELECT user_id, username, is_active FROM users WHERE is_active=true ORDER BY username")
+    conn.close()
+    return jsonify(users)
+
+@app.route('/points/api/leaderboard', methods=['GET'])
+@login_required
+def api_leaderboard():
+    conn = get_db()
+    users = fetchall(conn, "SELECT user_id, username, brotherhood_points, is_active FROM users WHERE is_active=true ORDER BY brotherhood_points DESC")
     conn.close()
     return jsonify(users)
 
@@ -530,7 +570,9 @@ def api_pending_transactions():
 @login_required
 def api_submit_transaction():
     data = request.json
-    desc = data.get('description','')
+    desc = sanitize_text(data.get('description', ''))
+    if not desc:
+        return jsonify({'error': 'Description is required'}), 400
     # Allow submitting on behalf of another member (any logged-in user can do this)
     target_member_id = data.get('member_id', session['user_id'])
     conn = get_db()
@@ -568,7 +610,7 @@ def api_get_all_actions():
 @admin_required
 def api_create_action():
     data = request.json
-    label = (data.get('label') or '').strip()
+    label = sanitize_text(data.get('label'))
     points = data.get('points')
     if not label:
         return jsonify({'error': 'Label is required'}), 400
@@ -587,7 +629,7 @@ def api_create_action():
 @admin_required
 def api_update_action(aid):
     data = request.json
-    label = (data.get('label') or '').strip()
+    label = sanitize_text(data.get('label'))
     points = data.get('points')
     is_active = data.get('is_active')
     fields, vals = [], []
@@ -622,12 +664,16 @@ def api_delete_action(aid):
 @moderator_required
 def api_approve(tid):
     conn = get_db()
-    row = fetchone(conn, "SELECT member_id, points FROM transactions WHERE transaction_id=?", (tid,))
+    row = fetchone(conn, "SELECT member_id, points FROM transactions WHERE transaction_id=? AND status='pending'", (tid,))
     if not row:
         conn.close()
-        return jsonify({'error': 'Not found'}), 404
-    execute(conn, "UPDATE transactions SET status='approved', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP WHERE transaction_id=?",
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    cur = execute(conn, "UPDATE transactions SET status='approved', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP WHERE transaction_id=? AND status='pending'",
             (session['username'], tid))
+    if cur.rowcount != 1:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
     execute(conn, "UPDATE users SET brotherhood_points=brotherhood_points+? WHERE user_id=?", (row['points'], row['member_id']))
     conn.commit()
     conn.close()
@@ -637,10 +683,14 @@ def api_approve(tid):
 @login_required
 @moderator_required
 def api_reject(tid):
-    data = request.json
+    data = request.json or {}
     conn = get_db()
-    execute(conn, "UPDATE transactions SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, rejection_reason=? WHERE transaction_id=?",
-            (session['username'], data.get('reason', ''), tid))
+    row = fetchone(conn, "SELECT transaction_id FROM transactions WHERE transaction_id=? AND status='pending'", (tid,))
+    if not row:
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    execute(conn, "UPDATE transactions SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, rejection_reason=? WHERE transaction_id=? AND status='pending'",
+            (session['username'], sanitize_text(data.get('reason', '')), tid))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -675,13 +725,13 @@ def api_get_depts():
 @admin_required
 def api_create_dept():
     data = request.json or {}
-    name = (data.get('name') or '').strip()
+    name = sanitize_text(data.get('name'))
     if not name:
         return jsonify({'error': 'Name is required'}), 400
     conn = get_db()
     try:
         execute(conn, "INSERT INTO budget_departments (name, description, created_by) VALUES (?,?,?)",
-                (name, data.get('description','').strip(), session['user_id']))
+                (name, sanitize_text(data.get('description', '')), session['user_id']))
         conn.commit()
     except Exception as e:
         conn.close()
@@ -697,7 +747,8 @@ def api_update_dept(did):
     fields, vals = [], []
     for f in ('name', 'description', 'is_active'):
         if f in data:
-            fields.append(f"{f}=?"); vals.append(data[f])
+            val = sanitize_text(data[f]) if f in ('name', 'description') else data[f]
+            fields.append(f"{f}=?"); vals.append(val)
     if not fields:
         return jsonify({'error': 'Nothing to update'}), 400
     vals.append(did)
@@ -744,7 +795,7 @@ def api_get_items(did):
 @admin_required
 def api_create_item(did):
     data = request.json or {}
-    name = (data.get('name') or '').strip()
+    name = sanitize_text(data.get('name'))
     try:
         allocated = float(data.get('allocated', 0))
     except:
@@ -764,7 +815,7 @@ def api_update_item(iid):
     data = request.json or {}
     fields, vals = [], []
     if 'name' in data:
-        fields.append("name=?"); vals.append(data['name'])
+        fields.append("name=?"); vals.append(sanitize_text(data['name']))
     if 'allocated' in data:
         try: fields.append("allocated=?"); vals.append(float(data['allocated']))
         except: pass
@@ -885,8 +936,8 @@ def api_dept_requests(did):
 def api_submit_request():
     data = request.json or {}
     item_id = data.get('item_id')
-    description = (data.get('description') or '').strip()
-    vendor = (data.get('vendor') or '').strip()
+    description = sanitize_text(data.get('description'))
+    vendor = sanitize_text(data.get('vendor'))
     try:
         amount = float(data.get('amount', 0))
     except:
@@ -925,7 +976,7 @@ def api_approve_request(rid):
 @admin_required
 def api_reject_request(rid):
     data = request.json or {}
-    reason = (data.get('reason') or '').strip()
+    reason = sanitize_text(data.get('reason'))
     if not reason:
         return jsonify({'error': 'Reason is required'}), 400
     conn = get_db()
@@ -1001,6 +1052,7 @@ def wheel_app():
     return _read_html('wheel.html')
 
 @app.route('/wheel/api/members')
+@login_required
 def wheel_members():
     conn = get_db()
     users = fetchall(conn, "SELECT user_id, username FROM users WHERE is_active=true ORDER BY username")
@@ -1029,13 +1081,13 @@ def dailies_get_tasks():
 @admin_required
 def dailies_create_task():
     data = request.json or {}
-    title = (data.get('title') or '').strip()
-    category = (data.get('category') or '').strip()
+    title = sanitize_text(data.get('title'))
+    category = sanitize_text(data.get('category'))
     if not title or not category:
         return jsonify({'error': 'Title and category required'}), 400
     conn = get_db()
     execute(conn, "INSERT INTO daily_tasks (title, description, category, created_by) VALUES (?,?,?,?)",
-            (title, data.get('description','').strip(), category, session['user_id']))
+            (title, sanitize_text(data.get('description', '')), category, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -1048,7 +1100,8 @@ def dailies_update_task(tid):
     fields, vals = [], []
     for f in ('title', 'description', 'category', 'is_active'):
         if f in data:
-            fields.append(f"{f}=?"); vals.append(data[f])
+            val = sanitize_text(data[f]) if f in ('title', 'description', 'category') else data[f]
+            fields.append(f"{f}=?"); vals.append(val)
     if not fields:
         return jsonify({'error': 'Nothing to update'}), 400
     vals.append(tid)
@@ -1205,7 +1258,7 @@ def dailies_complete_by_slot():
 
     execute(conn,
         "UPDATE daily_assignments SET status='submitted', completed_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
-        (data.get('notes', ''), existing['assignment_id']))
+        (sanitize_text(data.get('notes', '')), existing['assignment_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -1248,7 +1301,7 @@ def dailies_mark_complete(aid):
             return jsonify({'error': 'Not your assignment'}), 403
     execute(conn,
         "UPDATE daily_assignments SET status='submitted', completed_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
-        (data.get('notes',''), aid))
+        (sanitize_text(data.get('notes', '')), aid))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
@@ -1257,13 +1310,13 @@ def dailies_mark_complete(aid):
 @admin_required
 def dailies_approve(aid):
     conn = get_db()
-    a = fetchone(conn, "SELECT * FROM daily_assignments WHERE assignment_id=?", (aid,))
-    if not a:
-        conn.close()
-        return jsonify({'error': 'Not found'}), 404
-    execute(conn,
-        "UPDATE daily_assignments SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
+    cur = execute(conn,
+        "UPDATE daily_assignments SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=? AND status='submitted'",
         (session['user_id'], aid))
+    if cur.rowcount != 1:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
@@ -1274,16 +1327,20 @@ def dailies_mark_missed(aid):
     data = request.json or {}
     penalty = abs(int(data.get('penalty', 1)))
     conn = get_db()
-    a = fetchone(conn, "SELECT * FROM daily_assignments WHERE assignment_id=?", (aid,))
+    a = fetchone(conn, "SELECT * FROM daily_assignments WHERE assignment_id=? AND status NOT IN ('missed','approved')", (aid,))
     if not a:
         conn.close()
-        return jsonify({'error': 'Not found'}), 404
-    task = fetchone(conn, "SELECT title FROM daily_tasks WHERE task_id=?", (a['task_id'],))
-    execute(conn,
-        "UPDATE daily_assignments SET status='missed', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    cur = execute(conn,
+        "UPDATE daily_assignments SET status='missed', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=? AND status NOT IN ('missed','approved')",
         (session['user_id'], aid))
+    if cur.rowcount != 1:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    task = fetchone(conn, "SELECT title FROM daily_tasks WHERE task_id=?", (a['task_id'],))
     if penalty > 0:
-        title = task['title'] if task else 'Unknown'
+        title = sanitize_text(task['title'] if task else 'Unknown')
         execute(conn,
             "INSERT INTO transactions (member_id, points, description, status, reviewed_by, reviewed_at) VALUES (?,?,?,'approved',?,CURRENT_TIMESTAMP)",
             (a['member_id'], -penalty, "Missed Daily: " + title, session['username']))
@@ -1324,4 +1381,5 @@ if __name__ == '__main__':
     print(f"  → Default login: admin / admin123")
     print(f"  → DB: {'PostgreSQL' if DATABASE_URL else 'SQLite (local)'}")
     print("="*55 + "\n")
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    # python app.py is local-only; Railway uses gunicorn (Procfile)
+    app.run(debug=not DATABASE_URL, host='127.0.0.1', port=int(os.environ.get('PORT', 5000)))
