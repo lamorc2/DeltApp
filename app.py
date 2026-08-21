@@ -20,11 +20,21 @@ Push Notes:
 
 """
 from functools import wraps
-from flask import Flask, request, jsonify, session, redirect
+from flask import Flask, request, jsonify, session, redirect, Response, send_from_directory
+from werkzeug.security import check_password_hash, generate_password_hash
+from html import escape as html_escape
+from dotenv import load_dotenv
 import hashlib
+import json
 import os
+import re
 import datetime
 import bleach
+import urllib.error
+import urllib.request
+
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
+
 # Postgres when DATABASE_URL is set (Railway), SQLite locally as fallback
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -37,7 +47,13 @@ else:
     PH = '?'   # SQLite placeholder
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
+# Stable key locally so sessions survive reload. Railway should set SECRET_KEY.
+app.secret_key = os.environ.get(
+    'SECRET_KEY',
+    'dev-only-not-for-production' if not DATABASE_URL else os.urandom(24),
+)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SQLITE_PATH = os.path.join(BASE_DIR, 'brotherhood_system.db')
 
 # ============================================================================
 # DATABASE
@@ -49,7 +65,7 @@ def get_db():
         conn.autocommit = False
         return conn
     else:
-        conn = sqlite3.connect('brotherhood_system.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -285,20 +301,252 @@ def init_db():
             FOREIGN KEY (submitted_by) REFERENCES users(user_id),
             FOREIGN KEY (reviewed_by) REFERENCES users(user_id)
         )''')
+    try:
+        execute(conn, "ALTER TABLE org_settings ADD COLUMN footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858'")
+        conn.commit()
+    except Exception:
+        if DATABASE_URL:
+            conn.rollback()
 
+    if DATABASE_URL:
+        execute(conn, '''CREATE TABLE IF NOT EXISTS term_archives (
+            archive_id SERIAL PRIMARY KEY,
+            label TEXT UNIQUE NOT NULL,
+            payload TEXT NOT NULL,
+            created_by INTEGER REFERENCES users(user_id),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+    else:
+        execute(conn, '''CREATE TABLE IF NOT EXISTS term_archives (
+            archive_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            label TEXT UNIQUE NOT NULL,
+            payload TEXT NOT NULL,
+            created_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
 
     conn.commit()
     # Seed default admin if no users exist
     row = fetchone(conn, "SELECT COUNT(*) as cnt FROM users")
     cnt = row['cnt'] if row else 0
+    was_fresh = cnt == 0
     if cnt == 0:
         pw = hash_pw("admin123")
         execute(conn, "INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
                 ("admin", pw, "admin@brotherhood.com", "admin"))
         conn.commit()
+    execute(conn, '''CREATE TABLE IF NOT EXISTS org_settings (
+        id INTEGER PRIMARY KEY,
+        letters TEXT NOT NULL,
+        org_name TEXT NOT NULL,
+        tagline TEXT NOT NULL,
+        footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858',
+        primary_color TEXT NOT NULL,
+        accent_color TEXT NOT NULL,
+        bg_color TEXT NOT NULL,
+        text_color TEXT NOT NULL,
+        configured INTEGER NOT NULL DEFAULT 0
+    )''')
+    if not fetchone(conn, "SELECT id FROM org_settings WHERE id=1"):
+        d = DEFAULT_THEME
+        # Existing deploys keep the Delts look and skip the wizard.
+        configured = 0 if was_fresh else 1
+        execute(conn, '''INSERT INTO org_settings
+            (id, letters, org_name, tagline, footer, primary_color, accent_color, bg_color, text_color, configured)
+            VALUES (?,?,?,?,?,?,?,?,?,?)''',
+            (1, d['letters'], d['org_name'], d['tagline'], d['footer'],
+             d['primary_color'], d['accent_color'], d['bg_color'], d['text_color'], configured))
+        conn.commit()
     conn.close()
 
-def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
+def hash_pw(pw):
+    return generate_password_hash(str(pw or ''))
+
+def check_pw(pw, stored):
+    if not stored:
+        return False
+    stored = str(stored)
+    if stored.startswith(('pbkdf2:', 'scrypt:', 'argon2:')):
+        return check_password_hash(stored, pw or '')
+    return hashlib.sha256((pw or '').encode()).hexdigest() == stored
+
+def is_legacy_hash(stored):
+    return bool(stored) and not str(stored).startswith(('pbkdf2:', 'scrypt:', 'argon2:'))
+
+def sanitize_text(value, default=''):
+    if value is None:
+        return default
+    return bleach.clean(str(value), tags=[], attributes={}, strip=True).strip()
+
+DEFAULT_THEME = {
+    'letters': 'ΔΤΔ',
+    'org_name': 'Delta Tau Delta',
+    'tagline': 'Brotherhood Management Portal',
+    'footer': 'ΔΤΔ — Est. 1858',
+    'primary_color': '#3D0C45',
+    'accent_color': '#C9A84C',
+    'bg_color': '#0D0910',
+    'text_color': '#F0E8D0',
+}
+HEX_COLOR = re.compile(r'^#[0-9A-Fa-f]{6}$')
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+BUG_REPO_RE = re.compile(r'^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')
+
+def _settings_from_row(row):
+    if row is None:
+        d = dict(DEFAULT_THEME)
+        d['configured'] = 0
+        return d
+    footer = DEFAULT_THEME['footer']
+    try:
+        footer = row['footer'] or DEFAULT_THEME['footer']
+    except (KeyError, IndexError):
+        pass
+    return {
+        'letters': row['letters'],
+        'org_name': row['org_name'],
+        'tagline': row['tagline'],
+        'footer': footer,
+        'primary_color': row['primary_color'],
+        'accent_color': row['accent_color'],
+        'bg_color': row['bg_color'],
+        'text_color': row['text_color'],
+        'configured': int(row['configured'] or 0),
+    }
+
+def get_org_settings():
+    conn = get_db()
+    row = fetchone(conn, "SELECT * FROM org_settings WHERE id=1")
+    conn.close()
+    return _settings_from_row(row)
+
+def _is_configured():
+    return bool(get_org_settings()['configured'])
+
+def _norm_hex(value):
+    return (value or '').strip().upper()
+
+def _is_default_palette(s):
+    return (
+        _norm_hex(s['primary_color']) == '#3D0C45'
+        and _norm_hex(s['accent_color']) == '#C9A84C'
+        and _norm_hex(s['bg_color']) == '#0D0910'
+        and _norm_hex(s['text_color']) == '#F0E8D0'
+    )
+
+def _theme_css(s):
+    letters = json.dumps(s['letters'] or '', ensure_ascii=False)
+    if _is_default_palette(s):
+        derived = (
+            '  --purple-mid:#5C1F6B;\n'
+            '  --purple-light:#7B3094;\n'
+            '  --gold-bright:#E8C96A;\n'
+            '  --gold-dim:#8A7235;\n'
+            '  --dark-2:#150D1A;\n'
+            '  --dark-3:#1E1227;\n'
+            '  --dark-4:#261630;\n'
+            '  --surface:#1A0F21;\n'
+            '  --surface-2:#231428;\n'
+            '  --border:rgba(201,168,76,0.18);\n'
+            '  --border-strong:rgba(201,168,76,0.38);\n'
+            '  --text-dim:#9A8E7A;\n'
+            '  --text-muted:#5C5248;\n'
+        )
+    else:
+        derived = (
+            '  --purple-mid:color-mix(in srgb,var(--purple) 75%,white);\n'
+            '  --purple-light:color-mix(in srgb,var(--purple) 55%,white);\n'
+            '  --gold-bright:color-mix(in srgb,var(--gold) 82%,white);\n'
+            '  --gold-dim:color-mix(in srgb,var(--gold) 70%,black);\n'
+            '  --dark-2:color-mix(in srgb,var(--dark) 88%,var(--purple));\n'
+            '  --dark-3:color-mix(in srgb,var(--dark) 78%,var(--purple));\n'
+            '  --dark-4:color-mix(in srgb,var(--dark) 70%,var(--purple));\n'
+            '  --surface:color-mix(in srgb,var(--dark) 85%,var(--purple));\n'
+            '  --surface-2:color-mix(in srgb,var(--dark) 80%,var(--purple));\n'
+            '  --border:color-mix(in srgb,var(--gold) 18%,transparent);\n'
+            '  --border-strong:color-mix(in srgb,var(--gold) 38%,transparent);\n'
+            '  --text-dim:color-mix(in srgb,var(--text) 62%,var(--dark));\n'
+            '  --text-muted:color-mix(in srgb,var(--text) 38%,var(--dark));\n'
+        )
+    return (
+        ':root{\n'
+        f'  --purple:{s["primary_color"]};\n'
+        f'  --gold:{s["accent_color"]};\n'
+        f'  --dark:{s["bg_color"]};\n'
+        f'  --text:{s["text_color"]};\n'
+        f'{derived}'
+        f'  --brand-letters:{letters};\n'
+        '}\n'
+        + _MOBILE_CHROME_CSS
+    )
+
+# Shared mobile chrome: hamburger opens the existing sidebar (no cloned menu).
+_MOBILE_CHROME_CSS = '''
+.nav-toggle{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:44px;height:44px;margin:-8px 8px -8px -8px;cursor:pointer;flex-shrink:0}
+.hamburger span{display:block;width:18px;height:2px;background:var(--gold);border-radius:1px}
+.nav-backdrop{display:none}
+@media(max-width:768px){
+  .hamburger{display:inline-flex}
+  .topbar-brand:has(.hamburger) .topbar-symbol{display:none}
+  .topbar{z-index:160}
+  .nav-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:140}
+  #nav-toggle:checked ~ .nav-backdrop{display:block}
+  .sidebar{display:none;position:fixed;top:54px;left:0;width:min(300px,86vw);height:auto;max-height:calc(100dvh - 54px - 58px - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:150}
+  #nav-toggle:checked ~ .app-body{z-index:auto}
+  #nav-toggle:checked ~ .app-body > .sidebar{display:block !important;z-index:150}
+  #mobile-bottom-nav{z-index:90 !important;height:calc(58px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
+  body:has(#mobile-bottom-nav),#app:has(+ #mobile-bottom-nav),#main-app{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  body:has(#login-screen):not(.logged-in) #mobile-bottom-nav{display:none !important}
+  .admin-page .topbar-symbol,.admin-page .topbar-title,.admin-page .topbar-brand{display:none}
+  .admin-page .topbar{padding:0 .9rem;height:auto;min-height:54px}
+  .admin-page .topbar-user{gap:.4rem}
+  .admin-page .user-badge{display:none}
+}
+.mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid color-mix(in srgb, var(--gold) 10%, transparent);color:var(--text-dim)}
+.mob-nav-btn:last-child{border-right:none}
+.mob-nav-btn span:first-child{font-size:1.15rem;line-height:1}
+'''
+
+def _clean_brand_text(value, max_len):
+    text = sanitize_text(value)
+    text = ''.join(c for c in text if c not in '`"\\$')
+    return text[:max_len].strip()
+
+def _parse_hex_color(value, field):
+    color = sanitize_text(value).strip()
+    if not HEX_COLOR.match(color):
+        return None, field
+    return color, None
+
+def setup_gate(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not _is_configured():
+            return redirect('/setup')
+        return f(*args, **kwargs)
+    return decorated
+
+def _bug_reports_enabled():
+    token = (os.environ.get('GITHUB_TOKEN') or '').strip()
+    repo = (os.environ.get('GITHUB_BUG_REPO') or '').strip()
+    return bool(token) and bool(BUG_REPO_RE.match(repo))
+
+def _github_create_issue(title, body):
+    repo = (os.environ.get('GITHUB_BUG_REPO') or '').strip()
+    token = (os.environ.get('GITHUB_TOKEN') or '').strip()
+    payload = json.dumps({'title': title, 'body': body}).encode()
+    req = urllib.request.Request(
+        f'https://api.github.com/repos/{repo}/issues',
+        data=payload,
+        method='POST',
+    )
+    req.add_header('Authorization', f'Bearer {token}')
+    req.add_header('Accept', 'application/vnd.github+json')
+    req.add_header('Content-Type', 'application/json')
+    req.add_header('User-Agent', 'DeltApp')
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read().decode())
 
 def log_audit(user_id, action, details=""):
     try:
@@ -324,9 +572,6 @@ def ser(rows):
     return rows
 
 
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
-
 # ============================================================================
 # SHARED AUTH DECORATORS
 # ============================================================================
@@ -344,6 +589,14 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         if session.get('role') != 'admin':
             return jsonify({'error': 'Forbidden'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+def admin_page_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if session.get('role') != 'admin':
+            return redirect('/')
         return f(*args, **kwargs)
     return decorated
 
@@ -376,16 +629,21 @@ def officer_required(f):
 @app.route('/budget/api/login', methods=['POST'])
 def api_login():
     data = request.json or {}
+    pw = data.get('password', '')
     conn = get_db()
     user = fetchone(conn, "SELECT * FROM users WHERE username=? AND is_active=true", (data.get('username'),))
+    if not (user and check_pw(pw, user['password_hash'])):
+        conn.close()
+        return jsonify({'error': 'Invalid credentials'}), 401
+    if is_legacy_hash(user['password_hash']):
+        execute(conn, "UPDATE users SET password_hash=? WHERE user_id=?", (hash_pw(pw), user['user_id']))
+        conn.commit()
     conn.close()
-    if user and user['password_hash'] == hash_pw(data.get('password', '')):
-        session['user_id'] = user['user_id']
-        session['username'] = user['username']
-        session['role'] = user['role']
-        log_audit(user['user_id'], 'LOGIN', f"User {user['username']} logged in")
-        return jsonify({'success': True, 'role': user['role'], 'username': user['username']})
-    return jsonify({'error': 'Invalid credentials'}), 401
+    session['user_id'] = user['user_id']
+    session['username'] = user['username']
+    session['role'] = user['role']
+    log_audit(user['user_id'], 'LOGIN', f"User {user['username']} logged in")
+    return jsonify({'success': True, 'role': user['role'], 'username': user['username']})
 
 @app.route('/api/logout', methods=['POST'])
 @app.route('/points/api/logout', methods=['POST'])
@@ -400,21 +658,87 @@ def api_logout():
 @app.route('/budget/api/me')
 def api_me():
     if 'user_id' not in session:
-        return jsonify({'authenticated': False})
+        return jsonify({'authenticated': False, 'bug_reports': False})
     conn = get_db()
     user = fetchone(conn, "SELECT user_id, username, email, role, brotherhood_points FROM users WHERE user_id=?", (session['user_id'],))
     conn.close()
     if user:
-        return jsonify({'authenticated': True, **dict(user)})
-    return jsonify({'authenticated': False})
+        return jsonify({
+            'authenticated': True,
+            **dict(user),
+            'bug_reports': _bug_reports_enabled(),
+        })
+    return jsonify({'authenticated': False, 'bug_reports': False})
+
+@app.route('/api/bugs', methods=['POST'])
+@login_required
+def api_bugs_create():
+    if not _bug_reports_enabled():
+        return jsonify({'error': 'Bug reports are not configured'}), 404
+    data = request.json or {}
+    name = sanitize_text(data.get('name'), '')[:80]
+    email = sanitize_text(data.get('email'), '')[:120]
+    issue = sanitize_text(data.get('issue'), '')[:4000]
+    if not name or not email or not issue:
+        return jsonify({'error': 'Name, email, and issue are required'}), 400
+    if not EMAIL_RE.match(email):
+        return jsonify({'error': 'Invalid email'}), 400
+    account = sanitize_text(session.get('username'), '')
+    role = sanitize_text(session.get('role'), '')
+    page = sanitize_text(data.get('page') or request.headers.get('Referer'), '')[:200]
+    title = issue.split('\n', 1)[0][:72] or f'Bug from {name}'
+    body = (
+        f'**Name:** {name}\n'
+        f'**Email:** {email}\n'
+        f'**Account:** {account} ({role})\n'
+        f'**Page:** {page}\n\n'
+        f'{issue}'
+    )
+    try:
+        _github_create_issue(title, body)
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors='replace')[:400]
+        print(f'GitHub issue create failed: {e.code} {detail}')
+        if e.code == 404:
+            return jsonify({'error': 'GitHub repo not found. Create the private repo and give the token access to it.'}), 502
+        if e.code in (401, 403):
+            return jsonify({'error': 'GitHub token cannot create issues on that repo.'}), 502
+        return jsonify({'error': 'Could not file the report'}), 502
+    except urllib.error.URLError as e:
+        print(f'GitHub issue create failed: {e}')
+        return jsonify({'error': 'Could not reach GitHub'}), 502
+    log_audit(session.get('user_id'), 'bug_report', title)
+    return jsonify({'success': True})
+
+@app.route('/bug-report.js')
+def bug_report_js():
+    path = os.path.join(BASE_DIR, 'bug-report.js')
+    with open(path) as f:
+        return Response(f.read(), mimetype='application/javascript', headers={'Cache-Control': 'no-cache'})
 
 @app.route('/points/api/users', methods=['GET'])
 @app.route('/budget/api/users', methods=['GET'])
 @login_required
+@admin_required
 def api_get_users():
     conn = get_db()
     users = fetchall(conn, "SELECT user_id, username, email, role, brotherhood_points, is_active, created_at FROM users ORDER BY brotherhood_points DESC")
+    conn.close()
+    return jsonify(ser(users))
 
+@app.route('/points/api/members', methods=['GET'])
+@login_required
+def api_get_members():
+    conn = get_db()
+    users = fetchall(conn, "SELECT user_id, username, is_active FROM users WHERE is_active=true ORDER BY username")
+    conn.close()
+    return jsonify(users)
+
+@app.route('/points/api/leaderboard', methods=['GET'])
+@login_required
+def api_leaderboard():
+    conn = get_db()
+    users = fetchall(conn, "SELECT user_id, username, brotherhood_points, is_active FROM users WHERE is_active=true ORDER BY brotherhood_points DESC")
     conn.close()
     return jsonify(users)
 
@@ -529,8 +853,16 @@ def api_pending_transactions():
 @app.route('/points/api/transactions', methods=['POST'])
 @login_required
 def api_submit_transaction():
-    data = request.json
-    desc = data.get('description','')
+    data = request.json or {}
+    desc = sanitize_text(data.get('description', ''))
+    if not desc:
+        return jsonify({'error': 'Description is required'}), 400
+    try:
+        points = int(data.get('points'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Points must be a number'}), 400
+    if points < -99 or points > 99:
+        return jsonify({'error': 'Points must be between -99 and 99'}), 400
     # Allow submitting on behalf of another member (any logged-in user can do this)
     target_member_id = data.get('member_id', session['user_id'])
     conn = get_db()
@@ -540,7 +872,7 @@ def api_submit_transaction():
         conn.close()
         return jsonify({'error': 'Member not found'}), 404
     execute(conn, "INSERT INTO transactions (member_id, points, description) VALUES (?,?,?)",
-            (target_member_id, data['points'], desc))
+            (target_member_id, points, desc))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -568,7 +900,7 @@ def api_get_all_actions():
 @admin_required
 def api_create_action():
     data = request.json
-    label = (data.get('label') or '').strip()
+    label = sanitize_text(data.get('label'))
     points = data.get('points')
     if not label:
         return jsonify({'error': 'Label is required'}), 400
@@ -587,7 +919,7 @@ def api_create_action():
 @admin_required
 def api_update_action(aid):
     data = request.json
-    label = (data.get('label') or '').strip()
+    label = sanitize_text(data.get('label'))
     points = data.get('points')
     is_active = data.get('is_active')
     fields, vals = [], []
@@ -622,12 +954,16 @@ def api_delete_action(aid):
 @moderator_required
 def api_approve(tid):
     conn = get_db()
-    row = fetchone(conn, "SELECT member_id, points FROM transactions WHERE transaction_id=?", (tid,))
+    row = fetchone(conn, "SELECT member_id, points FROM transactions WHERE transaction_id=? AND status='pending'", (tid,))
     if not row:
         conn.close()
-        return jsonify({'error': 'Not found'}), 404
-    execute(conn, "UPDATE transactions SET status='approved', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP WHERE transaction_id=?",
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    cur = execute(conn, "UPDATE transactions SET status='approved', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP WHERE transaction_id=? AND status='pending'",
             (session['username'], tid))
+    if cur.rowcount != 1:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
     execute(conn, "UPDATE users SET brotherhood_points=brotherhood_points+? WHERE user_id=?", (row['points'], row['member_id']))
     conn.commit()
     conn.close()
@@ -637,10 +973,14 @@ def api_approve(tid):
 @login_required
 @moderator_required
 def api_reject(tid):
-    data = request.json
+    data = request.json or {}
     conn = get_db()
-    execute(conn, "UPDATE transactions SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, rejection_reason=? WHERE transaction_id=?",
-            (session['username'], data.get('reason', ''), tid))
+    row = fetchone(conn, "SELECT transaction_id FROM transactions WHERE transaction_id=? AND status='pending'", (tid,))
+    if not row:
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    execute(conn, "UPDATE transactions SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, rejection_reason=? WHERE transaction_id=? AND status='pending'",
+            (session['username'], sanitize_text(data.get('reason', '')), tid))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -675,13 +1015,13 @@ def api_get_depts():
 @admin_required
 def api_create_dept():
     data = request.json or {}
-    name = (data.get('name') or '').strip()
+    name = sanitize_text(data.get('name'))
     if not name:
         return jsonify({'error': 'Name is required'}), 400
     conn = get_db()
     try:
         execute(conn, "INSERT INTO budget_departments (name, description, created_by) VALUES (?,?,?)",
-                (name, data.get('description','').strip(), session['user_id']))
+                (name, sanitize_text(data.get('description', '')), session['user_id']))
         conn.commit()
     except Exception as e:
         conn.close()
@@ -697,7 +1037,8 @@ def api_update_dept(did):
     fields, vals = [], []
     for f in ('name', 'description', 'is_active'):
         if f in data:
-            fields.append(f"{f}=?"); vals.append(data[f])
+            val = sanitize_text(data[f]) if f in ('name', 'description') else data[f]
+            fields.append(f"{f}=?"); vals.append(val)
     if not fields:
         return jsonify({'error': 'Nothing to update'}), 400
     vals.append(did)
@@ -744,7 +1085,7 @@ def api_get_items(did):
 @admin_required
 def api_create_item(did):
     data = request.json or {}
-    name = (data.get('name') or '').strip()
+    name = sanitize_text(data.get('name'))
     try:
         allocated = float(data.get('allocated', 0))
     except:
@@ -764,7 +1105,7 @@ def api_update_item(iid):
     data = request.json or {}
     fields, vals = [], []
     if 'name' in data:
-        fields.append("name=?"); vals.append(data['name'])
+        fields.append("name=?"); vals.append(sanitize_text(data['name']))
     if 'allocated' in data:
         try: fields.append("allocated=?"); vals.append(float(data['allocated']))
         except: pass
@@ -885,8 +1226,8 @@ def api_dept_requests(did):
 def api_submit_request():
     data = request.json or {}
     item_id = data.get('item_id')
-    description = (data.get('description') or '').strip()
-    vendor = (data.get('vendor') or '').strip()
+    description = sanitize_text(data.get('description'))
+    vendor = sanitize_text(data.get('vendor'))
     try:
         amount = float(data.get('amount', 0))
     except:
@@ -925,7 +1266,7 @@ def api_approve_request(rid):
 @admin_required
 def api_reject_request(rid):
     data = request.json or {}
-    reason = (data.get('reason') or '').strip()
+    reason = sanitize_text(data.get('reason'))
     if not reason:
         return jsonify({'error': 'Reason is required'}), 400
     conn = get_db()
@@ -973,6 +1314,231 @@ def api_summary():
 
 
 # ============================================================================
+# CHAPTER STYLE
+# ============================================================================
+
+@app.route('/theme.css')
+def theme_css():
+    css = _theme_css(get_org_settings())
+    return Response(css, mimetype='text/css', headers={'Cache-Control': 'no-cache'})
+
+@app.route('/api/theme', methods=['GET'])
+def api_theme_get():
+    s = get_org_settings()
+    return jsonify({
+        'letters': s['letters'],
+        'org_name': s['org_name'],
+        'tagline': s['tagline'],
+        'footer': s['footer'],
+        'primary_color': s['primary_color'],
+        'accent_color': s['accent_color'],
+        'bg_color': s['bg_color'],
+        'text_color': s['text_color'],
+        'configured': bool(s['configured']),
+    })
+
+@app.route('/api/theme', methods=['POST'])
+def api_theme_save():
+    existing = get_org_settings()
+    if existing['configured'] and session.get('role') != 'admin':
+        return jsonify({'error': 'Forbidden'}), 403
+    data = request.json or {}
+    letters = _clean_brand_text(data.get('letters', ''), 32)
+    org_name = _clean_brand_text(data.get('org_name', ''), 80)
+    tagline = _clean_brand_text(data.get('tagline', ''), 120)
+    footer = _clean_brand_text(data.get('footer', ''), 120)
+    if not footer:
+        footer = DEFAULT_THEME['footer']
+    if not letters or not org_name or not tagline:
+        return jsonify({'error': 'Letters, org name, and tagline are required'}), 400
+    colors = {}
+    for key in ('primary_color', 'accent_color', 'bg_color', 'text_color'):
+        color, bad = _parse_hex_color(data.get(key, ''), key)
+        if bad:
+            return jsonify({'error': f'Invalid {bad}'}), 400
+        colors[key] = color
+    conn = get_db()
+    if fetchone(conn, "SELECT id FROM org_settings WHERE id=1"):
+        execute(conn, '''UPDATE org_settings SET
+            letters=?, org_name=?, tagline=?, footer=?,
+            primary_color=?, accent_color=?, bg_color=?, text_color=?,
+            configured=1 WHERE id=1''',
+            (letters, org_name, tagline, footer,
+             colors['primary_color'], colors['accent_color'],
+             colors['bg_color'], colors['text_color']))
+    else:
+        execute(conn, '''INSERT INTO org_settings
+            (id, letters, org_name, tagline, footer, primary_color, accent_color, bg_color, text_color, configured)
+            VALUES (?,?,?,?,?,?,?,?,?,1)''',
+            (1, letters, org_name, tagline, footer,
+             colors['primary_color'], colors['accent_color'],
+             colors['bg_color'], colors['text_color']))
+    conn.commit()
+    conn.close()
+    log_audit(session.get('user_id'), 'update_theme', org_name)
+    return jsonify({'success': True})
+
+@app.route('/setup')
+def setup_page():
+    if _is_configured() and session.get('role') != 'admin':
+        return redirect('/')
+    return _read_html('setup.html')
+
+
+# ============================================================================
+# TERM ARCHIVE
+# ============================================================================
+
+def _money(v):
+    return round(float(v or 0), 2)
+
+def _snapshot_points(conn):
+    users = fetchall(conn,
+        "SELECT username, brotherhood_points FROM users WHERE is_active=true ORDER BY brotherhood_points DESC")
+    return [{'username': u['username'], 'points': int(u['brotherhood_points'] or 0)} for u in users]
+
+def _snapshot_dailies(conn):
+    rows = fetchall(conn, (
+        "SELECT r.day_of_week, t.title, t.category, u.username as member_name "
+        "FROM rotation_template r "
+        "JOIN daily_tasks t ON r.task_id = t.task_id "
+        "JOIN users u ON r.member_id = u.user_id "
+        "WHERE t.is_active=true "
+        "ORDER BY t.category, t.title, r.day_of_week"
+    ))
+    return [{
+        'title': r['title'],
+        'category': r['category'],
+        'day_of_week': int(r['day_of_week']),
+        'member_name': r['member_name'],
+    } for r in rows]
+
+def _snapshot_budget(conn):
+    depts = fetchall(conn,
+        "SELECT dept_id, name FROM budget_departments WHERE is_active=true ORDER BY name")
+    out = []
+    for d in depts:
+        items = fetchall(conn, '''
+            SELECT i.item_id, i.name, i.allocated,
+                   COALESCE(SUM(CASE WHEN r.status = 'approved' THEN r.amount ELSE 0 END), 0) as spent
+            FROM budget_items i
+            LEFT JOIN budget_requests r ON r.item_id = i.item_id
+            WHERE i.dept_id = ? AND i.is_active = true
+            GROUP BY i.item_id, i.name, i.allocated
+            ORDER BY i.name
+        ''', (d['dept_id'],))
+        item_rows = []
+        alloc_t = 0.0
+        spent_t = 0.0
+        for i in items:
+            allocated = _money(i['allocated'])
+            spent = _money(i['spent'])
+            item_rows.append({
+                'name': i['name'],
+                'allocated': allocated,
+                'spent': spent,
+                'remainder': _money(allocated - spent),
+            })
+            alloc_t += allocated
+            spent_t += spent
+        out.append({
+            'name': d['name'],
+            'allocated': _money(alloc_t),
+            'spent': _money(spent_t),
+            'remainder': _money(alloc_t - spent_t),
+            'items': item_rows,
+        })
+    return out
+
+def _archive_and_reset(conn, label, user_id):
+    payload = {
+        'points': _snapshot_points(conn),
+        'dailies': _snapshot_dailies(conn),
+        'budget': _snapshot_budget(conn),
+    }
+    execute(conn, "INSERT INTO term_archives (label, payload, created_by) VALUES (?,?,?)",
+            (label, json.dumps(payload, ensure_ascii=False), user_id))
+    execute(conn, "UPDATE users SET brotherhood_points=0 WHERE is_active=true")
+    execute(conn, "DELETE FROM transactions WHERE status <> 'pending'")
+    execute(conn,
+        "UPDATE budget_requests SET status='rejected', reviewed_by=?, reviewed_at=CURRENT_TIMESTAMP, "
+        "rejection_reason=? WHERE status='pending'",
+        (user_id, 'Term archived'))
+    execute(conn, "DELETE FROM budget_requests")
+    execute(conn, "DELETE FROM budget_items")
+    execute(conn, "DELETE FROM daily_assignments")
+    execute(conn, "DELETE FROM rotation_template")
+
+@app.route('/api/admin/archives', methods=['GET'])
+@login_required
+@admin_required
+def api_list_archives():
+    conn = get_db()
+    rows = fetchall(conn, "SELECT label, created_at FROM term_archives ORDER BY created_at DESC")
+    conn.close()
+    return jsonify(ser(rows))
+
+@app.route('/api/admin/archives/<path:label>', methods=['GET'])
+@login_required
+@admin_required
+def api_get_archive(label):
+    conn = get_db()
+    row = fetchone(conn, "SELECT label, payload, created_at FROM term_archives WHERE label=?", (label,))
+    conn.close()
+    if not row:
+        return jsonify({'error': 'Not found'}), 404
+    out = {
+        'label': row['label'],
+        'created_at': row['created_at'],
+        'payload': json.loads(row['payload']),
+    }
+    return jsonify(ser([out])[0])
+
+@app.route('/api/admin/archive', methods=['POST'])
+@login_required
+@admin_required
+def api_create_archive():
+    label = sanitize_text((request.json or {}).get('label', ''))
+    if not label:
+        return jsonify({'error': 'Label is required'}), 400
+    conn = get_db()
+    try:
+        _archive_and_reset(conn, label, session['user_id'])
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        if is_integrity_error(e):
+            return jsonify({'error': 'Term Label is Already in use, Try a Different one'}), 409
+        raise
+    conn.close()
+    log_audit(session['user_id'], 'ARCHIVE_TERM', label)
+    return jsonify({'success': True})
+
+@app.route('/admin-settings.js')
+def admin_settings_js():
+    return send_from_directory(BASE_DIR, 'admin-settings.js', mimetype='application/javascript')
+
+@app.route('/users')
+@setup_gate
+@admin_page_required
+def users_page():
+    return _read_html('users.html')
+
+@app.route('/archive')
+@setup_gate
+@admin_page_required
+def archive_page():
+    return _read_html('archive.html')
+
+@app.route('/archives')
+@setup_gate
+@admin_page_required
+def archives_page():
+    return _read_html('archives.html')
+
+
+# ============================================================================
 # PAGE ROUTES
 # ============================================================================
 
@@ -980,9 +1546,18 @@ def api_summary():
 def _read_html(name):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
     with open(path) as f:
-        return f.read()
+        html_text = f.read()
+    s = get_org_settings()
+    return (
+        html_text
+        .replace('__BRAND_LETTERS__', html_escape(s['letters']))
+        .replace('__BRAND_NAME__', html_escape(s['org_name']))
+        .replace('__BRAND_TAGLINE__', html_escape(s['tagline']))
+        .replace('__BRAND_FOOTER__', html_escape(s['footer']))
+    )
 
 @app.route('/')
+@setup_gate
 def index():
     return _read_html('landing.html')
 
@@ -1001,6 +1576,7 @@ def wheel_app():
     return _read_html('wheel.html')
 
 @app.route('/wheel/api/members')
+@login_required
 def wheel_members():
     conn = get_db()
     users = fetchall(conn, "SELECT user_id, username FROM users WHERE is_active=true ORDER BY username")
@@ -1029,13 +1605,13 @@ def dailies_get_tasks():
 @admin_required
 def dailies_create_task():
     data = request.json or {}
-    title = (data.get('title') or '').strip()
-    category = (data.get('category') or '').strip()
+    title = sanitize_text(data.get('title'))
+    category = sanitize_text(data.get('category'))
     if not title or not category:
         return jsonify({'error': 'Title and category required'}), 400
     conn = get_db()
     execute(conn, "INSERT INTO daily_tasks (title, description, category, created_by) VALUES (?,?,?,?)",
-            (title, data.get('description','').strip(), category, session['user_id']))
+            (title, sanitize_text(data.get('description', '')), category, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -1048,7 +1624,8 @@ def dailies_update_task(tid):
     fields, vals = [], []
     for f in ('title', 'description', 'category', 'is_active'):
         if f in data:
-            fields.append(f"{f}=?"); vals.append(data[f])
+            val = sanitize_text(data[f]) if f in ('title', 'description', 'category') else data[f]
+            fields.append(f"{f}=?"); vals.append(val)
     if not fields:
         return jsonify({'error': 'Nothing to update'}), 400
     vals.append(tid)
@@ -1080,17 +1657,45 @@ def dailies_set_rotation():
     data = request.json or {}
     entries = data.get('entries', [])
     conn = get_db()
-    for e in entries:
-        existing = fetchone(conn,
-            "SELECT rotation_id FROM rotation_template WHERE task_id=? AND day_of_week=?",
-            (e['task_id'], e['day_of_week']))
-        if existing:
-            execute(conn, "UPDATE rotation_template SET member_id=? WHERE rotation_id=?",
-                    (e['member_id'], existing['rotation_id']))
-        else:
+    try:
+        execute(conn, "DELETE FROM rotation_template")
+        slots = {}
+        for e in entries:
+            task_id = int(e['task_id'])
+            dow = int(e['day_of_week'])
+            member_id = int(e['member_id'])
+            if dow < 1 or dow > 7:
+                conn.rollback()
+                conn.close()
+                return jsonify({'error': 'Invalid day_of_week'}), 400
             execute(conn, "INSERT INTO rotation_template (task_id, day_of_week, member_id) VALUES (?,?,?)",
-                    (e['task_id'], e['day_of_week'], e['member_id']))
-    conn.commit(); conn.close()
+                    (task_id, dow, member_id))
+            slots[(task_id, dow)] = member_id
+        # Drop still-pending copies of slots that were unassigned (or retarget if the brother changed).
+        pending = fetchall(conn,
+            "SELECT assignment_id, task_id, member_id, due_date FROM daily_assignments WHERE status='pending'")
+        for a in pending:
+            due = a['due_date']
+            if isinstance(due, datetime.datetime):
+                due = due.date()
+            elif not isinstance(due, datetime.date):
+                due = datetime.date.fromisoformat(str(due)[:10])
+            key = (a['task_id'], due.isoweekday())
+            if key not in slots:
+                execute(conn, "DELETE FROM daily_assignments WHERE assignment_id=?", (a['assignment_id'],))
+            elif a['member_id'] != slots[key]:
+                execute(conn, "UPDATE daily_assignments SET member_id=? WHERE assignment_id=?",
+                        (slots[key], a['assignment_id']))
+        conn.commit()
+    except (KeyError, TypeError, ValueError):
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Invalid rotation entries'}), 400
+    except Exception:
+        conn.rollback()
+        conn.close()
+        raise
+    conn.close()
     return jsonify({'success': True})
 
 @app.route('/dailies/api/rotation/<int:rid>', methods=['DELETE'])
@@ -1101,6 +1706,40 @@ def dailies_delete_rotation(rid):
     execute(conn, "DELETE FROM rotation_template WHERE rotation_id=?", (rid,))
     conn.commit(); conn.close()
     return jsonify({'success': True})
+
+def _ensure_assignments_for_date(conn, day):
+    """Create missing assignment rows from the active rotation for a date. Returns count created."""
+    if isinstance(day, str):
+        day = datetime.date.fromisoformat(day)
+    date_str = day.isoformat()
+    dow = day.isoweekday()
+    monday = day - datetime.timedelta(days=day.weekday())
+    rotation = fetchall(conn, (
+        "SELECT r.* FROM rotation_template r "
+        "JOIN daily_tasks t ON r.task_id = t.task_id "
+        "WHERE r.day_of_week=? AND t.is_active=true"
+    ), (dow,))
+    created = 0
+    for slot in rotation:
+        existing = fetchone(conn,
+            "SELECT assignment_id FROM daily_assignments WHERE task_id=? AND due_date=?",
+            (slot['task_id'], date_str))
+        if not existing:
+            execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
+                    (slot['task_id'], slot['member_id'], monday.isoformat(), date_str))
+            created += 1
+    return created
+
+
+def _ensure_current_week(conn):
+    """Materialize this week's rotation slots so Sync Day is not required on page open."""
+    today = datetime.date.today()
+    monday = today - datetime.timedelta(days=today.weekday())
+    created = 0
+    for i in range(7):
+        created += _ensure_assignments_for_date(conn, monday + datetime.timedelta(days=i))
+    return created
+
 
 @app.route('/dailies/api/assignments', methods=['GET'])
 @login_required
@@ -1122,6 +1761,10 @@ def dailies_get_assignments():
         today = datetime.date.today()
         monday = today - datetime.timedelta(days=today.weekday())
         dates = [monday + datetime.timedelta(days=i) for i in range(7)]
+
+    # Anyone opening Dailies should get this week's tasks stored without clicking Sync Day.
+    _ensure_current_week(conn)
+    conn.commit()
 
     rotation = fetchall(conn, (
         "SELECT r.task_id, r.day_of_week, r.member_id, r.rotation_id, "
@@ -1190,7 +1833,7 @@ def dailies_complete_by_slot():
     if not slot:
         conn.close()
         return jsonify({'error': 'No rotation slot found'}), 404
-    if session.get('role') not in ('admin', 'moderator') and slot['member_id'] != session['user_id']:
+    if session.get('role') != 'admin' and slot['member_id'] != session['user_id']:
         conn.close()
         return jsonify({'error': 'Not your assignment'}), 403
 
@@ -1205,7 +1848,7 @@ def dailies_complete_by_slot():
 
     execute(conn,
         "UPDATE daily_assignments SET status='submitted', completed_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
-        (data.get('notes', ''), existing['assignment_id']))
+        (sanitize_text(data.get('notes', '')), existing['assignment_id']))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -1213,26 +1856,14 @@ def dailies_complete_by_slot():
 
 @app.route('/dailies/api/assignments/ensure', methods=['POST'])
 @login_required
-@admin_required
+@moderator_required
 def dailies_ensure_assignments():
     data = request.json or {}
     date_str = data.get('date')
     if not date_str:
         return jsonify({'error': 'date required'}), 400
-    day = datetime.date.fromisoformat(date_str)
-    dow = day.isoweekday()
-    monday = day - datetime.timedelta(days=day.weekday())
     conn = get_db()
-    rotation = fetchall(conn, "SELECT * FROM rotation_template WHERE day_of_week=?", (dow,))
-    created = 0
-    for slot in rotation:
-        existing = fetchone(conn,
-            "SELECT assignment_id FROM daily_assignments WHERE task_id=? AND due_date=?",
-            (slot['task_id'], date_str))
-        if not existing:
-            execute(conn, "INSERT INTO daily_assignments (task_id, member_id, week_start, due_date) VALUES (?,?,?,?)",
-                    (slot['task_id'], slot['member_id'], monday.isoformat(), date_str))
-            created += 1
+    created = _ensure_assignments_for_date(conn, date_str)
     conn.commit(); conn.close()
     return jsonify({'success': True, 'created': created})
 
@@ -1241,14 +1872,14 @@ def dailies_ensure_assignments():
 def dailies_mark_complete(aid):
     data = request.json or {}
     conn = get_db()
-    if session.get('role') not in ('admin', 'moderator'):
+    if session.get('role') != 'admin':
         a = fetchone(conn, "SELECT member_id FROM daily_assignments WHERE assignment_id=?", (aid,))
         if not a or a['member_id'] != session['user_id']:
             conn.close()
             return jsonify({'error': 'Not your assignment'}), 403
     execute(conn,
         "UPDATE daily_assignments SET status='submitted', completed_at=CURRENT_TIMESTAMP, notes=? WHERE assignment_id=?",
-        (data.get('notes',''), aid))
+        (sanitize_text(data.get('notes', '')), aid))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
@@ -1257,13 +1888,13 @@ def dailies_mark_complete(aid):
 @admin_required
 def dailies_approve(aid):
     conn = get_db()
-    a = fetchone(conn, "SELECT * FROM daily_assignments WHERE assignment_id=?", (aid,))
-    if not a:
-        conn.close()
-        return jsonify({'error': 'Not found'}), 404
-    execute(conn,
-        "UPDATE daily_assignments SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
+    cur = execute(conn,
+        "UPDATE daily_assignments SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=? AND status='submitted'",
         (session['user_id'], aid))
+    if cur.rowcount != 1:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
     conn.commit(); conn.close()
     return jsonify({'success': True})
 
@@ -1274,16 +1905,20 @@ def dailies_mark_missed(aid):
     data = request.json or {}
     penalty = abs(int(data.get('penalty', 1)))
     conn = get_db()
-    a = fetchone(conn, "SELECT * FROM daily_assignments WHERE assignment_id=?", (aid,))
+    a = fetchone(conn, "SELECT * FROM daily_assignments WHERE assignment_id=? AND status NOT IN ('missed','approved')", (aid,))
     if not a:
         conn.close()
-        return jsonify({'error': 'Not found'}), 404
-    task = fetchone(conn, "SELECT title FROM daily_tasks WHERE task_id=?", (a['task_id'],))
-    execute(conn,
-        "UPDATE daily_assignments SET status='missed', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=?",
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    cur = execute(conn,
+        "UPDATE daily_assignments SET status='missed', approved_by=?, approved_at=CURRENT_TIMESTAMP WHERE assignment_id=? AND status NOT IN ('missed','approved')",
         (session['user_id'], aid))
+    if cur.rowcount != 1:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Not found or already reviewed'}), 404
+    task = fetchone(conn, "SELECT title FROM daily_tasks WHERE task_id=?", (a['task_id'],))
     if penalty > 0:
-        title = task['title'] if task else 'Unknown'
+        title = sanitize_text(task['title'] if task else 'Unknown')
         execute(conn,
             "INSERT INTO transactions (member_id, points, description, status, reviewed_by, reviewed_at) VALUES (?,?,?,'approved',?,CURRENT_TIMESTAMP)",
             (a['member_id'], -penalty, "Missed Daily: " + title, session['username']))
@@ -1321,7 +1956,12 @@ if __name__ == '__main__':
     print(f"  → Budget:       http://localhost:5000/budget")
     print(f"  → Wheel:        http://localhost:5000/wheel")
     print(f"  → Dailies:      http://localhost:5000/dailies")
+    print(f"  → Setup:        http://localhost:5000/setup")
+    print(f"  → Users:        http://localhost:5000/users")
+    print(f"  → Archive:      http://localhost:5000/archive")
+    print(f"  → Archives:     http://localhost:5000/archives")
     print(f"  → Default login: admin / admin123")
     print(f"  → DB: {'PostgreSQL' if DATABASE_URL else 'SQLite (local)'}")
     print("="*55 + "\n")
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    # python app.py is local-only; Railway uses gunicorn (Procfile)
+    app.run(debug=not DATABASE_URL, host='127.0.0.1', port=int(os.environ.get('PORT', 5000)))

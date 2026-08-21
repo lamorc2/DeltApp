@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Δ Τ Δ Budget System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>__BRAND_LETTERS__ Budget System</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -14,6 +14,7 @@
   --border: rgba(201,168,76,0.18); --border-strong: rgba(201,168,76,0.38);
   --text: #F0E8D0; --text-dim: #9A8E7A; --text-muted: #5C5248;
   --green: #4CAF7A; --red: #CF4A4A; --blue: #5B8DD9;
+  --brand-letters: "ΔΤΔ";
   --radius: 4px; --radius-lg: 8px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -23,13 +24,13 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 #app{position:relative;z-index:1}
 
 /* LOGIN */
-#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;background:radial-gradient(ellipse at 50% 0%,rgba(92,31,107,.4) 0%,transparent 70%),radial-gradient(ellipse at 80% 100%,rgba(61,12,69,.3) 0%,transparent 60%)}
-.login-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border-strong);padding:3rem 2.5rem;position:relative;box-shadow:0 0 80px rgba(92,31,107,.3),0 0 0 1px rgba(201,168,76,.08)}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb, var(--purple-mid) 40%, transparent) 0%,transparent 70%),radial-gradient(ellipse at 80% 100%,color-mix(in srgb, var(--purple) 30%, transparent) 0%,transparent 60%)}
+.login-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border-strong);padding:3rem 2.5rem;position:relative;box-shadow:0 0 80px color-mix(in srgb, var(--purple-mid) 30%, transparent),0 0 0 1px color-mix(in srgb, var(--gold) 8%, transparent)}
 .login-card::before,.login-card::after{content:'';position:absolute;width:24px;height:24px;border-color:var(--gold);border-style:solid}
 .login-card::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
 .login-card::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
 .crest{text-align:center;margin-bottom:2rem}
-.crest-symbol{font-family:'Cinzel Decorative',serif;font-size:3.5rem;color:var(--gold);display:block;line-height:1;text-shadow:0 0 40px rgba(201,168,76,.4);letter-spacing:.1em}
+.crest-symbol{font-family:'Cinzel Decorative',serif;font-size:3.5rem;color:var(--gold);display:block;line-height:1;text-shadow:0 0 40px color-mix(in srgb, var(--gold) 40%, transparent);letter-spacing:.1em}
 .crest-name{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.35em;color:var(--gold-dim);text-transform:uppercase;margin-top:.5rem}
 .crest-sub{font-family:'Crimson Pro',serif;font-style:italic;font-size:1rem;color:var(--text-dim);margin-top:.3rem}
 
@@ -37,7 +38,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .form-group{margin-bottom:1.25rem}
 .form-label{display:block;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.5rem}
 .form-input{width:100%;background:var(--dark-3);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem;font-family:'Crimson Pro',serif;font-size:1rem;outline:none;border-radius:var(--radius);transition:border-color .2s,box-shadow .2s}
-.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.12)}
+.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb, var(--gold) 12%, transparent)}
 .form-input::placeholder{color:var(--text-muted)}
 .form-input:disabled{opacity:.45;cursor:not-allowed}
 select.form-input option{background:var(--dark-3)}
@@ -47,7 +48,7 @@ textarea.form-input{resize:vertical;min-height:80px}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;border-radius:var(--radius);transition:all .2s;font-weight:600}
 .btn-primary{background:linear-gradient(135deg,var(--purple-mid),var(--purple));color:var(--gold);border:1px solid var(--border-strong);width:100%;justify-content:center;padding:.9rem}
-.btn-primary:hover{background:linear-gradient(135deg,var(--purple-light),var(--purple-mid));box-shadow:0 4px 20px rgba(92,31,107,.5)}
+.btn-primary:hover{background:linear-gradient(135deg,var(--purple-light),var(--purple-mid));box-shadow:0 4px 20px color-mix(in srgb, var(--purple-mid) 50%, transparent)}
 .btn-sm{padding:.4rem .9rem;font-size:.6rem}
 .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
 .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
@@ -61,15 +62,18 @@ textarea.form-input{resize:vertical;min-height:80px}
 /* TOPBAR */
 #main-app{display:none;flex-direction:column;min-height:100vh}
 .topbar{background:linear-gradient(180deg,var(--purple) 0%,var(--dark-2) 100%);border-bottom:1px solid var(--border-strong);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.4)}
-.topbar-brand{display:flex;align-items:center;gap:1rem}
-.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5)}
-.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase}
+.topbar-brand{display:flex;align-items:center;gap:1rem;min-width:0;overflow:hidden;position:relative;z-index:1}
+.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold);text-shadow:0 0 20px color-mix(in srgb, var(--gold) 50%, transparent);flex-shrink:0}
+.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar-sub{font-family:'Crimson Pro',serif;font-style:italic;font-size:.8rem;color:var(--text-muted);margin-left:.5rem}
-.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem}
-.user-badge{display:flex;align-items:center;gap:.6rem;background:rgba(201,168,76,.08);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
+.topbar-nav-links{display:flex;gap:.5rem;position:absolute;left:50%;transform:translateX(-50%)}
+.topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px;white-space:nowrap}
+.topbar-nav-links a.active{color:var(--gold);border-color:var(--gold-dim);background:color-mix(in srgb, var(--gold) 12%, transparent)}
+.topbar-user{display:flex;align-items:center;gap:1rem;font-size:.875rem;flex-shrink:0;position:relative;z-index:1;margin-left:auto}
+.user-badge{display:flex;align-items:center;gap:.6rem;background:color-mix(in srgb, var(--gold) 8%, transparent);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
 .user-name{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em}
 .role-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;font-family:'Cinzel',serif}
-.role-admin{background:rgba(201,168,76,.2);color:var(--gold);border:1px solid var(--gold-dim)}
+.role-admin{background:color-mix(in srgb, var(--gold) 20%, transparent);color:var(--gold);border:1px solid var(--gold-dim)}
 .role-moderator{background:rgba(192,132,208,.15);color:#C084D0;border:1px solid var(--purple-light)}
 .role-member{background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid var(--border)}
 .role-officer{background:rgba(91,141,217,.15);color:#5B8DD9;border:1px solid rgba(91,141,217,.3)}
@@ -79,8 +83,8 @@ textarea.form-input{resize:vertical;min-height:80px}
 .sidebar{width:230px;background:var(--dark-2);border-right:1px solid var(--border);padding:1.5rem 0;flex-shrink:0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
 .nav-section-title{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.3em;color:var(--text-muted);text-transform:uppercase;padding:0 1.5rem;margin-bottom:.5rem;margin-top:1.5rem}
 .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.5rem;cursor:pointer;transition:all .15s;color:var(--text-dim);font-size:.9rem;border-left:3px solid transparent}
-.nav-item:hover{background:rgba(201,168,76,.05);color:var(--text)}
-.nav-item.active{color:var(--gold);background:rgba(201,168,76,.08);border-left-color:var(--gold)}
+.nav-item:hover{background:color-mix(in srgb, var(--gold) 5%, transparent);color:var(--text)}
+.nav-item.active{color:var(--gold);background:color-mix(in srgb, var(--gold) 8%, transparent);border-left-color:var(--gold)}
 .nav-item .icon{font-size:1rem;width:20px;text-align:center}
 .nav-badge{margin-left:auto;background:var(--red);color:white;font-size:.6rem;font-family:'Cinzel',serif;padding:.1rem .4rem;border-radius:10px;min-width:18px;text-align:center}
 .nav-divider{height:1px;background:var(--border);margin:1rem 1.5rem}
@@ -121,7 +125,7 @@ textarea.form-input{resize:vertical;min-height:80px}
 .budget-bar-fill{height:100%;border-radius:4px;transition:width .4s ease;background:linear-gradient(90deg,var(--green),#7DD69A)}
 .budget-bar-fill.warn{background:linear-gradient(90deg,#B8860B,var(--gold))}
 .budget-bar-fill.over{background:linear-gradient(90deg,#8B1A1A,var(--red))}
-.budget-bar-pending{height:100%;border-radius:4px;position:absolute;top:0;background:rgba(201,168,76,.35)}
+.budget-bar-pending{height:100%;border-radius:4px;position:absolute;top:0;background:color-mix(in srgb, var(--gold) 35%, transparent)}
 
 /* TABLE */
 .table-wrap{overflow-x:auto}
@@ -131,11 +135,11 @@ th{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:var(--g
 td{padding:.75rem 1rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tbody tr{transition:background .15s}
-tbody tr:hover{background:rgba(201,168,76,.04)}
+tbody tr:hover{background:color-mix(in srgb, var(--gold) 4%, transparent)}
 
 /* BADGES */
 .badge{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.65rem;font-family:'Cinzel',serif;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
-.badge-pending{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+.badge-pending{background:color-mix(in srgb, var(--gold) 15%, transparent);color:var(--gold);border:1px solid color-mix(in srgb, var(--gold) 30%, transparent)}
 .badge-approved{background:rgba(76,175,122,.15);color:var(--green);border:1px solid rgba(76,175,122,.3)}
 .badge-rejected{background:rgba(207,74,74,.15);color:var(--red);border:1px solid rgba(207,74,74,.3)}
 .money{font-family:'Cinzel',serif;color:var(--gold);font-size:.9rem}
@@ -143,7 +147,7 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
 
 /* DEPT VIEW */
 .dept-header{background:linear-gradient(135deg,var(--purple) 0%,var(--dark-2) 100%);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:1.75rem 2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
-.dept-header::after{content:'ΔΤΔ';position:absolute;right:2rem;top:50%;transform:translateY(-50%);font-family:'Cinzel Decorative',serif;font-size:4rem;color:rgba(201,168,76,.06);pointer-events:none}
+.dept-header::after{content:var(--brand-letters);position:absolute;right:2rem;top:50%;transform:translateY(-50%);font-family:'Cinzel Decorative',serif;font-size:4rem;color:color-mix(in srgb, var(--gold) 6%, transparent);pointer-events:none}
 .dept-header-name{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);letter-spacing:.08em}
 .dept-header-desc{font-style:italic;color:var(--text-dim);margin-top:.25rem}
 
@@ -189,19 +193,16 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
 @media(max-width:768px){.sidebar{display:none}.content{padding:1rem}.items-grid{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}}
 
   /* ── MOBILE RESPONSIVE ── */
-  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid rgba(201,168,76,.1);transition:background .15s}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;gap:2px;border-right:1px solid color-mix(in srgb, var(--gold) 10%, transparent);transition:background .15s}
   .mob-nav-btn:last-child{border-right:none}
   .mob-nav-btn span:first-child{font-size:1.15rem;line-height:1}
-  .mob-nav-btn.mob-active{background:rgba(201,168,76,.1)}
+  .mob-nav-btn.mob-active{background:color-mix(in srgb, var(--gold) 10%, transparent)}
   @media(max-width:768px){
     #mobile-bottom-nav{display:flex !important}
     body,#app,#main-app{padding-bottom:58px}
     .topbar{padding:0 .9rem;height:auto;min-height:54px;flex-wrap:wrap;gap:.3rem;padding-top:.4rem;padding-bottom:.4rem}
     .topbar-nav-links,.topbar-nav{display:none !important}
-    .topbar-title,.topbar-sub{display:none}
     .topbar-user{gap:.4rem}
-    .user-badge{padding:.25rem .55rem}
-    .sidebar{display:none !important}
     .content{padding:.9rem .75rem !important}
     .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
     table{min-width:480px}
@@ -222,6 +223,8 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
     .header-actions{flex-direction:column;align-items:flex-start}
   }
 </style>
+<link rel="stylesheet" href="/theme.css">
+<script src="/bug-report.js"></script>
 </head>
 <body>
 <div id="app">
@@ -230,8 +233,8 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
 <div id="login-screen">
   <div class="login-card">
     <div class="crest">
-      <span class="crest-symbol">ΔΤΔ</span>
-      <div class="crest-name">Delta Tau Delta</div>
+      <span class="crest-symbol">__BRAND_LETTERS__</span>
+      <div class="crest-name">__BRAND_NAME__</div>
       <div class="crest-sub">Budget &amp; Bookkeeping</div>
     </div>
     <div class="form-group">
@@ -249,17 +252,19 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
 
 <!-- MAIN APP -->
 <div id="main-app">
+  <input type="checkbox" id="nav-toggle" class="nav-toggle">
+  <label class="nav-backdrop" for="nav-toggle"></label>
   <div class="topbar">
     <div class="topbar-brand">
-      <span class="topbar-symbol">ΔΤΔ</span>
+      <label class="hamburger" for="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></label>
+      <span class="topbar-symbol">__BRAND_LETTERS__</span>
       <span class="topbar-title">Treasury</span>
-      <span class="topbar-sub">Budget &amp; Bookkeeping</span>
     </div>
-    <div class="topbar-nav-links" style="display:flex;gap:.5rem;margin-left:1.5rem">
-      <a href="/points" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">⚔ Points</a>
-      <a href="/budget" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--gold);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--gold-dim);border-radius:4px;background:rgba(201,168,76,.12)">◈ Budget</a>
-      <a href="/wheel" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">🎡 Wheel</a>
-      <a href="/dailies" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px">📋 Dailies</a>
+    <div class="topbar-nav-links">
+      <a href="/points">⚔ Points</a>
+      <a href="/budget" class="active">◈ Budget</a>
+      <a href="/wheel">🎡 Wheel</a>
+      <a href="/dailies">📋 Dailies</a>
     </div>
     <div class="topbar-user">
       <div class="user-badge">
@@ -511,6 +516,7 @@ tbody tr:hover{background:rgba(201,168,76,.04)}
   </div>
 </div>
 
+<script src="/admin-settings.js"></script>
 <script>
 let currentUser = null;
 let allDepts = [];
@@ -519,10 +525,13 @@ let currentDeptItems = [];
 
 // ── UTILS ──
 const $ = id => document.getElementById(id);
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function toast(msg, type='info') {
   const c = $('toast-container'), t = document.createElement('div');
   t.className = `toast ${type}`;
-  t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ⓘ'}[type]||'ⓘ'}</span><span>${msg}</span>`;
+  t.innerHTML = `<span>${{success:'✓',error:'✕',info:'ⓘ'}[type]||'ⓘ'}</span><span>${esc(msg)}</span>`;
   c.appendChild(t); setTimeout(() => t.remove(), 3500);
 }
 function openModal(id) { $(id).classList.add('show'); }
@@ -530,7 +539,7 @@ function closeModal(id) { $(id).classList.remove('show'); }
 function fmt$(n) { return '$' + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
 function showErr(id, msg) { const e=$(id); e.textContent=msg; e.style.display='block'; }
-function statusBadge(s) { return `<span class="badge badge-${s}">${s}</span>`; }
+function statusBadge(s) { return `<span class="badge badge-${s}">${esc(s)}</span>`; }
 function budgetBar(spent, pending, allocated) {
   const pct = allocated > 0 ? Math.min((spent/allocated)*100,100) : 0;
   const pendPct = allocated > 0 ? Math.min((pending/allocated)*100, 100-pct) : 0;
@@ -584,10 +593,10 @@ async function loadApp() {
     document.getElementById('app').innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem">
         <div style="text-align:center;max-width:400px">
-          <div style="font-family:'Cinzel Decorative',serif;font-size:3rem;color:#C9A84C;margin-bottom:1.5rem">ΔΤΔ</div>
+          <div style="font-family:'Cinzel Decorative',serif;font-size:3rem;color:var(--gold);margin-bottom:1.5rem">__BRAND_LETTERS__</div>
           <div style="font-family:'Cinzel',serif;font-size:1rem;color:#CF4A4A;letter-spacing:.1em;margin-bottom:1rem">Access Restricted</div>
-          <p style="color:#9A8E7A;font-style:italic;margin-bottom:2rem">The Treasury is only accessible to chapter officers.</p>
-          <a href="/" style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;color:#C9A84C;text-decoration:none;padding:.6rem 1.5rem;border:1px solid rgba(201,168,76,.3);border-radius:4px">← Back to Portal</a>
+          <p style="color:var(--text-dim);font-style:italic;margin-bottom:2rem">The Treasury is only accessible to chapter officers.</p>
+          <a href="/" style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;color:var(--gold);text-decoration:none;padding:.6rem 1.5rem;border:1px solid color-mix(in srgb, var(--gold) 30%, transparent);border-radius:4px">← Back to Portal</a>
         </div>
       </div>`;
     return;
@@ -595,8 +604,10 @@ async function loadApp() {
 
   $('login-screen').style.display = 'none';
   $('main-app').style.display = 'flex';
+  document.body.classList.add('logged-in');
   $('topbar-username').textContent = d.username.toUpperCase();
   const rb = $('topbar-role'); rb.textContent = d.role; rb.className = `role-tag role-${d.role}`;
+  if (window.initBugHelp) initBugHelp(d);
 
   if (['officer','moderator','admin'].includes(d.role)) {
     $('nav-pending').style.display = 'flex';
@@ -611,6 +622,7 @@ async function loadApp() {
   await loadDepts();
   showPage('overview', $('nav-overview'));
   pollPending();
+  initAdminCog(d);
 }
 
 async function pollPending() {
@@ -664,7 +676,7 @@ function renderDeptNav() {
   }
   list.innerHTML = active.map(d => `
     <div class="nav-dept" id="nav-dept-${d.dept_id}" onclick="showDept(${d.dept_id}, this)">
-      <span class="nav-dept-dot"></span>${d.name}
+      <span class="nav-dept-dot"></span>${esc(d.name)}
     </div>`).join('');
 }
 
@@ -692,7 +704,7 @@ async function loadOverview() {
   tbody.innerHTML = active.map(d => {
     const pct = d.total_allocated > 0 ? 0 : 0; // will load async below
     return `<tr id="dept-row-${d.dept_id}" onclick="showDept(${d.dept_id}, $('nav-dept-${d.dept_id}'))" style="cursor:pointer">
-      <td style="font-family:'Cinzel',serif;font-size:.85rem">${d.name}</td>
+      <td style="font-family:'Cinzel',serif;font-size:.85rem">${esc(d.name)}</td>
       <td><span class="money">${fmt$(d.total_allocated)}</span></td>
       <td id="dept-spent-${d.dept_id}"><span class="text-dim">—</span></td>
       <td id="dept-rem-${d.dept_id}"><span class="text-dim">—</span></td>
@@ -724,7 +736,7 @@ async function loadSubmitForm() {
   const sel = $('req-dept');
   const active = allDepts.filter(d => d.is_active);
   sel.innerHTML = '<option value="">— Select a department —</option>' +
-    active.map(d => `<option value="${d.dept_id}">${d.name}</option>`).join('');
+    active.map(d => `<option value="${d.dept_id}">${esc(d.name)}</option>`).join('');
   $('req-item').innerHTML = '<option value="">— Select a budget item —</option>';
   $('req-item').disabled = true;
   $('item-budget-preview').style.display = 'none';
@@ -741,7 +753,7 @@ async function onDeptChange() {
   itemSel.innerHTML = '<option value="">— Select a budget item —</option>' +
     items.map(i => {
       const rem = parseFloat(i.allocated)-parseFloat(i.spent||0);
-      return `<option value="${i.item_id}" data-alloc="${i.allocated}" data-spent="${i.spent||0}" data-pending="${i.pending_amount||0}">${i.name} (${fmt$(rem)} remaining)</option>`;
+      return `<option value="${i.item_id}" data-alloc="${i.allocated}" data-spent="${i.spent||0}" data-pending="${i.pending_amount||0}">${esc(i.name)} (${fmt$(rem)} remaining)</option>`;
     }).join('');
   itemSel.disabled = false;
 }
@@ -787,10 +799,10 @@ async function loadMyRequests() {
   tbody.innerHTML = rows.map(r => `
     <tr>
       <td class="text-dim">#${r.request_id}</td>
-      <td style="font-size:.85rem">${r.dept_name}</td>
-      <td class="truncate text-dim" style="font-size:.85rem">${r.item_name}</td>
+      <td style="font-size:.85rem">${esc(r.dept_name)}</td>
+      <td class="truncate text-dim" style="font-size:.85rem">${esc(r.item_name)}</td>
       <td><span class="money">${fmt$(r.amount)}</span></td>
-      <td class="truncate" style="font-size:.85rem">${r.description}</td>
+      <td class="truncate" style="font-size:.85rem">${esc(r.description)}</td>
       <td>${statusBadge(r.status)}</td>
       <td class="text-dim" style="font-size:.8rem">${fmtDate(r.created_at)}</td>
     </tr>`).join('');
@@ -814,17 +826,17 @@ async function loadPending() {
     const rem = alloc - spent;
     return `<tr>
       <td class="text-dim">#${r.request_id}</td>
-      <td style="font-family:'Cinzel',serif;font-size:.8rem">${r.submitter_name}</td>
-      <td style="font-size:.85rem">${r.dept_name}</td>
-      <td style="font-size:.85rem">${r.item_name}<div class="row-info">${fmt$(rem)} remaining of ${fmt$(alloc)}</div></td>
+      <td style="font-family:'Cinzel',serif;font-size:.8rem">${esc(r.submitter_name)}</td>
+      <td style="font-size:.85rem">${esc(r.dept_name)}</td>
+      <td style="font-size:.85rem">${esc(r.item_name)}<div class="row-info">${fmt$(rem)} remaining of ${fmt$(alloc)}</div></td>
       <td><span class="money">${fmt$(r.amount)}</span></td>
-      <td class="truncate" style="font-size:.85rem" title="${r.description}">${r.description}</td>
-      <td class="text-dim" style="font-size:.85rem">${r.vendor||'—'}</td>
+      <td class="truncate" style="font-size:.85rem" title="${esc(r.description)}">${esc(r.description)}</td>
+      <td class="text-dim" style="font-size:.85rem">${esc(r.vendor||'—')}</td>
       <td class="text-dim" style="font-size:.8rem">${fmtDate(r.created_at)}</td>
       <td><div class="action-btns">
         ${currentUser.role==='admin' ? `<button class="btn btn-success btn-sm" onclick="approveRequest(${r.request_id})">✓ Approve</button>` : ''}
         ${currentUser.role==='admin' ? `<button class="btn btn-danger btn-sm" onclick="openReject(${r.request_id})">✕ Reject</button>` : ''}
-        ${currentUser.role==='officer' ? '<span style="font-size:.78rem;color:#5C5248;font-style:italic">View only</span>' : ''}
+        ${currentUser.role==='officer' ? '<span style="font-size:.78rem;color:var(--text-muted);font-style:italic">View only</span>' : ''}
       </div></td>
     </tr>`;
   }).join('');
@@ -888,7 +900,7 @@ async function loadDeptView(deptId) {
         const alloc = parseFloat(i.allocated||0);
         const rem = alloc - spent;
         return `<div class="item-card">
-          <div class="item-card-name">${i.name}</div>
+          <div class="item-card-name">${esc(i.name)}</div>
           ${budgetBar(spent, pending, alloc)}
           <div class="item-figures">
             <div><div class="item-fig-label">Budget</div><div class="item-fig-val text-gold">${fmt$(alloc)}</div></div>
@@ -908,11 +920,11 @@ async function loadDeptView(deptId) {
   tbody.innerHTML = txs.map(t => `
     <tr>
       <td class="text-dim">#${t.request_id}</td>
-      <td style="font-size:.85rem">${t.item_name}</td>
-      <td style="font-family:'Cinzel',serif;font-size:.8rem">${t.submitter_name}</td>
+      <td style="font-size:.85rem">${esc(t.item_name)}</td>
+      <td style="font-family:'Cinzel',serif;font-size:.8rem">${esc(t.submitter_name)}</td>
       <td><span class="money ${t.status==='approved'?'red':''}">${t.status==='approved'?'−':''}${fmt$(t.amount)}</span></td>
-      <td class="truncate" style="font-size:.85rem" title="${t.description}">${t.description}</td>
-      <td class="text-dim" style="font-size:.85rem">${t.vendor||'—'}</td>
+      <td class="truncate" style="font-size:.85rem" title="${esc(t.description)}">${esc(t.description)}</td>
+      <td class="text-dim" style="font-size:.85rem">${esc(t.vendor||'—')}</td>
       <td>${statusBadge(t.status)}</td>
       <td class="text-dim" style="font-size:.8rem">${fmtDate(t.created_at)}</td>
       <td>${currentUser.role==='admin' && t.status==='approved' ? `<button class="btn btn-danger btn-sm" onclick="deleteRequest(${t.request_id})">&#x2715; Delete</button>` : ''}</td>
@@ -940,8 +952,8 @@ async function loadManageDepts() {
     <div class="card" id="manage-dept-${dept.dept_id}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
         <div>
-          <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold)">${dept.name}</div>
-          ${dept.description?`<div class="text-dim" style="font-style:italic;font-size:.9rem;margin-top:.2rem">${dept.description}</div>`:''}
+          <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold)">${esc(dept.name)}</div>
+          ${dept.description?`<div class="text-dim" style="font-style:italic;font-size:.9rem;margin-top:.2rem">${esc(dept.description)}</div>`:''}
         </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="openEditDept(${dept.dept_id})">Edit</button>
@@ -970,7 +982,7 @@ async function loadManageDepts() {
         items.map(i => {
           const rem = parseFloat(i.allocated) - parseFloat(i.spent||0);
           return `<tr>
-            <td style="font-family:'Cinzel',serif">${i.name}</td>
+            <td style="font-family:'Cinzel',serif">${esc(i.name)}</td>
             <td><span class="money">${fmt$(i.allocated)}</span></td>
             <td><span class="money">${fmt$(i.spent||0)}</span></td>
             <td><span class="money ${rem<0?'red':'green'}">${fmt$(Math.abs(rem))}</span></td>
@@ -1076,11 +1088,11 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 </script>
 
   <!-- MOBILE BOTTOM NAV -->
-  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:#150D1A;border-top:1px solid rgba(201,168,76,.25);z-index:500;align-items:stretch">
-    <a href="/points" class="mob-nav-btn" style="color:#9A8E7A"><span>⚔</span><span>Points</span></a>
-    <a href="/budget" class="mob-nav-btn" style="color:#C9A84C"><span>◈</span><span>Budget</span></a>
-    <a href="/wheel" class="mob-nav-btn" style="color:#9A8E7A"><span>🎡</span><span>Wheel</span></a>
-    <a href="/dailies" class="mob-nav-btn" style="color:#9A8E7A"><span>📋</span><span>Dailies</span></a>
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:90;align-items:stretch">
+    <a href="/points" class="mob-nav-btn" style="color:var(--text-dim)"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn" style="color:var(--gold)"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn" style="color:var(--text-dim)"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn" style="color:var(--text-dim)"><span>📋</span><span>Dailies</span></a>
   </nav>
 </body>
 </html>

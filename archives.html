@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Archived Terms — __BRAND_NAME__</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple:#3D0C45;--purple-mid:#5C1F6B;--gold:#C9A84C;--gold-dim:#8A7235;
+  --dark:#0D0910;--dark-2:#150D1A;--dark-3:#1E1227;--surface:#1A0F21;
+  --border:rgba(201,168,76,0.18);--border-strong:rgba(201,168,76,0.38);
+  --text:#F0E8D0;--text-dim:#9A8E7A;--text-muted:#5C5248;--green:#4CAF7A;--red:#CF4A4A;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--dark);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--purple-mid) 28%,transparent) 0%,transparent 65%);pointer-events:none;z-index:0}
+.topbar{background:linear-gradient(180deg,var(--purple) 0%,var(--dark-2) 100%);border-bottom:1px solid var(--border-strong);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-brand{display:flex;align-items:center;gap:1rem;position:relative;z-index:1}
+.topbar-symbol{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--gold)}
+.topbar-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold-dim);text-transform:uppercase}
+.topbar-nav-links{display:flex;gap:.5rem;position:absolute;left:50%;transform:translateX(-50%)}
+.topbar-nav-links a{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-decoration:none;padding:.35rem .8rem;border:1px solid var(--border);border-radius:4px}
+.topbar-user{display:flex;align-items:center;gap:1rem;margin-left:auto;position:relative;z-index:1}
+.user-badge{display:flex;align-items:center;gap:.6rem;background:color-mix(in srgb,var(--gold) 8%,transparent);border:1px solid var(--border);padding:.35rem .9rem;border-radius:20px}
+.user-name{font-family:'Cinzel',serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em}
+.role-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.15rem .5rem;border-radius:20px;font-family:'Cinzel',serif}
+.role-admin{background:color-mix(in srgb,var(--gold) 20%,transparent);color:var(--gold);border:1px solid var(--gold-dim)}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border:none;border-radius:4px;font-weight:600}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+a.btn{text-decoration:none}
+.header-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end}
+.content{position:relative;z-index:1;padding:2rem;max-width:1100px;margin:0 auto}
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+.page-title{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold)}
+.page-subtitle{font-style:italic;color:var(--text-dim);font-size:.875rem;margin-top:.25rem}
+.form-label{display:block;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:.4rem}
+.form-input{background:var(--dark-3);border:1px solid var(--border);color:var(--text);padding:.55rem .85rem;font-family:'Crimson Pro',serif;font-size:1rem;border-radius:4px;min-width:220px}
+.tabs{display:flex;gap:.5rem;margin-bottom:1.5rem}
+.tabs button{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);background:transparent;border:1px solid var(--border);border-radius:4px;padding:.35rem .8rem;cursor:pointer}
+.tabs button.active{color:var(--gold);border-color:var(--gold-dim);background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.15em;color:var(--gold-dim);text-transform:uppercase;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:var(--gold-dim);text-transform:uppercase;padding:.75rem 1rem;text-align:left}
+td{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+.points-num{font-family:'Cinzel',serif;color:var(--gold)}
+.money{font-family:'Cinzel',serif;color:var(--gold)}
+.text-dim{color:var(--text-dim)}
+.hidden{display:none}
+.rotation-table{min-width:700px}
+.empty{text-align:center;padding:2.5rem;color:var(--text-muted);font-style:italic}
+@media(max-width:768px){
+  #mobile-bottom-nav{display:flex !important}
+  .topbar-nav-links{display:none}
+  .content{padding:1rem}
+  .page-header{flex-direction:column;align-items:flex-start}
+}
+</style>
+<link rel="stylesheet" href="/theme.css">
+<script src="/bug-report.js"></script>
+</head>
+<body class="admin-page">
+<div class="topbar">
+  <div class="topbar-brand">
+    <span class="topbar-symbol">__BRAND_LETTERS__</span>
+    <span class="topbar-title">Archived Terms</span>
+  </div>
+  <div class="topbar-nav-links">
+    <a href="/points">⚔ Points</a>
+    <a href="/budget">◈ Budget</a>
+    <a href="/wheel">🎡 Wheel</a>
+    <a href="/dailies">📋 Dailies</a>
+  </div>
+  <div class="topbar-user">
+    <div class="user-badge">
+      <span class="user-name" id="topbar-username"></span>
+      <span class="role-tag role-admin" id="topbar-role"></span>
+    </div>
+    <button class="btn btn-ghost" onclick="doLogout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Archived Terms</div>
+      <div class="page-subtitle">Read-only lookback. Live apps are unchanged.</div>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-ghost" href="/">← Home</a>
+      <div>
+        <label class="form-label" for="term-pick">Term</label>
+        <select class="form-input" id="term-pick" onchange="loadSelected()"></select>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button type="button" class="active" id="tab-points" onclick="showView('points')">Points</button>
+    <button type="button" id="tab-budget" onclick="showView('budget')">Budget</button>
+    <button type="button" id="tab-dailies" onclick="showView('dailies')">Dailies</button>
+  </div>
+  <div id="view-points"></div>
+  <div id="view-budget" class="hidden"></div>
+  <div id="view-dailies" class="hidden"></div>
+</div>
+
+<script src="/admin-settings.js"></script>
+<script>
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let current = null;
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmt$(n) {
+  return '$' + Number(n || 0).toFixed(2);
+}
+async function doLogout() {
+  await fetch('/api/logout', {method:'POST'});
+  window.location.href = '/';
+}
+function showView(name) {
+  ['points','budget','dailies'].forEach(v => {
+    document.getElementById('view-' + v).classList.toggle('hidden', v !== name);
+    document.getElementById('tab-' + v).classList.toggle('active', v === name);
+  });
+}
+function render() {
+  const p = (current && current.payload) || {points: [], budget: [], dailies: []};
+  const points = p.points || [];
+  const budget = p.budget || [];
+  const dailies = p.dailies || [];
+
+  const pb = document.getElementById('view-points');
+  if (!points.length) {
+    pb.innerHTML = '<div class="card"><div class="empty">No leaderboard in this snapshot.</div></div>';
+  } else {
+    pb.innerHTML = `<div class="card"><div class="card-title">Leaderboard</div><div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Member</th><th>Points</th></tr></thead>
+      <tbody>${points.map((u,i) => `<tr>
+        <td class="text-dim">${i+1}</td>
+        <td style="font-family:'Cinzel',serif">${esc(u.username)}</td>
+        <td><span class="points-num">${u.points}</span></td>
+      </tr>`).join('')}</tbody></table></div></div>`;
+  }
+
+  const bb = document.getElementById('view-budget');
+  if (!budget.length) {
+    bb.innerHTML = '<div class="card"><div class="empty">No departments in this snapshot.</div></div>';
+  } else {
+    bb.innerHTML = budget.map(d => `
+      <div class="card">
+        <div class="card-title">${esc(d.name)}</div>
+        <div class="table-wrap" style="margin-bottom:1rem">
+          <table><thead><tr><th>Allocated</th><th>Spent</th><th>Remainder</th></tr></thead>
+          <tbody><tr>
+            <td><span class="money">${fmt$(d.allocated)}</span></td>
+            <td><span class="money">${fmt$(d.spent)}</span></td>
+            <td><span class="money">${fmt$(d.remainder)}</span></td>
+          </tr></tbody></table>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Line item</th><th>Allocated</th><th>Spent</th><th>Remainder</th></tr></thead>
+          <tbody>${(d.items||[]).map(i => `<tr>
+            <td>${esc(i.name)}</td>
+            <td><span class="money">${fmt$(i.allocated)}</span></td>
+            <td><span class="money">${fmt$(i.spent)}</span></td>
+            <td><span class="money">${fmt$(i.remainder)}</span></td>
+          </tr>`).join('') || '<tr><td colspan="4" class="empty">No line items</td></tr>'}
+          </tbody></table></div>
+      </div>`).join('');
+  }
+
+  const db = document.getElementById('view-dailies');
+  if (!dailies.length) {
+    db.innerHTML = '<div class="card"><div class="empty">No rotation in this snapshot.</div></div>';
+    return;
+  }
+  const byTask = {};
+  dailies.forEach(s => {
+    const key = s.category + '\0' + s.title;
+    if (!byTask[key]) byTask[key] = {title: s.title, category: s.category, days: {}};
+    byTask[key].days[s.day_of_week] = s.member_name;
+  });
+  const cats = {};
+  Object.values(byTask).forEach(t => {
+    (cats[t.category] = cats[t.category] || []).push(t);
+  });
+  db.innerHTML = Object.keys(cats).map(cat => `
+    <div class="card">
+      <div class="card-title">${esc(cat)}</div>
+      <div class="table-wrap"><table class="rotation-table">
+        <thead><tr><th>Task</th>${DAYS.map(d => `<th>${d}</th>`).join('')}</tr></thead>
+        <tbody>${cats[cat].map(t => `<tr>
+          <td>${esc(t.title)}</td>
+          ${[1,2,3,4,5,6,7].map(dow => `<td>${esc(t.days[dow] || '—')}</td>`).join('')}
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`).join('');
+}
+
+async function loadSelected() {
+  const sel = document.getElementById('term-pick');
+  const label = sel.value;
+  current = null;
+  if (!label) { render(); return; }
+  const r = await fetch('/api/admin/archives/' + encodeURIComponent(label));
+  if (r.status === 403) { window.location.href = '/'; return; }
+  if (!r.ok) { render(); return; }
+  current = await r.json();
+  render();
+}
+
+(async () => {
+  const me = await fetch('/api/me').then(r => r.json());
+  if (!me.authenticated || me.role !== 'admin') { window.location.href = '/'; return; }
+  document.getElementById('topbar-username').textContent = me.username.toUpperCase();
+  document.getElementById('topbar-role').textContent = me.role;
+  if (window.initBugHelp) initBugHelp(me);
+  initAdminCog(me);
+
+  const r = await fetch('/api/admin/archives');
+  const rows = await r.json();
+  const sel = document.getElementById('term-pick');
+  sel.innerHTML = rows.map(a => `<option value="${esc(a.label)}">${esc(a.label)}</option>`).join('');
+  if (rows.length) await loadSelected();
+  else render();
+})();
+</script>
+  <nav id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--dark-2);border-top:1px solid color-mix(in srgb, var(--gold) 25%, transparent);z-index:90;align-items:stretch">
+    <a href="/points" class="mob-nav-btn"><span>⚔</span><span>Points</span></a>
+    <a href="/budget" class="mob-nav-btn"><span>◈</span><span>Budget</span></a>
+    <a href="/wheel" class="mob-nav-btn"><span>🎡</span><span>Wheel</span></a>
+    <a href="/dailies" class="mob-nav-btn"><span>📋</span><span>Dailies</span></a>
+  </nav>
+</body>
+</html>
