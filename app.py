@@ -301,19 +301,6 @@ def init_db():
             FOREIGN KEY (submitted_by) REFERENCES users(user_id),
             FOREIGN KEY (reviewed_by) REFERENCES users(user_id)
         )''')
-
-    execute(conn, '''CREATE TABLE IF NOT EXISTS org_settings (
-        id INTEGER PRIMARY KEY,
-        letters TEXT NOT NULL,
-        org_name TEXT NOT NULL,
-        tagline TEXT NOT NULL,
-        footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858',
-        primary_color TEXT NOT NULL,
-        accent_color TEXT NOT NULL,
-        bg_color TEXT NOT NULL,
-        text_color TEXT NOT NULL,
-        configured INTEGER NOT NULL DEFAULT 0
-    )''')
     try:
         execute(conn, "ALTER TABLE org_settings ADD COLUMN footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858'")
         conn.commit()
@@ -348,6 +335,18 @@ def init_db():
         execute(conn, "INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
                 ("admin", pw, "admin@brotherhood.com", "admin"))
         conn.commit()
+    execute(conn, '''CREATE TABLE IF NOT EXISTS org_settings (
+        id INTEGER PRIMARY KEY,
+        letters TEXT NOT NULL,
+        org_name TEXT NOT NULL,
+        tagline TEXT NOT NULL,
+        footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858',
+        primary_color TEXT NOT NULL,
+        accent_color TEXT NOT NULL,
+        bg_color TEXT NOT NULL,
+        text_color TEXT NOT NULL,
+        configured INTEGER NOT NULL DEFAULT 0
+    )''')
     if not fetchone(conn, "SELECT id FROM org_settings WHERE id=1"):
         d = DEFAULT_THEME
         # Existing deploys keep the Delts look and skip the wizard.
