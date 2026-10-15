@@ -301,12 +301,19 @@ def init_db():
             FOREIGN KEY (submitted_by) REFERENCES users(user_id),
             FOREIGN KEY (reviewed_by) REFERENCES users(user_id)
         )''')
-    try:
-        execute(conn, "ALTER TABLE org_settings ADD COLUMN footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858'")
-        conn.commit()
-    except Exception:
-        if DATABASE_URL:
-            conn.rollback()
+
+    execute(conn, '''CREATE TABLE IF NOT EXISTS org_settings (
+        id INTEGER PRIMARY KEY,
+        letters TEXT NOT NULL,
+        org_name TEXT NOT NULL,
+        tagline TEXT NOT NULL,
+        footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858',
+        primary_color TEXT NOT NULL,
+        accent_color TEXT NOT NULL,
+        bg_color TEXT NOT NULL,
+        text_color TEXT NOT NULL,
+        configured INTEGER NOT NULL DEFAULT 0
+    )''')
 
     if DATABASE_URL:
         execute(conn, '''CREATE TABLE IF NOT EXISTS term_archives (
@@ -325,7 +332,19 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )''')
 
+    # Commit before the footer migration. On Postgres a failed ALTER aborts
+    # the transaction, and rolling it back would drop tables created above
+    # (including users) on a brand-new database.
     conn.commit()
+
+    # Older databases created org_settings before the footer column existed.
+    try:
+        execute(conn, "ALTER TABLE org_settings ADD COLUMN footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858'")
+        conn.commit()
+    except Exception:
+        if DATABASE_URL:
+            conn.rollback()
+
     # Seed default admin if no users exist
     row = fetchone(conn, "SELECT COUNT(*) as cnt FROM users")
     cnt = row['cnt'] if row else 0
@@ -335,18 +354,6 @@ def init_db():
         execute(conn, "INSERT INTO users (username, password_hash, email, role) VALUES (?,?,?,?)",
                 ("admin", pw, "admin@brotherhood.com", "admin"))
         conn.commit()
-    execute(conn, '''CREATE TABLE IF NOT EXISTS org_settings (
-        id INTEGER PRIMARY KEY,
-        letters TEXT NOT NULL,
-        org_name TEXT NOT NULL,
-        tagline TEXT NOT NULL,
-        footer TEXT NOT NULL DEFAULT 'ΔΤΔ — Est. 1858',
-        primary_color TEXT NOT NULL,
-        accent_color TEXT NOT NULL,
-        bg_color TEXT NOT NULL,
-        text_color TEXT NOT NULL,
-        configured INTEGER NOT NULL DEFAULT 0
-    )''')
     if not fetchone(conn, "SELECT id FROM org_settings WHERE id=1"):
         d = DEFAULT_THEME
         # Existing deploys keep the Delts look and skip the wizard.
